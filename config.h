@@ -6,9 +6,10 @@
 // - Alsa Sound support "soundcore"
 // - USB sound and midi support "snd-usb-audio"
 //
-// Thanks to https://ccrma.stanford.edu/~craig/articles/linuxmidi/ for the MIDI programming examples.
+// Thanks to https://ccrma.stanford.edu/~craig/articles/linuxmidi/ for the 
+// excellent MIDI programming examples.
 // 
-// /dev/sequencer does not seem to work for input
+// "/dev/sequencer" does not seem to work for input
 
 #define MIDI_INPUT
 #define MIDI_DEV
