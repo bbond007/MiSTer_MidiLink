@@ -220,7 +220,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
