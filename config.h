@@ -5,6 +5,8 @@
 //
 // - Alsa Sound support "soundcore"
 // - USB sound and midi support "snd-usb-audio"
+//
+// Thanks to https://ccrma.stanford.edu/~craig/articles/linuxmidi/ for the MIDI programming examples.
 // 
 // /dev/sequencer does not seem to work for input
 
@@ -17,7 +19,7 @@ static unsigned char   midiDevnum       = 0;
 static unsigned char   test_note[3]     = {0x90, 60, 127};
 #ifdef MIDI_DEV
 static char          * midiDevice       = "/dev/midi";
-static char          * midi1Device       = "/dev/midi1";
+static char          * midi1Device      = "/dev/midi1";
 #else
 static char          * midiDevice       = "/dev/sequencer";
 #endif
