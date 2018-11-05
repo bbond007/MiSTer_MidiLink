@@ -280,7 +280,6 @@ int main(int argc, char *argv[])
 
 #ifdef MIDI_INPUT
     int status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
-
     if (status == -1)
     {
         printf("Error: unable to create MIDI input thread.\n");
