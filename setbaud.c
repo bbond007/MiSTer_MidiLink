@@ -7,10 +7,6 @@
 
 int ioctl(int fd, unsigned long request, ...);
 
-
-// I put this in its own file because /asm/termios.h conflicts with termios.h
-
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
