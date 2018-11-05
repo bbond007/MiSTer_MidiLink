@@ -14,12 +14,12 @@
 #define TRUE 1
 #define FALSE 0
 
-static int             fdSerial    	= -1;
+static int             fdSerial		= -1;
 static int             fdMidi		= -1;
 static int             fdMidi1		= -1;
 static pthread_t       midiInThread;
 static pthread_t       midi1InThread;
-static int 	       MIDI_DEBUG       = TRUE;
+static int 	       MIDI_DEBUG	= TRUE;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
