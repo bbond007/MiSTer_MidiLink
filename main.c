@@ -233,7 +233,6 @@ int main(int argc, char *argv[])
     //if (misc_check_args_option(argc, argv, "MIDI1")
     if (misc_check_device(midi1Device))
     {
-
         fdMidi1 = open(midi1Device, O_RDONLY);
         if (fdMidi1 < 0)
         {
@@ -301,7 +300,6 @@ int main(int argc, char *argv[])
     }
     else
         printf("QUIET mode emabled.\n");
-
 
     unsigned char buf[100];
     //  Main thread handles MIDI output
