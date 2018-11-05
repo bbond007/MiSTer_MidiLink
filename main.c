@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
         return -3;
     }
 
-    serial_set_interface_attribs(fdSerial); //SETS SERIAL PORT 38400 <-- perfect for ao486
+    serial_set_interface_attribs(fdSerial); //SETS SERIAL PORT 38400 <-- perfect for ao486 / SoftMPU
 
     //if (misc_check_args_option(argc, argv, "MIDI1")
     if (misc_check_device(midi1Device))
