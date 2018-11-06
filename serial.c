@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// set_interface_attribs(int fd, int speed)
+// int serial_set_interface_attribs(int fd, int speed)
 //
 
 int serial_set_interface_attribs(int fd)
@@ -52,7 +52,7 @@ int serial_set_interface_attribs(int fd)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//void do_tcdrain(int fd)
+//void serial_do_tcdrain(int fd)
 //
 
 void serial_do_tcdrain(int fd)
