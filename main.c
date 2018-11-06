@@ -233,6 +233,7 @@ int main(int argc, char *argv[])
 
     serial_set_interface_attribs(fdSerial); //SETS SERIAL PORT 38400 <-- perfect for ao486 / SoftMPU
 
+#ifdef MIDI_INPUT
     //if (misc_check_args_option(argc, argv, "MIDI1")
     if (misc_check_device(midi1Device))
     {
@@ -244,6 +245,7 @@ int main(int argc, char *argv[])
             return -2;
         }
     }
+#endif
 
     if (!misc_check_args_option(argc, argv, "38400"))
         setbaud_set_baud(serialDevice, fdSerial, 31200);  // <-- not so good for Amiga where we need midi speed
@@ -268,6 +270,7 @@ int main(int argc, char *argv[])
         test_midi_device();
     }
 
+#ifdef MIDI_INPUT
     if (fdMidi1 != -1)
     {
         int statusM1 = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
@@ -281,7 +284,6 @@ int main(int argc, char *argv[])
         printf("CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
     }
 
-#ifdef MIDI_INPUT
     int status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
     if (status == -1)
     {
