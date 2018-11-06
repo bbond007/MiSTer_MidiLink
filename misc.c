@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// args_str_to_upper(char *str)
+// void_misc__str_to_upper(char *str)
 //
 void misc_str_to_upper(char *str)
 {
@@ -23,7 +23,7 @@ void misc_str_to_upper(char *str)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// args_check_option (int argc, char *argv[], char * option)
+// BOOL misc_check_args_option (int argc, char *argv[], char * option)
 //
 
 int misc_check_args_option (int argc, char *argv[], char * option)
