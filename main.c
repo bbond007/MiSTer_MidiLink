@@ -26,7 +26,7 @@ static int		MIDI_DEBUG	= TRUE;
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * midi_thread_function(void * x) 
-// Thread function for /dev/midi
+// Thread function for /dev/midi input
 //
 void * midi_thread_function (void * x)
 {
@@ -87,7 +87,7 @@ void test_midi_device()
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // [sequencer]_thread_function 
-// Thread function for /dev/sequencer
+// Thread function for /dev/sequencer input
 //
 void* midi_thread_function (void* x)
 {
@@ -154,7 +154,7 @@ void test_midi_device()
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // midi1in_thread_function 
-// Thread function for /dev/midi1 (input-only)
+// Thread function for /dev/midi1 input
 //
 void * midi1in_thread_function (void * x)
 {
