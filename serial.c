@@ -46,7 +46,7 @@ int serial_set_interface_attribs(int fd)
         printf("Error from tcsetattr: %s\n", strerror(errno));
         return -1;
     }
-
+    
     return 0;
 }
 
