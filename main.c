@@ -21,14 +21,16 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static int		MIDI_DEBUG	= TRUE;
 
+
+#ifdef MIDI_DEV
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void * midi_thread_function(void * x) --> functions for running as a separate thread.
-// this is for /dev/midi
-#ifdef MIDI_DEV
+// void * midi_thread_function(void * x) 
+// Thread function for /dev/midi
+//
 void * midi_thread_function (void * x)
 {
-    unsigned char inbytes [100];             // bytes from sequencer driver
+    unsigned char inbytes [100];   
     unsigned char * inbyte;
     int rdLen;
     do
@@ -75,7 +77,7 @@ void write_midi_packet(char * buf, int bufLen)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // test_midi_device()
-// Play a note : this is for /dev/midi
+// Play a test note : this is for /dev/midi
 //
 void test_midi_device()
 {
@@ -84,13 +86,13 @@ void test_midi_device()
 #else
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// [sequencer]_thread_function --> functions for running as a separate thread.
-// this is for /dev/sequencer
+// [sequencer]_thread_function 
+// Thread function for /dev/sequencer
 //
 void* midi_thread_function (void* x)
 {
-    unsigned char inbytes[4];         // bytes from sequencer driver
-    int rdLen;                        // for error checking
+    unsigned char inbytes[4];         
+    int rdLen;                        
     do
     {
         do
@@ -135,7 +137,7 @@ void write_midi_packet(char * buf, int bufLen)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // test_midi_device()
-// Play a note : this is for /dev/sequencer
+// Play a test note : this is for /dev/sequencer
 //
 void test_midi_device()
 {
@@ -151,8 +153,8 @@ void test_midi_device()
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// [sequencer]_thread_function --> functions for running as a separate thread.
-// this is for /dev/midi1
+// midi1in_thread_function 
+// Thread function for /dev/midi1 (input-only)
 //
 void * midi1in_thread_function (void * x)
 {
@@ -191,7 +193,7 @@ void * midi1in_thread_function (void * x)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// close_fd()
+// void close_fd()
 //
 void close_fd()
 {
