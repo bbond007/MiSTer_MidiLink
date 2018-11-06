@@ -40,12 +40,12 @@ void * midi_thread_function (void * x)
         }
         else
         {
-            if(MIDI_DEBUG)
+            if (MIDI_DEBUG)
               printf("MIDI IN  [%02d]-->", rdLen);
               
             for (inbyte = inbytes; rdLen-- > 0; inbyte++)
             {
-                if(MIDI_DEBUG)
+                if (MIDI_DEBUG)
                     printf(" %02x",*inbyte);
                 write(fdSerial, inbyte, 1);
             }
@@ -63,7 +63,7 @@ void * midi_thread_function (void * x)
 void write_midi_packet(char * buf, int bufLen)
 {
     write(fdMidi, buf, bufLen);
-    if(MIDI_DEBUG)
+    if (MIDI_DEBUG)
     {
         printf("MIDI OUT [%02d] -->", bufLen);
         for (char * p = buf; bufLen-- > 0; p++)
@@ -102,7 +102,7 @@ void* midi_thread_function (void* x)
             }
             else if (inbytes[0] == SEQ_MIDIPUTC)
             {
-                if(MIDI_DEBUG)
+                if (MIDI_DEBUG)
                     printf("SEQU IN --> %02x\n", inbytes[1]);
                 write(fdSerial, &inbytes[1], 1);
             }
@@ -119,16 +119,16 @@ void write_midi_packet(char * buf, int bufLen)
 {
     unsigned char midiPacket[4] = {SEQ_MIDIPUTC, 0, midiDevnum, 0};
     unsigned char  *p;
-    if(MIDI_DEBUG)
+    if (MIDI_DEBUG)
         printf("MIDI1 IN [%02d] -->", bufLen);
     for (p = buf; bufLen-- > 0; p++)
     {
-        if(MIDI_DEBUG)
+        if (MIDI_DEBUG)
             printf(" %02x", *p);
         midiPacket[1] = *p;
         write(fdMidi, midiPacket, sizeof(midiPacket));
     }
-    if(MIDI_DEBUG)
+    if (MIDI_DEBUG)
         printf("\n");
 }
 
@@ -174,16 +174,16 @@ void * midi1in_thread_function (void * x)
         }
         else
         {
-            if(MIDI_DEBUG)
+            if (MIDI_DEBUG)
                 printf("MIDI1 IN [%02d] -->", rdLen);
             for (inbyte = inbytes; rdLen-- > 0; inbyte++)
             {
-                if(MIDI_DEBUG)
+                if (MIDI_DEBUG)
                     printf(" %02x", *inbyte);
                 write(fdSerial, inbyte, 1);
                 write(fdMidi, inbyte, 1);
             }
-            if(MIDI_DEBUG)
+            if (MIDI_DEBUG)
                 printf("\n");
         }
     } while (1);
@@ -195,14 +195,14 @@ void * midi1in_thread_function (void * x)
 //
 void close_fd()
 {
-    if (fdSerial > 0) close(fdSerial);
+    if (fdSerial > 0) close (fdSerial);
     if (fdMidi > 0)   close (fdMidi);
     if (fdMidi1 > 0)  close (fdMidi1);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// main(int argc, char *argv[])
+// int main(int argc, char *argv[])
 //
 int main(int argc, char *argv[])
 {
@@ -212,6 +212,7 @@ int main(int argc, char *argv[])
         MIDI_DEBUG = FALSE;
     else
         MIDI_DEBUG = TRUE;
+
     fdMidi = open(midiDevice, O_RDWR);
     if (fdMidi < 0)
     {
@@ -292,7 +293,7 @@ int main(int argc, char *argv[])
     printf("CONNECT : %s --> %s\n", serialDevice, midiDevice);
 #endif
 
-    if(MIDI_DEBUG)
+    if (MIDI_DEBUG)
     {
         printf("MIDI debug messages enabled.\n");
         printf("---------------------------------------------\n\n");
