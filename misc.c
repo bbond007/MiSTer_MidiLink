@@ -25,7 +25,6 @@ void misc_str_to_upper(char *str)
 //
 // BOOL misc_check_args_option (int argc, char *argv[], char * option)
 //
-
 int misc_check_args_option (int argc, char *argv[], char * option)
 {
     int result = FALSE;

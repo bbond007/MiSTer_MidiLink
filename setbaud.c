@@ -11,7 +11,6 @@ int ioctl(int fd, unsigned long request, ...);
 //
 // int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
 //
-
 int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
 {
     struct termios2 tio;
@@ -31,7 +30,6 @@ int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
 // int setbaud_set_baud_31250(char * serialDevice)
 // This changes the UART clock divisor to make 38400 BPS into 31250 BPS
 // I'm not using this anymore but it does seem to work :)
-
 int setbaud_set_baud_31250(char * serialDevice)
 {
     char temp[100];
