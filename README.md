@@ -1,4 +1,34 @@
 # MiSTer_MidiLink
 This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI adapters to be used with the Minimig and ao486 cores.
 
-For the ao486 core the SoftMPU TSR is required -->  http://bjt42.github.io/softmpu/
+Midilink is now included in MiSTer general.
+
+Once a compatible USB MIDI device is attached two additional ‘UART Connection’ options (‘USBMIDI’ and ‘USBMIDI-38K’) will be available in addition to ‘None’, ‘PPP’ and ‘Console’. 
+
+‘USBMIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the    standard MIDI speed.
+
+Many applications and most games won’t require any additional drivers to operate. Some “newer” applications may require the CAMD driver. 
+http://aminet.net/package/mus/edit/camd 
+
+‘USBMIDI-38K’ -This option is used with the ao486 core. This option sets the UART Connection speed to 38400 baud. (The MIDI speed of 31200 baud was not a standard serial speed DOS PCs were capable of doing) 
+
+While some sequencer applications may support MIDI on the serial port, DOS games typically require a MPU-401 interface which ao486 unfortunately lacks. In lieu of hardware MPU-401 capability SoftMPU can be used with a good degree of success.  
+
+http://bjt42.github.io/softmpu/
+
+SoftMPU requires the QEMM memory manager be installed. For testing QEMM 8.03 was used.  It’s a good idea to run QEMM optimize application again after installing SoftMPU in the AUTOEXEC.BAT to get the most of the 640K conventional free as possible.  QEMM “stealth” option seems to be incompatible with ao486 so it is advisable to skip that part of the process.
+
+Some DOS games and applications require MPU-401 interrupts. In some cases can break compatibility with others software not requiring it. 
+Starting SoftMPU without MPU-401 interrupts:
+      
+      SOFTMPU.EXE /MPU:330 /OUTPUT:COM1
+
+Starting SoftMPU with MPU-401 interrupts:
+      
+      SOFTMPU.EXE /SB:220 /IRQ:5 /MPU:330 /OUTPUT:COM1  
+
+The Rev.0 Roland MT-323 used in testing required the ‘DELAYSYSEX’ switch to prevent buffer overflow for certain games but made Sierra   Games upload sysex commands very slowly. 
+    
+      SOFTMPU.EXE /MPU:330 /DELAYSYSEX /OUTPUT:COM1
+
+
