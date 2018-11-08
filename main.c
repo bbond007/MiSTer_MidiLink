@@ -105,7 +105,7 @@ void* midi_thread_function (void* x)
             else if (inbytes[0] == SEQ_MIDIPUTC)
             {
                 if (MIDI_DEBUG)
-                    printf("SEQU IN --> %02x\n", inbytes[1]);
+                    printf("SEQU  IN --> %02x\n", inbytes[1]);
                 write(fdSerial, &inbytes[1], 1);
             }
         } while (rdLen > 0);
@@ -122,7 +122,7 @@ void write_midi_packet(char * buf, int bufLen)
     unsigned char midiPacket[4] = {SEQ_MIDIPUTC, 0, midiDevnum, 0};
     unsigned char  *p;
     if (MIDI_DEBUG)
-        printf("MIDI1 IN [%02d] -->", bufLen);
+        printf("SEQU OUT [%02d] -->", bufLen);
     for (p = buf; bufLen-- > 0; p++)
     {
         if (MIDI_DEBUG)
@@ -309,11 +309,11 @@ int main(int argc, char *argv[])
     //  Main thread handles MIDI output
     do
     {
-        int rdlen = read(fdSerial, buf, sizeof(buf));
-        if (rdlen > 0)
-            write_midi_packet(buf, rdlen);
-        else if (rdlen < 0)
-            printf("Error from read: %d: %s\n", rdlen, strerror(errno));
+        int rdLen = read(fdSerial, buf, sizeof(buf));
+        if (rdLen > 0)
+            write_midi_packet(buf, rdLen);
+        else if (rdLen < 0)
+            printf("Error from read: %d: %s\n", rdLen, strerror(errno));
     } while (1);
 
     close_fd();
