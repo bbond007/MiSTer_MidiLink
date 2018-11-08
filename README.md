@@ -16,7 +16,7 @@ While some sequencer applications may support MIDI on the serial port, DOS games
 
 http://bjt42.github.io/softmpu/
 
-SoftMPU requires the QEMM memory manager be installed. For testing QEMM 8.03 was used.  It’s a good idea to run QEMM optimize application again after installing SoftMPU in the AUTOEXEC.BAT to get the most of the 640K conventional free as possible.  QEMM “stealth” option seems to be incompatible with ao486 so it is advisable to skip that part of the process.
+SoftMPU requires the QEMM memory manager be installed. For testing QEMM 8.03 was used.  It’s a good idea to run QEMM optimize application again after installing SoftMPU in the AUTOEXEC.BAT to get the most of the lower 640K conventional free as possible.  QEMM “stealth” option seems to be incompatible with ao486 so it is advisable to skip that part of the process.
 
 Some DOS games and applications require MPU-401 interrupts. In some cases can break compatibility with others software not requiring it. 
 Starting SoftMPU without MPU-401 interrupts:
