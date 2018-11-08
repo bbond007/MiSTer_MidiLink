@@ -3,7 +3,7 @@ This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI 
 
 The 'midilink' binary is now included in MiSTer general!
 
-In the Minimig and ao486 cores once a compatible USB MIDI device is attached two additional ‘UART Connection’ menu options (‘USBMIDI’ and ‘USBMIDI-38K’) will be available in addition to ‘None’, ‘PPP’ and ‘Console’. 
+When running the Minimig and ao486 cores, once a compatible USB MIDI device is attached, two additional ‘UART Connection’ menu options (‘USBMIDI’ and ‘USBMIDI-38K’) will be available in addition to ‘None’, ‘PPP’ and ‘Console’. 
 
 ‘USBMIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the    standard MIDI speed.
 
