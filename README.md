@@ -8,13 +8,14 @@ When running the Minimig and ao486 cores, once a compatible USB MIDI device is a
 ‘USBMIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the    standard MIDI speed.
 
 Many applications and most games won’t require any additional drivers to operate. Some “newer” applications may require the CAMD driver. 
-http://aminet.net/package/mus/edit/camd 
+
+      http://aminet.net/package/mus/edit/camd 
 
 ‘USBMIDI-38K’ -This option is used with the ao486 core. This option sets the UART Connection speed to 38400 baud. (The MIDI speed of 31200 baud was not a standard serial speed DOS PCs were capable of doing) 
 
 While some sequencer applications may support MIDI on the serial port, DOS games typically require a MPU-401 interface which ao486 unfortunately lacks. In lieu of hardware MPU-401 capability SoftMPU can be used with a good degree of success.  
 
-http://bjt42.github.io/softmpu/
+      http://bjt42.github.io/softmpu/
 
 SoftMPU requires the QEMM memory manager be installed. For testing QEMM 8.03 was used. QEMM “stealth” option seems to be incompatible with ao486 so it is advisable to skip that part of the optimize process. It’s a good idea to run QEMM optimize application again after installing SoftMPU (in the AUTOEXEC.BAT) to get the most of the lower 640K conventional RAM free as possible.  
 
