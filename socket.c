@@ -5,7 +5,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <linux/soundcard.h>
-
+#define USE_UDP
 static struct sockaddr_in serv_addr;
 
 ///////////////////////////////////////////////////////////////////////////////////////
