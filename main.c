@@ -172,7 +172,6 @@ void write_alsa_packet(char * buf, int bufLen)
 //
 // void show_line()
 //
-
 void show_line()
 {
     if (MIDI_DEBUG)
@@ -245,7 +244,6 @@ int main(int argc, char *argv[])
         UDP    = misc_check_args_option(argc, argv, "UDP"); 
     }
     
-    
     printf("Killing --> fluidsynth\n");
     system("killall -q fluidsynth");
     printf("Killing --> mt32d\n");
@@ -267,8 +265,7 @@ int main(int argc, char *argv[])
         system(buf);
         sleep(2);
     }
-    
-    
+        
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
     else
@@ -284,12 +281,10 @@ int main(int argc, char *argv[])
 
     serial_set_interface_attribs(fdSerial); //SETS SERIAL PORT 38400 <-- perfect for ao486 / SoftMPU
 
-
     if (!misc_check_args_option(argc, argv, "38400"))
         setbaud_set_baud(serialDevice, fdSerial, 31200);  // <-- not so good for Amiga where we need midi speed
     else
         printf("Setting %s to 38400 baud.\n",serialDevice);
-
 
     if (misc_check_args_option(argc, argv, "TESTSER")) //send hello message too serial port
     {
@@ -302,7 +297,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    
     if (MUNT || MUNTGM || FSYNTH)
     {        
         if(alsa_open_seq(128, MUNTGM) == 0)
@@ -318,7 +312,6 @@ int main(int argc, char *argv[])
                 else if (rdLen < 0)
                     printf("Error from read: %d: %s\n", rdLen, strerror(errno));
             } while (1);
-
         }
         else
             return -2;
