@@ -112,19 +112,16 @@ int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, in
         case '=':
             sep = TRUE;
             break;
-
         case ' ':
             if (sep && iVal > 0)
                 value[iVal++] = str[i];
             break;
-
         case 0x0a:
             break;
         case 0x0d:
             break;
         case 0x00:
             break;
-
         default :
             if(sep)
             {
@@ -136,7 +133,6 @@ int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, in
                 if(iKey < keyLen)
                     key[iKey++] = toupper(str[i]);
             }
-
         }
     key[iKey]   = 0x00;
     value[iVal] = 0x00;
