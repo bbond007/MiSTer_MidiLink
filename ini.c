@@ -152,7 +152,7 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
     int count;
     char str[999];
     FILE * file;
-    file = fopen( fileName, "r");
+    file = fopen(fileName, "r");
     if (file)
     {
         while (fgets(str, sizeof(str), file)!= NULL)
