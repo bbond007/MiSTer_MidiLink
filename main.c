@@ -298,6 +298,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    serial_do_tcdrain(fdSerial);
+      
     if (MUNT || MUNTGM || FSYNTH)
     {        
         if(alsa_open_seq(128, MUNTGM) == 0)
@@ -356,8 +358,6 @@ int main(int argc, char *argv[])
             }
         }
 #endif
-
-        serial_do_tcdrain(fdSerial);
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
         {
             printf("Testing --> %s\n", midiDevice);
