@@ -50,7 +50,7 @@ int alsa_open_seq(int _portNo, int _devNo)
     printf ("Opening ALSA address --> %d:%d\n", portNo, devNo);
     if(snd_seq_open(&seq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
     {
-        printf("Failed --> snd_seq_open(%d, %d)\n", portNo, devNo);
+        printf("ERROR: snd_seq_open(%d, %d)\n", portNo, devNo);
         return -1;
     }
 /*
