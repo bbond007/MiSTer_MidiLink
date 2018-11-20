@@ -82,5 +82,9 @@ int misc_set_priority(int priority)
     int which = PRIO_PROCESS;
     id_t pid = getpid();
     printf("Setting task priority --> %d\n", priority);
-    return setpriority(which, pid, priority);
+    if(setpriority(which, pid, priority) == 0)
+        return TRUE;
+    else
+        printf("ERROR: unable to set task priority --> %s\n", strerror(errno));
+    return FALSE;
 }
