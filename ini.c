@@ -115,22 +115,22 @@ char ini_first_char(char * str, int len)
 //
 // int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
 // 
-int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
+int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, int valMax)
 {
     int iKey = 0;
     int iVal = 0;
-    int sep =  FALSE;
-    keyLen--;
-    valLen--;
+    int eq =  FALSE;
+    keyMax--;
+    valMax--;
 
     for (int i = 0; i < len; i++)
         switch(str[i])
         {
         case '=':
-            sep = TRUE;
+            eq = TRUE;
             break;
         case ' ':
-            if (sep && iVal > 0)
+            if (eq && iVal)
                 value[iVal++] = str[i];
             break;
         case 0x0a:
@@ -140,27 +140,27 @@ int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, in
         case 0x00:
             break;
         default :
-            if(sep)
+            if(eq)
             {
-                if(iVal < valLen)
+                if(iVal < valMax)
                     value[iVal++] = str[i];
             }
             else
             {
-                if(iKey < keyLen)
+                if(iKey < keyMax)
                     key[iKey++] = toupper(str[i]);
             }
         }
     key[iKey]   = 0x00;
     value[iVal] = 0x00;
-    return sep;
+    return eq;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int valLen)
 // 
-int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int valLen)
+int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
 {
     int count;
     char str[999];
@@ -172,7 +172,7 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
         {
             if(ini_first_char(str, strlen(str)) != '#')
             {
-                if(ini_parse_line(str, strlen(str), key, keyLen, value, valLen))
+                if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax))
                    ini_process_key_value(key, value);
             }
         }
