@@ -47,10 +47,10 @@ The 'midilink' daemon currently supports following switches / options:
                  (default is 31200 baud) - used with ao486 core.
       
       MUNT     - Use MUNT SoftSynth (no USB MIDI adapter 
-		 required)
+                 required)
 
       FSYNTH   - Use FluidSynth SoftSynth (no USB MIDI adapter 
-		 required)
+                 required)
 
       UDP      - Send MIDI to UDP Port (INI setting MIDI_SERVER /
                  MIDI_SERVER_PORT)
