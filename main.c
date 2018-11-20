@@ -24,8 +24,8 @@ static int		fdMidi1		       = -1;
 static int 		socket 		       = -1;
 char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
 char         		midiServer [50]        = "";
-unsigned int 		muntVolume             = 70;
-unsigned int 		fsynthVolume           = 70;
+int 			muntVolume             = -1;
+int 			fsynthVolume           = -1;
 unsigned int 		midiServerPort         = 1999;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
@@ -187,10 +187,13 @@ void show_line()
 //
 void set_pcm_volume(int value)
 {
-    char buf[30];
-    sprintf(buf, "amixer set PCM %d%c", value, '%');
-    printf("Setting 'PCM' to %d%\n", value);
-    system(buf);
+    if(value != -1)
+    {
+        char buf[30];
+        sprintf(buf, "amixer set PCM %d%c", value, '%');
+        printf("Setting 'PCM' to %d%\n", value);
+        system(buf);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

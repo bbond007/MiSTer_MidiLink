@@ -75,8 +75,14 @@ char ini_process_key_value(char * key, char * value)
 void ini_print_settings()
 {
     printf("Settings:\n");
+    if(muntVolume != -1)
     printf("  - MUNT_VOLUME      --> %d%c\n", muntVolume, '%');
+    else
+    printf("  - MUNT_VOLUME      --> Default (don't set)\n", muntVolume, '%');
+    if(fsynthVolume != -1)
     printf("  - FSYNTH_VOLUME    --> %d%c\n", fsynthVolume, '%');
+    else
+    printf("  - FSYNTH_VOLUME    --> Default (don't set)\n", fsynthVolume, '%');
     printf("  - MIDI_SERVER      --> '%s'\n", midiServer);
     printf("  - MIDI_SERVER_PORT --> %d\n",   midiServerPort);
     printf("  - FSYNTH_SOUNTFONT --> '%s'\n", fsynthSoundFont);   
