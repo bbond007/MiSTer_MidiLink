@@ -11,14 +11,12 @@ static int devNo  = 0;
 //
 // void alsa_reset_seq_event(snd_seq_event_t * ev)
 // 
-
 void alsa_reset_seq_event(snd_seq_event_t * ev)
 {
     snd_seq_ev_clear(ev);
     snd_seq_ev_set_direct(ev);
     snd_seq_ev_set_dest(ev, portNo, devNo);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -40,7 +38,6 @@ void alsa_send_midi_raw(char * buf, int bufLen)
 	}   
     }
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
