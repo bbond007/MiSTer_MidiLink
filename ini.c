@@ -161,7 +161,6 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
             {
                 if(ini_split_line(str, strlen(str), key, keyLen, value, valLen))
                    ini_process_key_value(key, value);
-
             }
         }
         fclose(file);
