@@ -6,8 +6,6 @@
 #include <arpa/inet.h>
 #include <linux/soundcard.h>
 
-#define USE_UDP
-
 static struct sockaddr_in serv_addr;
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +60,7 @@ void socket_write(int sock, char * buf, int bufLen)
                (const struct sockaddr *) &serv_addr,
                sizeof(serv_addr));
 #else
-        send(sock, midiPacket, sizeof(midiPacket), 0);
+        send(sock, buf, bufLen, 0);
 #endif
 }
 
