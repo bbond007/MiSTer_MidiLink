@@ -53,7 +53,6 @@ int alsa_open_seq(int _portNo, int _devNo)
         printf("Failed --> snd_seq_open()\n");
         return -1;
     }
-
 /*
     int port = snd_seq_create_simple_port(seq, "BBond007",
                                           SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_WRITE,
