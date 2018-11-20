@@ -21,27 +21,29 @@ int socket_client_connect(char * ipAddr, int port)
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 #endif
     {
-        printf("Socket creation error\n");
+        printf("ERROR:socket_client_connect() --> Socket creation error\n");
         return -1;
     }
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
-    //printf("TEST --> inet_pton\n");
-    if(inet_pton(AF_INET, ipAddr, &serv_addr.sin_addr)<=0)
-    {
-        printf("Invalid address / Address not supported \n");
-        return -1;
-    }
+    if(strlen(ipAddr) == 0)
+        serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    else
+        if(inet_pton(AF_INET, ipAddr, &serv_addr.sin_addr)<=0)
+        {
+           printf("ERROR: socket_client_connect() --> Invalid IP address\n");
+           return -1;
+        }
 #ifndef USE_UDP
     printf("CONNECT : %s port %d\n", ipAddr, port);
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        printf("Connection Failed \n");
+        printf("ERROR: socket_client_connect() --> Connection Failed\n");
         return -1;
     }
 
-    printf("Connected to %s port %d", ipAddr, port);
+    printf("Connected to %s port %d\n", ipAddr, port);
 #endif
     return sock;
 }
