@@ -113,7 +113,7 @@ char ini_first_char(char * str, int len)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
+// int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, int valMax)
 // 
 int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, int valMax)
 {
@@ -158,7 +158,7 @@ int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, in
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int valLen)
+// int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
 // 
 int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
 {
