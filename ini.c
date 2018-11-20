@@ -3,8 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "ini.h"
-
-
 #define TRUE  1
 #define FALSE 0
 
@@ -34,40 +32,33 @@ char ini_process_key_value(char * key, char * value)
     char * strPort, * endPtr;
     int iTmp;
 
-
     if(strcmp("MUNT_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
         iTmp = strtol(value, &endPtr, 10);
         if(iTmp > 0)
-        {
             muntVolume = iTmp;
-        }
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
         iTmp = strtol(value, &endPtr, 10);
         if(iTmp > 0)
-        {
             fsynthVolume = iTmp;
-        }
     }
     else if(strcmp("MIDI_SERVER_PORT", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
         if(iTmp > 0)
-        {
             midiServerPort = iTmp;
-        }
     }
-    else if (strcmp( "MIDI_SERVER", key) == 0)
+    else if (strcmp("MIDI_SERVER", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
         if(strlen(value) > 1)
             strcpy(midiServer, value);
     }
-    else if (strcmp( "FSYNTH_SOUNDFONT", key) == 0)
+    else if (strcmp("FSYNTH_SOUNDFONT", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
         if(strlen(value) > 1)
