@@ -179,7 +179,6 @@ void show_line()
     }
     else
         printf("QUIET mode emabled.\n");
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -217,6 +216,12 @@ int main(int argc, char *argv[])
     printf(helloStr);
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI);
+   
+    if (misc_check_args_option(argc, argv, "QUIET"))
+        MIDI_DEBUG = FALSE;
+    else
+        MIDI_DEBUG = TRUE;
+        
     int MUNT   = FALSE;
     int MUNTGM = FALSE;
     int FSYNTH = FALSE; 
@@ -264,11 +269,6 @@ int main(int argc, char *argv[])
         sleep(2);
     }
         
-    if (misc_check_args_option(argc, argv, "QUIET"))
-        MIDI_DEBUG = FALSE;
-    else
-        MIDI_DEBUG = TRUE;
-
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
