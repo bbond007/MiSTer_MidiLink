@@ -13,7 +13,6 @@
 #include "socket.h"
 #include "alsa.h"
 #include "ini.h"
-
 #define TRUE 1
 #define FALSE 0
 
