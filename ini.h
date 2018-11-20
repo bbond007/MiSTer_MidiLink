@@ -1,4 +1,5 @@
 int  ini_read_ini(char * fileName);
+char ini_replace_char(char * str, int strLen, char old, char new);
 char ini_process_key_value(char * key, char * value);
 void ini_print_settings();
 char ini_first_char(char * str, int len);

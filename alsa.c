@@ -7,6 +7,11 @@ static snd_seq_t * seq;
 static int portNo = 128;
 static int devNo  = 0; 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void alsa_reset_seq_event(snd_seq_event_t * ev)
+// 
+
 void alsa_reset_seq_event(snd_seq_event_t * ev)
 {
     snd_seq_ev_clear(ev);
@@ -15,6 +20,10 @@ void alsa_reset_seq_event(snd_seq_event_t * ev)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void alsa_send_midi_raw(char * buf, int bufLen)
+// 
 void alsa_send_midi_raw(char * buf, int bufLen)
 {
     for (int i = 0; i < bufLen; i++)
@@ -33,6 +42,10 @@ void alsa_send_midi_raw(char * buf, int bufLen)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int alsa_open_seq(int _portNo, int _devNo)
+// 
 int alsa_open_seq(int _portNo, int _devNo)
 {
     portNo = _portNo;

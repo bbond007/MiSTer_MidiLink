@@ -18,7 +18,6 @@ extern unsigned int midiServerPort;
 //
 // char ini_replace_char(char * str, int strLen, char old, char new)
 // 
-
 char ini_replace_char(char * str, int strLen, char old, char new)
 {
     for(int i = 0; i < strLen; i++)

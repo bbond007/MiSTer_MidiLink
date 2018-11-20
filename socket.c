@@ -14,7 +14,6 @@ static struct sockaddr_in serv_addr;
 //
 // int socket_client_connect(char * ipAddr, int port)
 //
-
 int socket_client_connect(char * ipAddr, int port)
 {
     int sock = 0, valread;
@@ -55,10 +54,6 @@ int socket_client_connect(char * ipAddr, int port)
 //
 void socket_write(int sock, char * buf, int bufLen)
 {
-
-    unsigned char midiPacket[4] = {0, 0, 0, 0};
-
-
 #ifdef USE_UDP
         sendto(sock,
                (const char *) buf,
