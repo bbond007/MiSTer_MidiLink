@@ -165,6 +165,12 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
         }
         fclose(file);
         ini_print_settings();
+        return TRUE;
+    }
+    else
+    {
+        printf("ERROR ini_read_loop() : Unable to open --> '%s'\n", fileName);
+        return FALSE;
     }
 }
 
