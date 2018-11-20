@@ -31,7 +31,6 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * midi_thread_function(void * x)
