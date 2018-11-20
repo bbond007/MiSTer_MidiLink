@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h> // close function
-
+#include <sys/resource.h>
 #define TRUE  1
 #define FALSE 0
 
@@ -73,3 +73,14 @@ int misc_check_file(char * fileName)
     return misc_check_device(fileName);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_set_priority(int priority) 
+//
+int misc_set_priority(int priority)
+{
+    int which = PRIO_PROCESS;
+    id_t pid = getpid();
+    printf("Setting task priority --> %d\n", priority);
+    return setpriority(which, pid, priority);
+}

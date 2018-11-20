@@ -10,6 +10,7 @@ char                fsynthSoundFont[150];
 extern char         midiServer[50];
 extern int 	    muntVolume;
 extern int 	    fsynthVolume;
+extern int 	    midilinkPriority;  
 extern unsigned int midiServerPort;
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -36,20 +37,20 @@ char ini_process_key_value(char * key, char * value)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
         iTmp = strtol(value, &endPtr, 10);
-        if(iTmp > 0)
+        if(iTmp != 0)
             muntVolume = iTmp;
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
         iTmp = strtol(value, &endPtr, 10);
-        if(iTmp > 0)
+        if(iTmp != 0)
             fsynthVolume = iTmp;
     }
     else if(strcmp("MIDI_SERVER_PORT", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
-        if(iTmp > 0)
+        if(iTmp != 0)
             midiServerPort = iTmp;
     }
     else if (strcmp("MIDI_SERVER", key) == 0)
@@ -64,6 +65,12 @@ char ini_process_key_value(char * key, char * value)
         if(strlen(value) > 1)
             strcpy(fsynthSoundFont, value);
     }
+    else if (strcmp("MIDILINK_PRIORITY", key) == 0)
+    {
+        iTmp = strtol(value, &endPtr, 10);
+        if(iTmp != 0)
+            midilinkPriority = iTmp;
+    }
     else
         printf("ERROR Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -76,16 +83,20 @@ void ini_print_settings()
 {
     printf("Settings:\n");
     if(muntVolume != -1)
-    printf("  - MUNT_VOLUME      --> %d%c\n", muntVolume, '%');
+    printf("  - MUNT_VOLUME       --> %d%c\n", muntVolume, '%');
     else
-    printf("  - MUNT_VOLUME      --> Default (don't set)\n", muntVolume, '%');
+    printf("  - MUNT_VOLUME       --> Default (don't set)\n", muntVolume, '%');
     if(fsynthVolume != -1)
-    printf("  - FSYNTH_VOLUME    --> %d%c\n", fsynthVolume, '%');
+    printf("  - FSYNTH_VOLUME     --> %d%c\n", fsynthVolume, '%');
     else
-    printf("  - FSYNTH_VOLUME    --> Default (don't set)\n", fsynthVolume, '%');
-    printf("  - MIDI_SERVER      --> '%s'\n", midiServer);
-    printf("  - MIDI_SERVER_PORT --> %d\n",   midiServerPort);
-    printf("  - FSYNTH_SOUNTFONT --> '%s'\n", fsynthSoundFont);   
+    printf("  - FSYNTH_VOLUME     --> Default (don't set)\n", fsynthVolume, '%');
+    printf("  - MIDI_SERVER       --> '%s'\n", midiServer);
+    printf("  - MIDI_SERVER_PORT  --> %d\n",   midiServerPort);
+    printf("  - FSYNTH_SOUNTFONT  --> '%s'\n", fsynthSoundFont);   
+    if(midilinkPriority != 0)
+    printf("  - MIDILINK_PRIORITY --> %d\n",   midilinkPriority);
+    else
+    printf("  - MIDILINK_PRIORITY --> Default (don't change)\n", midilinkPriority);   
     printf("\n");
 }
 

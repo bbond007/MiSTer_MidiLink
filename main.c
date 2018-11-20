@@ -26,6 +26,7 @@ char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
 char         		midiServer [50]        = "";
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
+int 			midilinkPriority       = 0;
 unsigned int 		midiServerPort         = 1999;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
@@ -224,7 +225,10 @@ int main(int argc, char *argv[])
         MIDI_DEBUG = FALSE;
     else
         MIDI_DEBUG = TRUE;
-        
+    
+    if (midilinkPriority != 0)
+        misc_set_priority(midilinkPriority);
+             
     int MUNT   = FALSE;
     int MUNTGM = FALSE;
     int FSYNTH = FALSE; 
