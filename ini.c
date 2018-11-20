@@ -8,9 +8,9 @@
 
 char                fsynthSoundFont[150];
 extern char         midiServer[50];
-extern int 	    muntVolume;
-extern int 	    fsynthVolume;
-extern int 	    midilinkPriority;  
+extern int          muntVolume;
+extern int          fsynthVolume;
+extern int          midilinkPriority;  
 extern unsigned int midiServerPort;
 
 ///////////////////////////////////////////////////////////////////////////////////////
