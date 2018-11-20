@@ -167,7 +167,6 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
         fclose(file);
         ini_print_settings();
     }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

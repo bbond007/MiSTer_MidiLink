@@ -158,15 +158,14 @@ void write_socket_packet(char * buf, int bufLen)
 //
 void write_alsa_packet(char * buf, int bufLen)
 {
-    unsigned char  *p;
     alsa_send_midi_raw(buf, bufLen);
     if (MIDI_DEBUG)
+    {     
         printf("SEQU OUT [%02d] -->", bufLen);
-    for (p = buf; bufLen-- > 0; p++)
-        if (MIDI_DEBUG)
+        for (char * p = buf; bufLen-- > 0; p++)
             printf(" %02x", *p);
-    if (MIDI_DEBUG)
         printf("\n");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

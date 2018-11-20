@@ -46,9 +46,11 @@ The 'midilink' daemon currently supports following switches / options:
       38400    - this option sets the serial speed to 38400 baud 
                  (default is 31200 baud) - used with ao486 core.
       
-      MUNT     - Use MUNT SoftSynth (no USB MIDI required)
+      MUNT     - Use MUNT SoftSynth (no USB MIDI adapter 
+		 required)
 
-      FSYNTH   - Use FluidSynth SoftSynth (no USB MIDI required)
+      FSYNTH   - Use FluidSynth SoftSynth (no USB MIDI adapter 
+		 required)
 
       UDP      - Send MIDI to UDP Port (INI setting MIDI_SERVER /
                  MIDI_SERVER_PORT)
