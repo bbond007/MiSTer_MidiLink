@@ -96,7 +96,7 @@ char ini_first_char(char * str, int len)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_split_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
+// int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
 // 
 int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
 {
