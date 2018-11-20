@@ -46,7 +46,7 @@ void * midi_thread_function (void * x)
         rdLen = read(fdMidi, &inbytes, sizeof(inbytes));
         if (rdLen < 0)
         {
-            printf("Error reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
+            printf("ERROR: midi_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
         }
         else
         {
@@ -107,7 +107,7 @@ void * midi1in_thread_function (void * x)
         rdLen = read(fdMidi1, &inbytes, sizeof(inbytes));
         if (rdLen < 0)
         {
-            printf("Error reading %s --> %d : %s \n", midi1Device, rdLen, strerror(errno));
+            printf("ERROR: midi1in_thread_function() reading %s --> %d : %s \n", midi1Device, rdLen, strerror(errno));
             sleep(10);
             if (misc_check_device(midi1Device))
             {
@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
-        printf("Error opening %s: %s\n", serialDevice, strerror(errno));
+        printf("ERROR: opening %s: %s\n", serialDevice, strerror(errno));
         close_fd();
         return -1;
     }
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
         int wlen = write(fdSerial, helloStr, strlen(helloStr));
         if (wlen != strlen(helloStr))
         {
-            printf("Error from write: %d, %d\n", wlen, errno);
+            printf("ERROR: from write: %d, %d\n", wlen, errno);
             close_fd();
             return -2;
         }
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
                     write_alsa_packet(buf, rdLen); 
                 }
                 else if (rdLen < 0)
-                    printf("Error from read: %d: %s\n", rdLen, strerror(errno));
+                    printf("ERROR: from read --> %d: %s\n", rdLen, strerror(errno));
             } while (1);
         }
         else
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
         }   
         else
         {
-            printf("ERROR in INI File --> %s\n", midiLinkINI);
+            printf("ERROR: in INI File --> %s\n", midiLinkINI);
             return -4;
         }            
     }
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
         fdMidi = open(midiDevice, O_RDWR);
         if (fdMidi < 0)
         {
-            printf("Error: cannot open %s: %s\n", midiDevice, strerror(errno));
+            printf("ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
             return -5;
         }
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
             fdMidi1 = open(midi1Device, O_RDONLY);
             if (fdMidi1 < 0)
             {
-                printf("Error: cannot open %s: %s\n", midi1Device, strerror(errno));
+                printf("ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
                 close_fd();
                 return -6;
             }
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
             int statusM1 = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
             if (statusM1 == -1)
             {
-                printf("Error: unable to create *MIDI input thread.\n");
+                printf("ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
                 return -7;
             }
@@ -384,7 +384,7 @@ int main(int argc, char *argv[])
         int status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
         if (status == -1)
         {
-            printf("Error: unable to create MIDI input thread.\n");
+            printf("ERROR: unable to create MIDI input thread.\n");
             close_fd();
             return -8;
         }
@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
                 write_socket_packet(buf,rdLen);
         }
         else if (rdLen < 0)
-            printf("Error from read: %d: %s\n", rdLen, strerror(errno));
+            printf("ERROR: from read: %d: %s\n", rdLen, strerror(errno));
     } while (1);
 
     close_fd();
