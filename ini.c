@@ -181,6 +181,6 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
 int ini_read_ini(char * fileName)
 {
     char key[30];
-    char value[50];
+    char value[150];
     ini_read_loop(fileName, key, sizeof(key), value, sizeof(value));
 }
