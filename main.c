@@ -328,8 +328,7 @@ int main(int argc, char *argv[])
         {
             printf("ERROR in INI File --> %s\n", midiLinkINI);
             return -4;
-        }
-            
+        }            
     }
     else
     {
