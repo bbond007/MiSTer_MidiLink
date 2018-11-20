@@ -215,7 +215,7 @@ void close_fd()
 int main(int argc, char *argv[])
 {	
     unsigned char buf[256];
-
+    
     printf("\e[2J\e[H"); 
     printf(helloStr);
     if(misc_check_file(midiLinkINI))
