@@ -17,19 +17,19 @@
 #define TRUE 1
 #define FALSE 0
 
-static int		fdSerial	= -1;
-static int		fdMidi		= -1;
-static int		fdMidi1		= -1;
-static int 		socket 		= -1;
+static int		MIDI_DEBUG	       = TRUE;
+static int		fdSerial	       = -1;
+static int		fdMidi		       = -1;
+static int		fdMidi1		       = -1;
+static int 		socket 		       = -1;
+char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
+char         		midiServer [50]        = "";
+unsigned int 		muntVolume             = 70;
+unsigned int 		fsynthVolume           = 70;
+unsigned int 		midiServerPort         = 1999;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
-static int		MIDI_DEBUG	= TRUE;
-char         fsynthSoundFont [150]      = "/media/fat/SOUNDFONT/default.sf2";
-char         midiServer [50]            = "";
-unsigned int muntVolume                 = 70;
-unsigned int fsynthVolume               = 70;
-unsigned int midiServerPort             = 1999;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +149,6 @@ void write_socket_packet(char * buf, int bufLen)
         printf("\n");
     }
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
