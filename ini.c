@@ -98,7 +98,7 @@ char ini_first_char(char * str, int len)
 //
 // int ini_split_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
 // 
-int ini_split_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
+int ini_parse_line(char * str, int len, char * key, int keyLen, char * value, int valLen)
 {
     int iKey = 0;
     int iVal = 0;
@@ -159,7 +159,7 @@ int ini_read_loop (char * fileName, char * key, int keyLen, char * value, int va
         {
             if(ini_first_char(str, strlen(str)) != '#')
             {
-                if(ini_split_line(str, strlen(str), key, keyLen, value, valLen))
+                if(ini_parse_line(str, strlen(str), key, keyLen, value, valLen))
                    ini_process_key_value(key, value);
             }
         }
