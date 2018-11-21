@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int serial_set_interface_attribs(int fd, int speed)
+// int serial_set_interface_attribs(int fd, int speed) to 38400 8N1 RTS/CTS flow control 
 //
 int serial_set_interface_attribs(int fd)
 {
@@ -29,7 +29,7 @@ int serial_set_interface_attribs(int fd)
     tty.c_cflag |= CS8;         /* 8-bit characters */
     tty.c_cflag &= ~PARENB;     /* no parity bit */
     tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-    tty.c_cflag &= ~CRTSCTS;    /* no hardware flowcontrol */
+    tty.c_cflag |= CRTSCTS;     /* hardware flowcontrol */
 
     /* setup for non-canonical mode */
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
