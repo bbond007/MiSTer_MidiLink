@@ -26,9 +26,9 @@ char ini_replace_char(char * str, int strLen, char old, char new)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char ini_process_key_value(char * key, char * value)
+// char ini_process_key_value_pair(char * key, char * value)
 // 
-char ini_process_key_value(char * key, char * value)
+char ini_process_key_value_pair(char * key, char * value)
 {
     char * strPort, * endPtr;
     int iTmp;
@@ -172,7 +172,7 @@ int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int va
         {
             if(ini_first_char(str, strlen(str)) != '#')
                 if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax))
-                   ini_process_key_value(key, value);
+                   ini_process_key_value_pair(key, value);
         }
         fclose(file);
         ini_print_settings();
