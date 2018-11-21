@@ -72,7 +72,7 @@ char ini_process_key_value(char * key, char * value)
             midilinkPriority = iTmp;
     }
     else
-        printf("ERROR Unknown INI KEY --> '%s' = '%s'\n", key, value);
+        printf("ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -163,7 +163,7 @@ int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, in
 int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
 {
     int count;
-    char str[999];
+    char str[1024];
     FILE * file;
     file = fopen(fileName, "r");
     if (file)
@@ -171,10 +171,8 @@ int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int va
         while (fgets(str, sizeof(str), file)!= NULL)
         {
             if(ini_first_char(str, strlen(str)) != '#')
-            {
                 if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax))
                    ini_process_key_value(key, value);
-            }
         }
         fclose(file);
         ini_print_settings();
@@ -182,7 +180,7 @@ int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int va
     }
     else
     {
-        printf("ERROR ini_read_loop() : Unable to open --> '%s'\n", fileName);
+        printf("ERROR: ini_read_loop() : Unable to open --> '%s'\n", fileName);
         return FALSE;
     }
 }
