@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
       
     if (MUNT || MUNTGM || FSYNTH)
     {        
-        if(alsa_open_seq(128, MUNTGM) == 0)
+        if(alsa_open_seq(128, MUNTGM))
         {
             show_line();
             do
