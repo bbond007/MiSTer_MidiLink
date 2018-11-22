@@ -38,12 +38,12 @@ static pthread_t	socketInThread;
 //
 void * midi_thread_function (void * x)
 {
-    unsigned char inbytes [100];
-    unsigned char * inbyte;
+    unsigned char buf [100];
+    unsigned char * byte;
     int rdLen;
     do
     {
-        rdLen = read(fdMidi, &inbytes, sizeof(inbytes));
+        rdLen = read(fdMidi, &buf, sizeof(buf));
         if (rdLen < 0)
         {
             printf("ERROR: midi_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
@@ -53,16 +53,16 @@ void * midi_thread_function (void * x)
            if (MIDI_DEBUG)
                 printf("MIDI IN  [%02d]-->", rdLen);
 
-            for (inbyte = inbytes; rdLen-- > 0; inbyte++)
+            for (byte = buf; rdLen-- > 0; byte++)
             {
                 if (MIDI_DEBUG)
-                    printf(" %02x",*inbyte);
-                write(fdSerial, inbyte, 1);
+                    printf(" %02x",*byte);
+                write(fdSerial, byte, 1);
             }
             if (MIDI_DEBUG)
                 printf("\n");
         }
-    } while (1);
+    } while (TRUE);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -99,12 +99,12 @@ void test_midi_device()
 //
 void * midi1in_thread_function (void * x)
 {
-    unsigned char inbytes [100];             // bytes from sequencer driver
-    unsigned char * inbyte;
+    unsigned char buf[100];             // bytes from sequencer driver
+    unsigned char * byte;
     int rdLen;
     do
     {
-        rdLen = read(fdMidi1, &inbytes, sizeof(inbytes));
+        rdLen = read(fdMidi1, &buf, sizeof(buf));
         if (rdLen < 0)
         {
             printf("ERROR: midi1in_thread_function() reading %s --> %d : %s \n", midi1Device, rdLen, strerror(errno));
@@ -119,17 +119,17 @@ void * midi1in_thread_function (void * x)
         {
             if (MIDI_DEBUG)
                 printf("MIDI1 IN [%02d] -->", rdLen);
-            for (inbyte = inbytes; rdLen-- > 0; inbyte++)
+            for (byte = buf; rdLen-- > 0; byte++)
             {
                 if (MIDI_DEBUG)
-                    printf(" %02x", *inbyte);
-                write(fdSerial, inbyte, 1);
-                write(fdMidi, inbyte, 1);
+                    printf(" %02x", *byte);
+                write(fdSerial, byte, 1);
+                write(fdMidi, byte, 1);
             }
             if (MIDI_DEBUG)
                 printf("\n");
         }
-    } while (1);
+    } while (TRUE);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -317,11 +317,10 @@ int main(int argc, char *argv[])
                 }
                 else if (rdLen < 0)
                     printf("ERROR: from read --> %d: %s\n", rdLen, strerror(errno));
-            } while (1);
+            } while (TRUE);
         }
         else
-            return -2;
-            
+            return -2;            
         return 0;
     }
 
@@ -410,7 +409,7 @@ int main(int argc, char *argv[])
         }
         else if (rdLen < 0)
             printf("ERROR: from read: %d: %s\n", rdLen, strerror(errno));
-    } while (1);
+    } while (TRUE);
 
     close_fd();
     return 0;
