@@ -4,8 +4,8 @@
 static snd_seq_event_t ev;
 static snd_midi_event_t* parser;
 static snd_seq_t * seq;
-static int portNo = 128;
-static int devNo  = 0; 
+static int portNo = -1;
+static int devNo  = -1; 
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -27,14 +27,12 @@ void alsa_send_midi_raw(char * buf, int bufLen)
     for (int i = 0; i < bufLen; i++)
     {
         int result  = snd_midi_event_encode_byte(parser, buf[i], &ev);
-        //printf("snd_midi_event_encode_byte() --> %d\n", result);
         if(result == 1)
         { 
 	    snd_seq_event_output(seq, &ev);
 	    snd_seq_drain_output(seq);
 	    alsa_reset_seq_event(&ev);
 	    snd_midi_event_reset_encode(parser);
-	    //printf("snd_seq_drain_output()\n"); 
 	}   
     }
 }
@@ -53,17 +51,6 @@ int alsa_open_seq(int _portNo, int _devNo)
         printf("ERROR: snd_seq_open(%d, %d)\n", portNo, devNo);
         return -1;
     }
-/*
-    int port = snd_seq_create_simple_port(seq, "BBond007",
-                                          SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_WRITE,
-                                          SND_SEQ_PORT_TYPE_APPLICATION);
-
-    if (port < 0)
-    {
-        printf("Failed --> snd_seq_create_simple_port()\n");
-        return -2;
-    }
-*/
     alsa_reset_seq_event(&ev);
     snd_midi_event_new(256, &parser);
     return 0;
