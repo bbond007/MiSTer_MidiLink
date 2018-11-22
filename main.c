@@ -327,14 +327,14 @@ int main(int argc, char *argv[])
 
     if (UDP)
     {
-        if (TRUE)// misc_check_file(midiLinkINI) && strlen(midiServer) > 7)
+        if (strlen(midiServer) > 7)
         {
             printf("Connecting to server --> %s:%d\n",midiServer, midiServerPort);
             socket = socket_client_connect(midiServer, midiServerPort);
         }   
         else
         {
-            printf("ERROR: in INI File --> %s\n", midiLinkINI);
+            printf("ERROR: in INI File (MIDI_SERVER) --> %s\n", midiLinkINI);
             return -4;
         }            
     }

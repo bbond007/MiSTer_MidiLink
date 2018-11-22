@@ -86,3 +86,21 @@ int misc_set_priority(int priority)
         printf("ERROR: unable to set task priority --> %s\n", strerror(errno));
     return FALSE;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// bool misc_ipaddr_is_multicast(char * ipAddr)
+//
+int misc_ipaddr_is_multicast(char * ipAddr)
+{
+    if (strlen(ipAddr) > 3)
+    {
+        char * strPort, * endPtr;
+        char ip1s[] = {ipAddr[0], ipAddr[1], ipAddr[2], 0x00};
+        int ip1 = strtol(ip1s, &endPtr, 10);
+        if(ip1 >= 224 && ip1 <= 239)
+            return TRUE;
+    }     
+    return FALSE;
+}
+

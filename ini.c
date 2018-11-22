@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "ini.h"
+#include "misc.h"
 #define TRUE  1
 #define FALSE 0
 
@@ -90,7 +91,8 @@ void ini_print_settings()
     printf("  - FSYNTH_VOLUME     --> %d%c\n", fsynthVolume, '%');
     else
     printf("  - FSYNTH_VOLUME     --> Default (don't set)\n", fsynthVolume, '%');
-    printf("  - MIDI_SERVER       --> '%s'\n", midiServer);
+    printf("  - MIDI_SERVER       --> '%s'%s\n", midiServer, 
+    misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
     printf("  - MIDI_SERVER_PORT  --> %d\n",   midiServerPort);
     printf("  - FSYNTH_SOUNTFONT  --> '%s'\n", fsynthSoundFont);   
     if(midilinkPriority != 0)
