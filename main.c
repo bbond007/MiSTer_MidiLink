@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
         if (!MUNT && !MUNTGM && !FSYNTH && !UDP)
         { 
             printf("AUTO --> MUNT\n");
-            MUNT = TRUE;
+            UDP = TRUE;
         }
     }
     else
