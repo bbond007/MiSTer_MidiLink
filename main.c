@@ -6,11 +6,13 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <linux/soundcard.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include "setbaud.h"
 #include "serial.h"
 #include "config.h"
 #include "misc.h"
-#include "socket.h"
+#include "udpsock.h"
 #include "alsa.h"
 #include "ini.h"
 #define TRUE 1
@@ -20,16 +22,54 @@ static int		MIDI_DEBUG	       = TRUE;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
 static int		fdMidi1		       = -1;
-static int 		socket 		       = -1;
+static int 		socket_in	       = -1;
+static int 		socket_out	       = -1;
 char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
 char         		midiServer [50]        = "";
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
+int 			midiServerBaud	       = -1;
 unsigned int 		midiServerPort         = 1999;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void * socket_thread_function(void * x)
+// Thread function for /dev/midi input
+//
+void * udpsock_thread_function (void * x)
+{
+    unsigned char buf[100];
+    unsigned char * byte;
+    struct sockaddr_in cliaddr;
+
+    int rdLen, addrLen;
+    memset(&cliaddr, 0, sizeof(cliaddr));
+    do 
+    {
+        rdLen = recvfrom(socket_in, (char *)buf, sizeof(buf),
+                     MSG_WAITALL, ( struct sockaddr *) &cliaddr,
+                     &addrLen);
+        if (rdLen > 0)
+        {
+            if(MIDI_DEBUG)
+                printf("SOCK IN  [%02d] -->", rdLen);
+            for (byte = buf; rdLen-- > 0; byte++)
+            {
+                if (MIDI_DEBUG)
+                    printf(" %02x", *byte);
+                write(fdSerial, byte, 1);
+            }
+            if (MIDI_DEBUG)
+                printf("\n");
+        }
+        
+    } while (TRUE);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -52,7 +92,6 @@ void * midi_thread_function (void * x)
         {
            if (MIDI_DEBUG)
                 printf("MIDI IN  [%02d]-->", rdLen);
-
             for (byte = buf; rdLen-- > 0; byte++)
             {
                 if (MIDI_DEBUG)
@@ -139,7 +178,7 @@ void * midi1in_thread_function (void * x)
 //
 void write_socket_packet(char * buf, int bufLen)
 {
-    socket_write(socket, buf, bufLen);
+    udpsock_write(socket_out, buf, bufLen);
     if (MIDI_DEBUG)
     {
         printf("SOCK OUT [%02d] -->", bufLen);
@@ -213,6 +252,7 @@ void close_fd()
 //
 int main(int argc, char *argv[])
 {	
+    int status;
     unsigned char buf[256];
     
     printf("\e[2J\e[H"); 
@@ -241,7 +281,7 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_UDP"))    UDP    = TRUE;
         if (!MUNT && !MUNTGM && !FSYNTH && !UDP)
         { 
-            printf("AUTO --> MUNT\n");
+            printf("AUTO --> UDP\n");
             UDP = TRUE;
         }
     }
@@ -284,7 +324,10 @@ int main(int argc, char *argv[])
     }
 
     serial_set_interface_attribs(fdSerial); //SETS SERIAL PORT 38400 <-- perfect for ao486 / SoftMPU
-
+    
+    if (UDP && midiServerBaud > 0)
+        setbaud_set_baud(serialDevice, fdSerial, midiServerBaud);
+    else
     if (!misc_check_args_option(argc, argv, "38400"))
         setbaud_set_baud(serialDevice, fdSerial, 31200);  // <-- not so good for Amiga where we need midi speed
     else
@@ -329,7 +372,18 @@ int main(int argc, char *argv[])
         if (strlen(midiServer) > 7)
         {
             printf("Connecting to server --> %s:%d\n",midiServer, midiServerPort);
-            socket = socket_client_connect(midiServer, midiServerPort);
+            socket_out = udpsock_client_connect(midiServer, midiServerPort);
+            socket_in  = udpsock_server_open(midiServerPort);
+            if(socket_in > 0)
+            {
+                status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
+                if (status == -1)
+                {
+                    printf("ERROR: unable to create socket input thread.\n");
+                    close_fd();
+                    return -3;
+                }
+            }
         }   
         else
         {
@@ -380,7 +434,7 @@ int main(int argc, char *argv[])
             printf("CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
         }
 
-        int status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
+        status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
         if (status == -1)
         {
             printf("ERROR: unable to create MIDI input thread.\n");
@@ -393,18 +447,16 @@ int main(int argc, char *argv[])
         printf("CONNECT : %s --> %s\n", serialDevice, midiDevice);
 #endif
     }
-  
     show_line();
-
     //  Main thread handles MIDI output
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));
         if (rdLen > 0)
         {
-            if(fdMidi != -1)
+            if(fdMidi > 0)
                 write_midi_packet(buf, rdLen);
-            if(socket != -1)
+            if(socket_out > 0)
                 write_socket_packet(buf,rdLen);
         }
         else if (rdLen < 0)

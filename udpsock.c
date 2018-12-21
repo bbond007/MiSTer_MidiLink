@@ -6,21 +6,16 @@
 #include <arpa/inet.h>
 #include <linux/soundcard.h>
 #include "misc.h"
-#define USE_UDP
 static struct sockaddr_in serv_addr;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int socket_client_connect(char * ipAddr, int port)
+// int udpsock_client_connect(char * ipAddr, int port)
 //
-int socket_client_connect(char * ipAddr, int port)
+int udpsock_client_connect(char * ipAddr, int port)
 {
     int sock = 0, valread;
-#ifdef USE_UDP
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-#else
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-#endif
     {
         printf("ERROR:socket_client_connect() --> Socket creation error\n");
         return -1;
@@ -35,7 +30,7 @@ int socket_client_connect(char * ipAddr, int port)
         printf("ERROR: socket_client_connect() --> Invalid IP address\n");
         return -1;
     }
-#ifdef USE_UDP
+
     if (misc_ipaddr_is_multicast(ipAddr))
     {
         unsigned char multicastTTL = 1;
@@ -47,34 +42,49 @@ int socket_client_connect(char * ipAddr, int port)
             return -2;
         }
     }
-#else
-    printf("CONNECT : %s port %d\n", ipAddr, port);
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        printf("ERROR: socket_client_connect() --> Connection Failed\n");
-        return -3;
-    }
-
-    printf("Connected to %s port %d\n", ipAddr, port);
-#endif
     return sock;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int socket_client_connect(char * ipAddr, int port)
+// int udpsock_client_connect(char * ipAddr, int port)
 //
-void socket_write(int sock, char * buf, int bufLen)
+void udpsock_write(int sock, char * buf, int bufLen)
 {
-#ifdef USE_UDP
     sendto(sock,
            (const char *) buf,
            bufLen,
            MSG_CONFIRM,
            (const struct sockaddr *) &serv_addr,
            sizeof(serv_addr));
-#else
-    send(sock, buf, bufLen, 0);
-#endif
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int uspsock_server_open(int port)
+//
+
+int udpsock_server_open(int port)
+{
+    int sock;
+    struct sockaddr_in servaddr;
+    // Creating socket file descriptor
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
+    {
+        printf("ERROR: socket_server_open() --> socket creation failed");
+        return -1;
+    }
+    memset(&servaddr, 0, sizeof(servaddr));
+    // Filling server information
+    servaddr.sin_family      = AF_INET; // IPv4
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port 	     = htons(port);
+    // Bind the socket with the server address
+    if (bind(sock, (const struct sockaddr *)&servaddr,
+              sizeof(servaddr)) < 0 )
+    {
+        printf("ERROR: socket_server_open() --> bind failed\n");
+        return -2;
+    }
+    return sock;
+}

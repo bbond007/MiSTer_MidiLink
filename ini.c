@@ -13,7 +13,7 @@ extern int          muntVolume;
 extern int          fsynthVolume;
 extern int          midilinkPriority;  
 extern unsigned int midiServerPort;
-
+extern int          midiServerBaud;
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // char ini_replace_char(char * str, int strLen, char old, char new)
@@ -72,6 +72,12 @@ char ini_process_key_value_pair(char * key, char * value)
         if(iTmp != 0)
             midilinkPriority = iTmp;
     }
+    else if (strcmp("MIDI_SERVER_BAUD", key) == 0)
+    {
+        iTmp = strtol(value, &endPtr, 10);
+        if(iTmp != 0)
+            midiServerBaud = iTmp;
+    }
     else
         printf("ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -98,7 +104,12 @@ void ini_print_settings()
     if(midilinkPriority != 0)
     printf("  - MIDILINK_PRIORITY --> %d\n",   midilinkPriority);
     else
-    printf("  - MIDILINK_PRIORITY --> Default (don't change)\n", midilinkPriority);   
+    printf("  - MIDILINK_PRIORITY --> Default (don't change)\n");   
+    if(midiServerBaud > 0)
+    printf("  - MIDI_SERVER_BAUD  --> %d\n",   midiServerBaud);
+    else
+    printf("  - MIDI_SERVER_BAUD  --> Default (don't change)\n");   
+    
     printf("\n");
 }
 
