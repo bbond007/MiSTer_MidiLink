@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <linux/soundcard.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "setbaud.h"
 #include "serial.h"
 #include "config.h"
@@ -35,7 +33,6 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * socket_thread_function(void * x)
@@ -45,27 +42,20 @@ void * udpsock_thread_function (void * x)
 {
     unsigned char buf[100];
     unsigned char * byte;
-    struct sockaddr_in cliaddr;
-
-    int rdLen, addrLen;
-    memset(&cliaddr, 0, sizeof(cliaddr));
+    int rdLen;
     do 
     {
-        rdLen = recvfrom(socket_in, (char *)buf, sizeof(buf),
-                     MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-                     &addrLen);
+        rdLen = udpsock_read(socket_in, (char *) buf, sizeof(buf));
         if (rdLen > 0)
         {
+            write(fdSerial, buf, rdLen);
             if(MIDI_DEBUG)
-                printf("SOCK IN  [%02d] -->", rdLen);
-            for (byte = buf; rdLen-- > 0; byte++)
             {
-                if (MIDI_DEBUG)
+                printf("SOCK IN  [%02d] -->", rdLen);
+                for (byte = buf; rdLen-- > 0; byte++)
                     printf(" %02x", *byte);
-                write(fdSerial, byte, 1);
-            }
-            if (MIDI_DEBUG)
                 printf("\n");
+            }
         }
         
     } while (TRUE);
@@ -84,22 +74,20 @@ void * midi_thread_function (void * x)
     do
     {
         rdLen = read(fdMidi, &buf, sizeof(buf));
-        if (rdLen < 0)
+        if (rdLen > 0)
         {
-            printf("ERROR: midi_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
+            write(fdSerial, buf, rdLen);
+            if (MIDI_DEBUG)
+            {
+                printf("MIDI IN  [%02d]-->", rdLen);
+                for (byte = buf; rdLen-- > 0; byte++)
+                    printf(" %02x",*byte);                
+                printf("\n");
+            }
         }
         else
         {
-           if (MIDI_DEBUG)
-                printf("MIDI IN  [%02d]-->", rdLen);
-            for (byte = buf; rdLen-- > 0; byte++)
-            {
-                if (MIDI_DEBUG)
-                    printf(" %02x",*byte);
-                write(fdSerial, byte, 1);
-            }
-            if (MIDI_DEBUG)
-                printf("\n");
+            printf("ERROR: midi_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
         }
     } while (TRUE);
 }
@@ -155,18 +143,16 @@ void * midi1in_thread_function (void * x)
             }
         }
         else
-        {
+        {    
+            write(fdSerial, buf, rdLen);
+            write(fdMidi, buf, rdLen);
             if (MIDI_DEBUG)
-                printf("MIDI1 IN [%02d] -->", rdLen);
-            for (byte = buf; rdLen-- > 0; byte++)
             {
-                if (MIDI_DEBUG)
+                printf("MIDI1 IN [%02d] -->", rdLen);
+                for (byte = buf; rdLen-- > 0; byte++)
                     printf(" %02x", *byte);
-                write(fdSerial, byte, 1);
-                write(fdMidi, byte, 1);
-            }
-            if (MIDI_DEBUG)
                 printf("\n");
+            }
         }
     } while (TRUE);
 }

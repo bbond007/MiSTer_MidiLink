@@ -100,16 +100,15 @@ void ini_print_settings()
     printf("  - MIDI_SERVER       --> '%s'%s\n", midiServer, 
     misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
     printf("  - MIDI_SERVER_PORT  --> %d\n",   midiServerPort);
+    if(midiServerBaud > 0)
+    printf("  - MIDI_SERVER_BAUD  --> %d\n",   midiServerBaud);
+    else
+    printf("  - MIDI_SERVER_BAUD  --> Default (don't change)\n");   
     printf("  - FSYNTH_SOUNTFONT  --> '%s'\n", fsynthSoundFont);   
     if(midilinkPriority != 0)
     printf("  - MIDILINK_PRIORITY --> %d\n",   midilinkPriority);
     else
     printf("  - MIDILINK_PRIORITY --> Default (don't change)\n");   
-    if(midiServerBaud > 0)
-    printf("  - MIDI_SERVER_BAUD  --> %d\n",   midiServerBaud);
-    else
-    printf("  - MIDI_SERVER_BAUD  --> Default (don't change)\n");   
-    
     printf("\n");
 }
 
