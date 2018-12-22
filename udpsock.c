@@ -62,7 +62,6 @@ void udpsock_write(int sock, char * buf, int bufLen)
            sizeof(serv_addr));
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int uspsock_server_open(int port)
