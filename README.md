@@ -57,7 +57,7 @@ The 'midilink' daemon currently supports following switches / options:
 
 The Midilink INI file:
 
-      #This isa sample MidiLink.INI FILE 
+      #This is a sample MidiLink.INI FILE  _[DESCRIPTION]_ 
 
       MIDILINK_PRIORITY = -20          --> Sets the task priority of MidiLink
       MUNT_VOLUME       = 71           --> Volume for MUNT (0 - 100)  
