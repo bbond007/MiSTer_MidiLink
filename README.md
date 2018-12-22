@@ -65,14 +65,14 @@ The Midilink INI file:
       MIDI_SERVER       = 192.168.1.52 --> MIDI server for UDP 
       MIDI_SERVER_PORT  = 1999         --> Port for MIDI SERVER and local
       					   listening port
-      #MIDI_SERVER_BAUD = 9600         --> Set a different BPS for socket
-                                           connection (this is used
+      #MIDI_SERVER_BAUD = 2400         --> Set a different BPS for socket
+                                           connection (this is useful 
 					   this for serial connection
-				           for gaming (Populous). This 
-                                           overrides arg '38400' when 
-                                           used with arg 'UDP'
+				           for gaming (Populous)). This 
+                                           overrides arg '38400' but only 
+                                           when used with arg 'UDP'
 								 
       FSYNTH_SOUNDFONT  = /media/fat/SOUNDFONT/default.sf2
 
                                        --> This is the soundfont For 
-                                           FluidSynth
+                                           FluidSynth. 
