@@ -16,7 +16,7 @@
 #define TRUE 1
 #define FALSE 0
 
-static int		MIDI_DEBUG	       = TRUE;
+int                     MIDI_DEBUG	       = TRUE;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
 static int		fdMidi1		       = -1;
@@ -29,6 +29,7 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int 			midiServerBaud	       = -1;
 unsigned int 		midiServerPort         = 1999;
+unsigned int            midiServerFilterIP     = FALSE;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;

@@ -8,7 +8,7 @@
 #include <netinet/in.h>
 #include <linux/soundcard.h>
 #include "misc.h"
-static struct sockaddr_in serv_addr;
+static struct sockaddr_in server_addr;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -22,13 +22,13 @@ int udpsock_client_connect(char * ipAddr, int port)
         printf("ERROR:socket_client_connect() --> Socket creation error\n");
         return -1;
     }
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
+    memset(&server_addr, 0, sizeof(server_addr));
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
     if(strlen(ipAddr) == 0)
-        serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    else if(inet_pton(AF_INET, ipAddr, &serv_addr.sin_addr)<=0)
+        server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    else if(inet_pton(AF_INET, ipAddr, &server_addr.sin_addr)<=0)
     {
         printf("ERROR: socket_client_connect() --> Invalid IP address\n");
         return -1;
@@ -38,8 +38,8 @@ int udpsock_client_connect(char * ipAddr, int port)
     {
         unsigned char multicastTTL = 1;
         printf("Enabling MULTICAST\n");
-        if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, (void *) 
-            &multicastTTL, sizeof(multicastTTL)) < 0)
+        if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, (void *)
+                       &multicastTTL, sizeof(multicastTTL)) < 0)
         {
             printf("ERROR: socket_client_connect() --> setsockopt MULTICAST failed\n");
             return -1;
@@ -58,8 +58,8 @@ void udpsock_write(int sock, char * buf, int bufLen)
            (const char *) buf,
            bufLen,
            MSG_CONFIRM,
-           (const struct sockaddr *) &serv_addr,
-           sizeof(serv_addr));
+           (const struct sockaddr *) &server_addr,
+           sizeof(server_addr));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ int udpsock_server_open(int port)
     servaddr.sin_port 	     = htons(port);
     // Bind the socket with the server address
     if (bind(sock, (const struct sockaddr *)&servaddr,
-              sizeof(servaddr)) < 0 )
+             sizeof(servaddr)) < 0 )
     {
         printf("ERROR: socket_server_open() --> bind failed\n");
         return -1;
@@ -95,19 +95,36 @@ int udpsock_server_open(int port)
 //
 // int udpsock_read(int sock, char * buf, int bufLen)
 //
+extern unsigned int midiServerFilterIP;
+extern int MIDI_DEBUG;
+
 int udpsock_read(int sock, char * buf,  int bufLen)
 {
     int rdLen, addrLen;
     struct sockaddr_in client_addr;
     //memset(&client_addr, 0, sizeof(client_addr));
     addrLen = sizeof(client_addr);
-    rdLen = recvfrom(sock, 
-                     (char *) buf, 
+    rdLen = recvfrom(sock,
+                     (char *) buf,
                      bufLen,
-                     MSG_WAITALL, 
+                     MSG_WAITALL,
                      ( struct sockaddr *) &client_addr,
                      &addrLen);
-    if (rdLen < 0) 
-        printf("ERROR : udpsock_read(%d, %d, %d) --> rdLen = %d\n", sock, buf, bufLen, rdLen);
+
+    //throw out stuff not from the MIDI server
+    if (midiServerFilterIP && (client_addr.sin_addr.s_addr != server_addr.sin_addr.s_addr))
+    {
+        if(MIDI_DEBUG)
+        {
+            char server_str[20];
+            char client_str[20];
+            inet_ntop(AF_INET, &(client_addr.sin_addr), client_str, sizeof(client_addr));
+            inet_ntop(AF_INET, &(server_addr.sin_addr), server_str, sizeof(server_addr));
+            printf("(client_addr --> %s) != (server_addr --> %s)", client_str, server_str);
+        }
+        rdLen = 0;
+    }
+    //if (rdLen < 0)
+    //printf("ERROR : udpsock_read(%d, %d, %d) --> rdLen = %d\n", sock, buf, bufLen, rdLen);
     return rdLen;
 }

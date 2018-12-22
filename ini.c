@@ -11,13 +11,15 @@ char                fsynthSoundFont[150];
 extern char         midiServer[50];
 extern int          muntVolume;
 extern int          fsynthVolume;
-extern int          midilinkPriority;  
+extern int          midilinkPriority;
 extern unsigned int midiServerPort;
 extern int          midiServerBaud;
+extern unsigned int midiServerFilterIP;
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // char ini_replace_char(char * str, int strLen, char old, char new)
-// 
+//
 char ini_replace_char(char * str, int strLen, char old, char new)
 {
     for(int i = 0; i < strLen; i++)
@@ -28,7 +30,7 @@ char ini_replace_char(char * str, int strLen, char old, char new)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // char ini_process_key_value_pair(char * key, char * value)
-// 
+//
 char ini_process_key_value_pair(char * key, char * value)
 {
     char * strPort, * endPtr;
@@ -60,6 +62,19 @@ char ini_process_key_value_pair(char * key, char * value)
         if(strlen(value) > 1)
             strcpy(midiServer, value);
     }
+    else if (strcmp("MIDI_SERVER_FILTER", key) == 0)
+    {
+        if (strlen(value) > 0)
+        {
+            char c = toupper(value[0]);
+            if (c == 'T' || c == 'Y')
+                midiServerFilterIP = TRUE;
+            else
+                midiServerFilterIP = FALSE;
+        }
+        else
+            midiServerFilterIP = FALSE;
+    }
     else if (strcmp("FSYNTH_SOUNDFONT", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
@@ -85,37 +100,38 @@ char ini_process_key_value_pair(char * key, char * value)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void ini_print_settings()
-// 
+//
 void ini_print_settings()
 {
     printf("Settings:\n");
     if(muntVolume != -1)
-    printf("  - MUNT_VOLUME       --> %d%c\n", muntVolume, '%');
+        printf("  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
-    printf("  - MUNT_VOLUME       --> Default (don't set)\n", muntVolume, '%');
+        printf("  - MUNT_VOLUME        --> Default (don't set)\n", muntVolume, '%');
     if(fsynthVolume != -1)
-    printf("  - FSYNTH_VOLUME     --> %d%c\n", fsynthVolume, '%');
+        printf("  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
-    printf("  - FSYNTH_VOLUME     --> Default (don't set)\n", fsynthVolume, '%');
-    printf("  - MIDI_SERVER       --> '%s'%s\n", midiServer, 
-    misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
-    printf("  - MIDI_SERVER_PORT  --> %d\n",   midiServerPort);
+        printf("  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
+    printf("  - MIDI_SERVER        --> '%s'%s\n", midiServer,
+           misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
+    printf("  - MIDI_SERVER_PORT   --> %d\n",   midiServerPort);
     if(midiServerBaud > 0)
-    printf("  - MIDI_SERVER_BAUD  --> %d\n",   midiServerBaud);
+        printf("  - MIDI_SERVER_BAUD   --> %d\n",   midiServerBaud);
     else
-    printf("  - MIDI_SERVER_BAUD  --> Default (don't change)\n");   
-    printf("  - FSYNTH_SOUNTFONT  --> '%s'\n", fsynthSoundFont);   
+        printf("  - MIDI_SERVER_BAUD   --> Default (don't change)\n");
+    printf("  - MIDI_SERVER_FILTER --> %s\n", midiServerFilterIP?"TRUE":"FALSE");
+    printf("  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     if(midilinkPriority != 0)
-    printf("  - MIDILINK_PRIORITY --> %d\n",   midilinkPriority);
+        printf("  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
-    printf("  - MIDILINK_PRIORITY --> Default (don't change)\n");   
+        printf("  - MIDILINK_PRIORITY  --> Default (don't change)\n");
     printf("\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // char ini_first_char(char * str, int len)
-// 
+//
 char ini_first_char(char * str, int len)
 {
     for (int i = 0; i < len; i++)
@@ -126,7 +142,7 @@ char ini_first_char(char * str, int len)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, int valMax)
-// 
+//
 int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, int valMax)
 {
     int iKey = 0;
@@ -171,7 +187,7 @@ int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, in
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
-// 
+//
 int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
 {
     int count;
@@ -184,7 +200,7 @@ int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int va
         {
             if(ini_first_char(str, strlen(str)) != '#')
                 if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax))
-                   ini_process_key_value_pair(key, value);
+                    ini_process_key_value_pair(key, value);
         }
         fclose(file);
         ini_print_settings();
@@ -199,8 +215,8 @@ int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int va
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_read_ini(char * fileName) 
-// 
+// int ini_read_ini(char * fileName)
+//
 int ini_read_ini(char * fileName)
 {
     char key[30];
