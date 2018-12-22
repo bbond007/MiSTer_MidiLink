@@ -360,7 +360,8 @@ int main(int argc, char *argv[])
             socket_out = udpsock_client_connect(midiServer, midiServerPort);
             socket_in  = udpsock_server_open(midiServerPort);
             if(socket_in > 0)
-            {
+            {   
+                printf("Socket Listener created on port %d.\n", midiServerPort);
                 status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
                 if (status == -1)
                 {
@@ -368,8 +369,7 @@ int main(int argc, char *argv[])
                     close_fd();
                     return -3;
                 }
-                else
-                    printf("Socket input thread created.\n");
+                printf("Socket input thread created.\n");
             }
         }   
         else
@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
         int rdLen = read(fdSerial, buf, sizeof(buf));
         if (rdLen > 0)
         {
-            if(fdMidi != 1)
+            if(fdMidi != -1)
                 write_midi_packet(buf, rdLen);
             if(socket_out != -1)
                 write_socket_packet(buf,rdLen);

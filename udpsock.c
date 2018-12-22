@@ -42,7 +42,7 @@ int udpsock_client_connect(char * ipAddr, int port)
             &multicastTTL, sizeof(multicastTTL)) < 0)
         {
             printf("ERROR: socket_client_connect() --> setsockopt MULTICAST failed\n");
-            return -2;
+            return -1;
         }
     }
     return sock;
@@ -88,7 +88,7 @@ int udpsock_server_open(int port)
               sizeof(servaddr)) < 0 )
     {
         printf("ERROR: socket_server_open() --> bind failed\n");
-        return -2;
+        return -1;
     }
     return sock;
 }
