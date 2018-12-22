@@ -60,8 +60,8 @@ The Midilink INI file:
       #This isa sample MidiLink.INI FILE 
 
       MIDILINK_PRIORITY = -20          --> Sets the task priority of MidiLink
-      MUNT_VOLUME       = 71           --> Volume for MUNT  
-      FSYNTH_VOLUME     = 83           --> Volume for FluidSynth
+      MUNT_VOLUME       = 71           --> Volume for MUNT (0 - 100)  
+      FSYNTH_VOLUME     = 83           --> Volume for FluidSynth (0 - 100)
       MIDI_SERVER       = 192.168.1.52 --> MIDI server for UDP 
       MIDI_SERVER_PORT  = 1999         --> Port for MIDI SERVER and local
       					   listening port
