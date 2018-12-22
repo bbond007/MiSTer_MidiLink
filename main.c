@@ -368,6 +368,8 @@ int main(int argc, char *argv[])
                     close_fd();
                     return -3;
                 }
+                else
+                    printf("Socket input thread created.\n");
             }
         }   
         else
@@ -439,9 +441,9 @@ int main(int argc, char *argv[])
         int rdLen = read(fdSerial, buf, sizeof(buf));
         if (rdLen > 0)
         {
-            if(fdMidi > 0)
+            if(fdMidi != 1)
                 write_midi_packet(buf, rdLen);
-            if(socket_out > 0)
+            if(socket_out != -1)
                 write_socket_packet(buf,rdLen);
         }
         else if (rdLen < 0)
