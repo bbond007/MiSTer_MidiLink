@@ -35,9 +35,6 @@ The Rev.0 Roland MT-32 used in testing required the ‘DELAYSYSEX’ switch to p
 
 The 'midilink' daemon currently supports following switches / options:
 
-      TESTSER  - this option sends a test message to the serial port once 
-                 the daemon is started.  
-                 
       TESTMIDI - this option sends a middle 'c' note to the MIDI device 
                  once the daemon is started. 
 
@@ -61,8 +58,10 @@ The 'midilink' daemon currently supports following switches / options:
 The Midilink INI file:
 
       #This isa sample MidiLink.INI FILE 
+      MIDILINK_PRIORITY = -20
       MUNT_VOLUME       = 71
       FSYNTH_VOLUME     = 83
       MIDI_SERVER       = 192.168.1.52
       MIDI_SERVER_PORT  = 1999
+      #MIDI_SERVER_BAUD = 9600 
       FSYNTH_SOUNDFONT  = /media/fat/SOUNDFONT/default.sf2
