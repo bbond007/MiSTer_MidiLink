@@ -77,8 +77,6 @@ int udpsock_server_open(int port)
         return -1;
     }
     memset(&servaddr, 0, sizeof(servaddr));
-    //memset(&client_addr, 0, sizeof(client_addr));
-    
     // Filling server information
     servaddr.sin_family      = AF_INET; // IPv4
     servaddr.sin_addr.s_addr = INADDR_ANY;
@@ -101,7 +99,7 @@ int udpsock_read(int sock, char * buf,  int bufLen)
 {
     int rdLen, addrLen;
     struct sockaddr_in client_addr;
-    memset(&client_addr, 0, sizeof(client_addr));
+    //memset(&client_addr, 0, sizeof(client_addr));
     addrLen = sizeof(client_addr);
     rdLen = recvfrom(sock, 
                      (char *) buf, 
