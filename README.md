@@ -64,7 +64,7 @@ The Midilink INI file:
       FSYNTH_VOLUME     = 83           --> Volume for FluidSynth (0 - 100)
       MIDI_SERVER       = 192.168.1.52 --> MIDI server for UDP 
       MIDI_SERVER_PORT  = 1999         --> Port for MIDI SERVER and local
-      					   listening port
+                                           listening port
       #MIDI_SERVER_BAUD = 2400         --> Set a different BPS for socket
                                            connection (this is useful 
                                            this for serial connection
