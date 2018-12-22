@@ -52,10 +52,10 @@ void * udpsock_thread_function (void * x)
             write(fdSerial, buf, rdLen);
             if(MIDI_DEBUG)
             {
-                printf("SOCK IN  [%02d] -->", rdLen);
+                misc_print("SOCK IN  [%02d] -->", rdLen);
                 for (byte = buf; rdLen-- > 0; byte++)
-                    printf(" %02x", *byte);
-                printf("\n");
+                    misc_print(" %02x", *byte);
+                misc_print("\n");
             }
         }        
     } while (TRUE);
@@ -79,15 +79,15 @@ void * midi_thread_function (void * x)
             write(fdSerial, buf, rdLen);
             if (MIDI_DEBUG)
             {
-                printf("MIDI IN  [%02d]-->", rdLen);
+                misc_print("MIDI IN  [%02d]-->", rdLen);
                 for (byte = buf; rdLen-- > 0; byte++)
-                    printf(" %02x",*byte);                
-                printf("\n");
+                    misc_print(" %02x",*byte);                
+                misc_print("\n");
             }
         }
         else
         {
-            printf("ERROR: midi_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
+            misc_print("ERROR: midi_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
         }
     } while (TRUE);
 }
@@ -102,10 +102,10 @@ void write_midi_packet(char * buf, int bufLen)
     write(fdMidi, buf, bufLen);
     if (MIDI_DEBUG)
     {
-        printf("MIDI OUT [%02d] -->", bufLen);
+        misc_print("MIDI OUT [%02d] -->", bufLen);
         for (char * p = buf; bufLen-- > 0; p++)
-            printf(" %02x", *p);
-        printf("\n");
+            misc_print(" %02x", *p);
+        misc_print("\n");
     }
 }
 
@@ -134,11 +134,11 @@ void * midi1in_thread_function (void * x)
         rdLen = read(fdMidi1, &buf, sizeof(buf));
         if (rdLen < 0)
         {
-            printf("ERROR: midi1in_thread_function() reading %s --> %d : %s \n", midi1Device, rdLen, strerror(errno));
+            misc_print("ERROR: midi1in_thread_function() reading %s --> %d : %s \n", midi1Device, rdLen, strerror(errno));
             sleep(10);
             if (misc_check_device(midi1Device))
             {
-                printf("Reopening  %s --> %d : %s \n", midi1Device);
+                misc_print("Reopening  %s --> %d : %s \n", midi1Device);
                 fdMidi1 = open(midi1Device, O_RDONLY);
             }
         }
@@ -148,10 +148,10 @@ void * midi1in_thread_function (void * x)
             write(fdMidi, buf, rdLen);
             if (MIDI_DEBUG)
             {
-                printf("MIDI1 IN [%02d] -->", rdLen);
+                misc_print("MIDI1 IN [%02d] -->", rdLen);
                 for (byte = buf; rdLen-- > 0; byte++)
-                    printf(" %02x", *byte);
-                printf("\n");
+                    misc_print(" %02x", *byte);
+                misc_print("\n");
             }
         }
     } while (TRUE);
@@ -167,10 +167,10 @@ void write_socket_packet(char * buf, int bufLen)
     udpsock_write(socket_out, buf, bufLen);
     if (MIDI_DEBUG)
     {
-        printf("SOCK OUT [%02d] -->", bufLen);
+        misc_print("SOCK OUT [%02d] -->", bufLen);
         for (char * p = buf; bufLen-- > 0; p++)
-            printf(" %02x", *p);
-        printf("\n");
+            misc_print(" %02x", *p);
+        misc_print("\n");
     }
 }
 
@@ -184,10 +184,10 @@ void write_alsa_packet(char * buf, int bufLen)
     alsa_send_midi_raw(buf, bufLen);
     if (MIDI_DEBUG)
     {     
-        printf("SEQU OUT [%02d] -->", bufLen);
+        misc_print("SEQU OUT [%02d] -->", bufLen);
         for (char * p = buf; bufLen-- > 0; p++)
-            printf(" %02x", *p);
-        printf("\n");
+            misc_print(" %02x", *p);
+        misc_print("\n");
     }
 }
 
@@ -199,11 +199,11 @@ void show_line()
 {
     if (MIDI_DEBUG)
     {
-        printf("MIDI debug messages enabled.\n");
-        printf("---------------------------------------------\n\n");
+        misc_print("MIDI debug messages enabled.\n");
+        misc_print("---------------------------------------------\n\n");
     }
     else
-        printf("QUIET mode emabled.\n");
+        misc_print("QUIET mode emabled.\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -216,7 +216,7 @@ void set_pcm_volume(int value)
     {
         char buf[30];
         sprintf(buf, "amixer set PCM %d%c", value, '%');
-        printf("Setting 'PCM' to %d%\n", value);
+        misc_print("Setting 'PCM' to %d%\n", value);
         system(buf);
     }
 }
@@ -241,8 +241,8 @@ int main(int argc, char *argv[])
     int status;
     unsigned char buf[256];
     
-    printf("\e[2J\e[H"); 
-    printf(helloStr);
+    misc_print("\e[2J\e[H"); 
+    misc_print(helloStr);
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI);
    
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_UDP"))    UDP    = TRUE;
         if (!MUNT && !MUNTGM && !FSYNTH && !UDP)
         { 
-            printf("AUTO --> UDP\n");
+            misc_print("AUTO --> UDP\n");
             UDP = TRUE;
         }
     }
@@ -279,23 +279,23 @@ int main(int argc, char *argv[])
         UDP    = misc_check_args_option(argc, argv, "UDP"); 
     }
     
-    printf("Killing --> fluidsynth\n");
+    misc_print("Killing --> fluidsynth\n");
     system("killall -q fluidsynth");
-    printf("Killing --> mt32d\n");
+    misc_print("Killing --> mt32d\n");
     system("killall -q mt32d");
     sleep(3);
         
     if (MUNT || MUNTGM)
     {
         set_pcm_volume(muntVolume);
-        printf("Starting --> mt32d\n");
+        misc_print("Starting --> mt32d\n");
         system("mt32d &");
         sleep(2);
     }
     else if (FSYNTH)
     {
         set_pcm_volume(fsynthVolume);
-        printf("Starting --> fluidsynth\n");
+        misc_print("Starting --> fluidsynth\n");
         sprintf(buf, "fluidsynth -is -a alsa -m alsa_seq %s &", fsynthSoundFont);
         system(buf);
         sleep(2);
@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
-        printf("ERROR: opening %s: %s\n", serialDevice, strerror(errno));
+        misc_print("ERROR: opening %s: %s\n", serialDevice, strerror(errno));
         close_fd();
         return -1;
     }
@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
     if (!misc_check_args_option(argc, argv, "38400"))
         setbaud_set_baud(serialDevice, fdSerial, 31200);  // <-- not so good for Amiga where we need midi speed
     else
-        printf("Setting %s to 38400 baud.\n",serialDevice);
+        misc_print("Setting %s to 38400 baud.\n",serialDevice);
 
     serial_do_tcdrain(fdSerial);
       
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
                     write_alsa_packet(buf, rdLen); 
                 }
                 else if (rdLen < 0)
-                    printf("ERROR: from read --> %d: %s\n", rdLen, strerror(errno));
+                    misc_print("ERROR: from read --> %d: %s\n", rdLen, strerror(errno));
             } while (TRUE);
         }
         else
@@ -346,25 +346,25 @@ int main(int argc, char *argv[])
     {
         if (strlen(midiServer) > 7)
         {
-            printf("Connecting to server --> %s:%d\n",midiServer, midiServerPort);
+            misc_print("Connecting to server --> %s:%d\n",midiServer, midiServerPort);
             socket_out = udpsock_client_connect(midiServer, midiServerPort);
             socket_in  = udpsock_server_open(midiServerPort);
             if(socket_in > 0)
             {   
-                printf("Socket Listener created on port %d.\n", midiServerPort);
+                misc_print("Socket Listener created on port %d.\n", midiServerPort);
                 status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
                 if (status == -1)
                 {
-                    printf("ERROR: unable to create socket input thread.\n");
+                    misc_print("ERROR: unable to create socket input thread.\n");
                     close_fd();
                     return -3;
                 }
-                printf("Socket input thread created.\n");
+                misc_print("Socket input thread created.\n");
             }
         }   
         else
         {
-            printf("ERROR: in INI File (MIDI_SERVER) --> %s\n", midiLinkINI);
+            misc_print("ERROR: in INI File (MIDI_SERVER) --> %s\n", midiLinkINI);
             return -4;
         }            
     }
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
         fdMidi = open(midiDevice, O_RDWR);
         if (fdMidi < 0)
         {
-            printf("ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
+            misc_print("ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
             return -5;
         }
@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
             fdMidi1 = open(midi1Device, O_RDONLY);
             if (fdMidi1 < 0)
             {
-                printf("ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
+                misc_print("ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
                 close_fd();
                 return -6;
             }
@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
 #endif
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
         {
-            printf("Testing --> %s\n", midiDevice);
+            misc_print("Testing --> %s\n", midiDevice);
             test_midi_device();
         }
 
@@ -403,25 +403,25 @@ int main(int argc, char *argv[])
             status = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
             if (status == -1)
             {
-                printf("ERROR: unable to create *MIDI input thread.\n");
+                misc_print("ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
                 return -7;
             }
-            printf("MIDI1 input thread created.\n");
-            printf("CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
+            misc_print("MIDI1 input thread created.\n");
+            misc_print("CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
         }
 
         status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
         if (status == -1)
         {
-            printf("ERROR: unable to create MIDI input thread.\n");
+            misc_print("ERROR: unable to create MIDI input thread.\n");
             close_fd();
             return -8;
         }
-        printf("MIDI input thread created.\n");
-        printf("CONNECT : %s <--> %s\n", serialDevice, midiDevice);
+        misc_print("MIDI input thread created.\n");
+        misc_print("CONNECT : %s <--> %s\n", serialDevice, midiDevice);
 #else
-        printf("CONNECT : %s --> %s\n", serialDevice, midiDevice);
+        misc_print("CONNECT : %s --> %s\n", serialDevice, midiDevice);
 #endif
     }
     show_line();
@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
                 write_socket_packet(buf,rdLen);
         }
         else if (rdLen < 0)
-            printf("ERROR: from read: %d: %s\n", rdLen, strerror(errno));
+            misc_print("ERROR: from read: %d: %s\n", rdLen, strerror(errno));
     } while (TRUE);
 
     close_fd();

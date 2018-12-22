@@ -8,8 +8,26 @@
 #include <sys/types.h>
 #include <unistd.h> // close function
 #include <sys/resource.h>
+#include <stdarg.h>
+#include <pthread.h>
 #define TRUE  1
 #define FALSE 0
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  misc_print( const char* format, ... )
+//
+pthread_mutex_t print_lock;
+
+void misc_print( const char* format, ... )
+{
+    pthread_mutex_lock(&print_lock);
+    va_list args;
+    va_start (args, format);
+    vprintf (format, args);
+    va_end (args);
+    pthread_mutex_unlock(&print_lock);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -49,24 +67,24 @@ int misc_check_args_option (int argc, char *argv[], char * option)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// BOOL misc_check_device (char * deviceName) 
+// BOOL misc_check_device (char * deviceName)
 //
 int misc_check_device (char * deviceName)
 {
     struct stat filestat;
-    printf("Checking for --> %s : ", deviceName);
+    misc_print("Checking for --> %s : ", deviceName);
     if (stat(deviceName, &filestat) != 0)
     {
-        printf("FALSE\n");
+        misc_print("FALSE\n");
         return FALSE;
     }
-    printf("TRUE\n"); 
+    misc_print("TRUE\n");
     return TRUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// BOOL misc_check_device (char * fileName) 
+// BOOL misc_check_device (char * fileName)
 //
 int misc_check_file(char * fileName)
 {
@@ -75,15 +93,15 @@ int misc_check_file(char * fileName)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int misc_set_priority(int priority) 
+// int misc_set_priority(int priority)
 //
 int misc_set_priority(int priority)
 {
-    printf("Setting task priority --> %d\n", priority);
+    misc_print("Setting task priority --> %d\n", priority);
     if(setpriority(PRIO_PROCESS, getpid(), priority) == 0)
         return TRUE;
     else
-        printf("ERROR: unable to set task priority --> %s\n", strerror(errno));
+        misc_print("ERROR: unable to set task priority --> %s\n", strerror(errno));
     return FALSE;
 }
 
@@ -100,7 +118,7 @@ int misc_ipaddr_is_multicast(char * ipAddr)
         int ip1 = strtol(ip1s, &endPtr, 10);
         if(ip1 >= 224 && ip1 <= 239)
             return TRUE;
-    }     
+    }
     return FALSE;
 }
 

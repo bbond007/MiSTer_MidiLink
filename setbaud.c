@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include"misc.h"
 
 int ioctl(int fd, unsigned long request, ...);
 
@@ -14,7 +15,7 @@ int ioctl(int fd, unsigned long request, ...);
 int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
 {
     struct termios2 tio;
-    printf("Setting %s to %d baud.\n",serialDevice, baud);
+    misc_print("Setting %s to %d baud.\n",serialDevice, baud);
     ioctl(fdSerial, TCGETS2, &tio);
     tio.c_cflag &= ~CBAUD;
     tio.c_cflag |= BOTHER;

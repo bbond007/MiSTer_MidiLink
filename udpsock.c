@@ -19,7 +19,7 @@ int udpsock_client_connect(char * ipAddr, int port)
     int sock = 0, valread;
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
-        printf("ERROR:socket_client_connect() --> Socket creation error\n");
+        misc_print("ERROR:socket_client_connect() --> Socket creation error\n");
         return -1;
     }
     memset(&server_addr, 0, sizeof(server_addr));
@@ -30,18 +30,18 @@ int udpsock_client_connect(char * ipAddr, int port)
         server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     else if(inet_pton(AF_INET, ipAddr, &server_addr.sin_addr)<=0)
     {
-        printf("ERROR: socket_client_connect() --> Invalid IP address\n");
+        misc_print("ERROR: socket_client_connect() --> Invalid IP address\n");
         return -1;
     }
 
     if (misc_ipaddr_is_multicast(ipAddr))
     {
         unsigned char multicastTTL = 1;
-        printf("Enabling MULTICAST\n");
+        misc_print("Enabling MULTICAST\n");
         if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, (void *)
                        &multicastTTL, sizeof(multicastTTL)) < 0)
         {
-            printf("ERROR: socket_client_connect() --> setsockopt MULTICAST failed\n");
+            misc_print("ERROR: socket_client_connect() --> setsockopt MULTICAST failed\n");
             return -1;
         }
     }
@@ -73,7 +73,7 @@ int udpsock_server_open(int port)
     // Creating socket file descriptor
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
     {
-        printf("ERROR: socket_server_open() --> socket creation failed");
+        misc_print("ERROR: socket_server_open() --> socket creation failed");
         return -1;
     }
     memset(&servaddr, 0, sizeof(servaddr));
@@ -85,7 +85,7 @@ int udpsock_server_open(int port)
     if (bind(sock, (const struct sockaddr *)&servaddr,
              sizeof(servaddr)) < 0 )
     {
-        printf("ERROR: socket_server_open() --> bind failed\n");
+        misc_print("ERROR: socket_server_open() --> bind failed\n");
         return -1;
     }
     return sock;
@@ -120,11 +120,11 @@ int udpsock_read(int sock, char * buf,  int bufLen)
             char client_str[20];
             inet_ntop(AF_INET, &(client_addr.sin_addr), client_str, sizeof(client_addr));
             inet_ntop(AF_INET, &(server_addr.sin_addr), server_str, sizeof(server_addr));
-            printf("(client_addr --> %s) != (server_addr --> %s)", client_str, server_str);
+            misc_print("(client_addr --> %s) != (server_addr --> %s)\n", client_str, server_str);
         }
         rdLen = 0;
     }
     //if (rdLen < 0)
-    //printf("ERROR : udpsock_read(%d, %d, %d) --> rdLen = %d\n", sock, buf, bufLen, rdLen);
+    //misc_print("ERROR : udpsock_read(%d, %d, %d) --> rdLen = %d\n", sock, buf, bufLen, rdLen);
     return rdLen;
 }

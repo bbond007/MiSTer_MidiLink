@@ -94,7 +94,7 @@ char ini_process_key_value_pair(char * key, char * value)
             midiServerBaud = iTmp;
     }
     else
-        printf("ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
+        misc_print("ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -103,29 +103,29 @@ char ini_process_key_value_pair(char * key, char * value)
 //
 void ini_print_settings()
 {
-    printf("Settings:\n");
+    misc_print("Settings:\n");
     if(muntVolume != -1)
-        printf("  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
+        misc_print("  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
-        printf("  - MUNT_VOLUME        --> Default (don't set)\n", muntVolume, '%');
+        misc_print("  - MUNT_VOLUME        --> Default (don't set)\n", muntVolume, '%');
     if(fsynthVolume != -1)
-        printf("  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
+        misc_print("  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
-        printf("  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
-    printf("  - MIDI_SERVER        --> '%s'%s\n", midiServer,
+        misc_print("  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
+    misc_print("  - MIDI_SERVER        --> '%s'%s\n", midiServer,
            misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
-    printf("  - MIDI_SERVER_PORT   --> %d\n",   midiServerPort);
+    misc_print("  - MIDI_SERVER_PORT   --> %d\n",   midiServerPort);
     if(midiServerBaud > 0)
-        printf("  - MIDI_SERVER_BAUD   --> %d\n",   midiServerBaud);
+        misc_print("  - MIDI_SERVER_BAUD   --> %d\n",   midiServerBaud);
     else
-        printf("  - MIDI_SERVER_BAUD   --> Default (don't change)\n");
-    printf("  - MIDI_SERVER_FILTER --> %s\n", midiServerFilterIP?"TRUE":"FALSE");
-    printf("  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
+        misc_print("  - MIDI_SERVER_BAUD   --> Default (don't change)\n");
+    misc_print("  - MIDI_SERVER_FILTER --> %s\n", midiServerFilterIP?"TRUE":"FALSE");
+    misc_print("  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     if(midilinkPriority != 0)
-        printf("  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
+        misc_print("  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
-        printf("  - MIDILINK_PRIORITY  --> Default (don't change)\n");
-    printf("\n");
+        misc_print("  - MIDILINK_PRIORITY  --> Default (don't change)\n");
+    misc_print("\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -208,7 +208,7 @@ int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int va
     }
     else
     {
-        printf("ERROR: ini_read_loop() : Unable to open --> '%s'\n", fileName);
+        misc_print("ERROR: ini_read_loop() : Unable to open --> '%s'\n", fileName);
         return FALSE;
     }
 }
