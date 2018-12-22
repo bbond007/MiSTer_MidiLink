@@ -318,17 +318,6 @@ int main(int argc, char *argv[])
     else
         printf("Setting %s to 38400 baud.\n",serialDevice);
 
-    if (misc_check_args_option(argc, argv, "TESTSER")) //send hello message too serial port
-    {
-        int wlen = write(fdSerial, helloStr, strlen(helloStr));
-        if (wlen != strlen(helloStr))
-        {
-            printf("ERROR: from write: %d, %d\n", wlen, errno);
-            close_fd();
-            return -2;
-        }
-    }
-
     serial_do_tcdrain(fdSerial);
       
     if (MUNT || MUNTGM || FSYNTH)
