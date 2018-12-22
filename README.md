@@ -73,6 +73,5 @@ The Midilink INI file:
                                            when used with arg 'UDP'
 								 
       FSYNTH_SOUNDFONT  = /media/fat/SOUNDFONT/default.sf2
-
                                        --> This is the soundfont For 
                                            FluidSynth. 
