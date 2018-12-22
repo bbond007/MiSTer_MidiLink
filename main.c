@@ -56,8 +56,7 @@ void * udpsock_thread_function (void * x)
                     printf(" %02x", *byte);
                 printf("\n");
             }
-        }
-        
+        }        
     } while (TRUE);
 }
 
