@@ -23,7 +23,7 @@ int udpsock_client_connect(char * ipAddr, int port)
         return -1;
     }
     memset(&serv_addr, 0, sizeof(serv_addr));
-    //memset(&client_addr, 0, sizeof(client_addr));
+    
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
     if(strlen(ipAddr) == 0)
@@ -101,6 +101,7 @@ int udpsock_read(int sock, char * buf,  int bufLen)
 {
     int rdLen, addrLen;
     struct sockaddr_in client_addr;
+    memset(&client_addr, 0, sizeof(client_addr));
     addrLen = sizeof(client_addr);
     rdLen = recvfrom(sock, 
                      (char *) buf, 
