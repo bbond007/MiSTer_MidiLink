@@ -399,8 +399,8 @@ int main(int argc, char *argv[])
 #ifdef MIDI_INPUT
         if (fdMidi1 != -1)
         {
-            int statusM1 = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
-            if (statusM1 == -1)
+            status = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
+            if (status == -1)
             {
                 printf("ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
