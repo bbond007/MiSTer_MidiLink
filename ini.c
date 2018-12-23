@@ -105,26 +105,26 @@ void ini_print_settings()
 {
     misc_print("Settings:\n");
     if(muntVolume != -1)
-        misc_print("  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
+    misc_print("  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
-        misc_print("  - MUNT_VOLUME        --> Default (don't set)\n", muntVolume, '%');
+    misc_print("  - MUNT_VOLUME        --> Default (don't set)\n", muntVolume, '%');
     if(fsynthVolume != -1)
-        misc_print("  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
+    misc_print("  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
-        misc_print("  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
+    misc_print("  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
     misc_print("  - MIDI_SERVER        --> '%s'%s\n", midiServer,
-           misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
+        misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
     misc_print("  - MIDI_SERVER_PORT   --> %d\n",   midiServerPort);
     if(midiServerBaud > 0)
-        misc_print("  - MIDI_SERVER_BAUD   --> %d\n",   midiServerBaud);
+    misc_print("  - MIDI_SERVER_BAUD   --> %d\n",   midiServerBaud);
     else
-        misc_print("  - MIDI_SERVER_BAUD   --> Default (don't change)\n");
+    misc_print("  - MIDI_SERVER_BAUD   --> Default (don't change)\n");
     misc_print("  - MIDI_SERVER_FILTER --> %s\n", midiServerFilterIP?"TRUE":"FALSE");
     misc_print("  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     if(midilinkPriority != 0)
-        misc_print("  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
+    misc_print("  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
-        misc_print("  - MIDILINK_PRIORITY  --> Default (don't change)\n");
+    misc_print("  - MIDILINK_PRIORITY  --> Default (don't change)\n");
     misc_print("\n");
 }
 

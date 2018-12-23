@@ -72,7 +72,7 @@ The Midilink INI file:
                                             overrides arg '38400' but only 
                                             when used with arg 'UDP'
       MIDI_SERVER_FILTER = FALSE        --> Only accept Socket data from 
-					    MIDI_SERVER IP
+                                            MIDI_SERVER IP
 														 
       FSYNTH_SOUNDFONT   = /media/fat/SOUNDFONT/default.sf2
                                         --> This is the soundfont For 
