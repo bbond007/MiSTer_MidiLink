@@ -50,7 +50,7 @@ int udpsock_client_connect(char * ipAddr, int port)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void udpsock_write(char * ipAddr, int port)
+// void udpsock_write(int sock, char * ipAddr, int port)
 //
 void udpsock_write(int sock, char * buf, int bufLen)
 {
