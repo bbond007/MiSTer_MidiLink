@@ -5,3 +5,5 @@ int  misc_check_device (char * deviceName);
 int  misc_set_priority(int priority);
 int  misc_ipaddr_is_multicast(char * ipAddr);
 void misc_print( const char* format, ... );
+#define TRUE 1
+#define FALSE 0

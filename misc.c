@@ -10,8 +10,7 @@
 #include <sys/resource.h>
 #include <stdarg.h>
 #include <pthread.h>
-#define TRUE  1
-#define FALSE 0
+#include "misc.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //

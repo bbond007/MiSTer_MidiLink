@@ -13,8 +13,6 @@
 #include "udpsock.h"
 #include "alsa.h"
 #include "ini.h"
-#define TRUE 1
-#define FALSE 0
 
 int                     MIDI_DEBUG	       = TRUE;
 static int		fdSerial	       = -1;

@@ -1,8 +1,6 @@
 #include <alsa/asoundlib.h>     /* Interface to the ALSA system */
 #include <unistd.h>             /* for sleep() function */
 #include"misc.h"
-#define TRUE  1
-#define FALSE 0
 
 static snd_seq_event_t ev;
 static snd_midi_event_t* parser;

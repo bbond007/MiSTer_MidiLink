@@ -4,8 +4,6 @@
 #include <ctype.h>
 #include "ini.h"
 #include "misc.h"
-#define TRUE  1
-#define FALSE 0
 
 char                fsynthSoundFont[150];
 extern char         midiServer[50];
