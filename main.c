@@ -181,17 +181,22 @@ void do_modem_emulation(char * buf, int bufLen)
                     write(fdSerial, example2, strlen(example2));
                 }
                 else
-                {
+                { 
+                    int ipError = FALSE;
                     int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
                     if (!misc_is_ip_addr(ipAddr))
                         if(!misc_hostname_to_ip(ipAddr, ipAddr))
                         {
                             sprintf(tmp, "\r\nERROR: Unable to convert hostname '%s' to IP address.", ipAddr);
                             write(fdSerial, tmp, strlen(tmp));
+                            ipError = TRUE;
                         }   
-                    sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
-                    write(fdSerial, tmp, strlen(tmp));
-                    socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
+                    if(!ipError)
+                    {
+                        sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
+                        write(fdSerial, tmp, strlen(tmp));
+                        socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
+                    }
                     if(socket_out > 0)
                     {
                         sprintf(tmp, "\r\nCONNECTED %d\r\n", midiServerBaud);
