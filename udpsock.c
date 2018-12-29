@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <linux/soundcard.h>
+#include <errno.h>
 #include "misc.h"
 static struct sockaddr_in server_addr;
 
@@ -50,16 +51,22 @@ int udpsock_client_connect(char * ipAddr, int port)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void udpsock_write(int sock, char * ipAddr, int port)
+// int udpsock_write(int sock, char * ipAddr, int port)
 //
-void udpsock_write(int sock, char * buf, int bufLen)
+extern int MIDI_DEBUG;
+
+int udpsock_write(int sock, char * buf, int bufLen)
 {
-    sendto(sock,
-           (const char *) buf,
-           bufLen,
-           MSG_CONFIRM,
-           (const struct sockaddr *) &server_addr,
-           sizeof(server_addr));
+    int result = sendto(sock,
+                       (const char *) buf,
+                       bufLen,
+                       MSG_CONFIRM,
+                       (const struct sockaddr *) &server_addr,
+                       sizeof(server_addr));
+    if(MIDI_DEBUG)
+        if (result > 0) 
+           misc_print("ERROR: udpsock_write() --> %d : %s\n", result, strerror(errno));
+    return result;  
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +103,6 @@ int udpsock_server_open(int port)
 // int udpsock_read(int sock, char * buf, int bufLen)
 //
 extern unsigned int midiServerFilterIP;
-extern int MIDI_DEBUG;
 
 int udpsock_read(int sock, char * buf,  int bufLen)
 {

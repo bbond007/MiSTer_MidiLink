@@ -68,6 +68,9 @@ void * tcpsock_thread_function (void * x)
             write(fdSerial, buf, rdLen);
             show_debug_buf("TSOCK IN ", buf, rdLen);            
         }
+        else if(rdLen < 0)
+            if (MIDI_DEBUG)
+                misc_print("ERROR: tcpsock_thread_function() --> rdLen < 0\n");
     } while (socket_out != -1);
     if(MIDI_DEBUG)
        misc_print("TCPSOCK Thread fuction exiting.\n", socket_out);
@@ -219,7 +222,7 @@ void do_modem_emulation(char * buf, int bufLen)
             } 
             else if (memcmp(lineBuf, "ATIP", 4) == 0)
             {
-                sprintf(tmp, "\r\n---------------------\r\n");
+                sprintf(tmp, "\r\n-------------------------\r\n");
                 write(fdSerial, tmp, strlen(tmp));
                 misc_get_ipaddr("eth0", tmp);
                 write(fdSerial, " ", 1);

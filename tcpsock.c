@@ -10,6 +10,7 @@
 #include <errno.h>
 #include "misc.h"
 static struct sockaddr_in server_addr;
+extern int MIDI_DEBUG;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -50,11 +51,15 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void tcpsock_write(int sock, char * ipAddr, int port)
+// int tcpsock_write(int sock, char * ipAddr, int port)
 //
-void tcpsock_write(int sock, char * buf, int bufLen)
+int tcpsock_write(int sock, char * buf, int bufLen)
 {
-    write(sock, buf, bufLen); 
+    int result = write(sock, buf, bufLen);
+    if(MIDI_DEBUG)
+        if (result > 0) 
+           misc_print("ERROR: tcpsock_write() --> %d : %s\n", result, strerror(errno));
+    return result;  
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +95,6 @@ int tcpsock_server_open(int port)
 //
 // int tcpsock_read(int sock, char * buf, int bufLen)
 //
-extern int MIDI_DEBUG;
 
 int tcpsock_read(int sock, char * buf,  int bufLen)
 {
