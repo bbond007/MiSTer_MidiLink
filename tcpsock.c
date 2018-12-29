@@ -57,7 +57,7 @@ int tcpsock_write(int sock, char * buf, int bufLen)
 {
     int result = write(sock, buf, bufLen);
     if(MIDI_DEBUG)
-        if (result > 0) 
+        if (result < 0) 
            misc_print("ERROR: tcpsock_write() --> %d : %s\n", result, strerror(errno));
     return result;  
 }
@@ -100,5 +100,8 @@ int tcpsock_read(int sock, char * buf,  int bufLen)
 {
     int rdLen;
     rdLen = read(sock, buf, bufLen);
+    if(MIDI_DEBUG)
+        if (rdLen < 0) 
+           misc_print("ERROR: tcpsock_read() --> %d : %s\n", rdLen, strerror(errno));
     return rdLen;
 }

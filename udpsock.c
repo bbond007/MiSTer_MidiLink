@@ -64,7 +64,7 @@ int udpsock_write(int sock, char * buf, int bufLen)
                        (const struct sockaddr *) &server_addr,
                        sizeof(server_addr));
     if(MIDI_DEBUG)
-        if (result > 0) 
+        if (result < 0) 
            misc_print("ERROR: udpsock_write() --> %d : %s\n", result, strerror(errno));
     return result;  
 }
@@ -130,7 +130,8 @@ int udpsock_read(int sock, char * buf,  int bufLen)
         }
         rdLen = 0;
     }
-    //if (rdLen < 0)
-    //misc_print("ERROR : udpsock_read(%d, %d, %d) --> rdLen = %d\n", sock, buf, bufLen, rdLen);
+    if(MIDI_DEBUG)
+        if (rdLen < 0) 
+           misc_print("ERROR: tcpsock_read() --> %d : %s\n", rdLen, strerror(errno));
     return rdLen;
 }
