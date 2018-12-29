@@ -42,7 +42,7 @@ static pthread_t	socketInThread;
 //
 void show_debug_buf(char * descr, char * buf, int bufLen)
 {
-    if(FALSE)//MIDI_DEBUG)
+    if(MIDI_DEBUG)
     {
         misc_print("%s[%02d] -->", descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
