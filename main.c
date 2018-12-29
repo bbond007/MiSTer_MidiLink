@@ -18,7 +18,6 @@
 #include "ini.h"
 
 int                     MIDI_DEBUG	       = TRUE;
-static int              TCP                    = FALSE;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
 static int		fdMidi1		       = -1;
@@ -179,7 +178,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
                     if (!misc_is_ip_addr(ipAddr))
                         misc_hostname_to_ip(ipAddr, ipAddr);
-                    sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
+                    sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
                     write(fdSerial, tmp, strlen(tmp));
                     socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
                     if(socket_out > 0)
@@ -188,6 +187,8 @@ void do_modem_emulation(char * buf, int bufLen)
                         write(fdSerial, tmp, strlen(tmp));
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
+                    else
+                        write(fdSerial, "\r\nOK\r\n", 6);
                 }
             }
             else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
@@ -197,12 +198,12 @@ void do_modem_emulation(char * buf, int bufLen)
                 if (setbaud_is_valid_rate (iBaud))
                 {
                     int sec = 10;
-                    sprintf(tmp, "\r\nSetting BAUD to %d in %d seconds...\r\n", iBaud, sec);
+                    sprintf(tmp, "\r\nSetting BAUD to %d in %d seconds...", iBaud, sec);
                     write(fdSerial, tmp, strlen(tmp));
                     sleep(sec);
                     setbaud_set_baud(serialDevice, fdSerial, iBaud);
                     midiServerBaud = iBaud;
-                    sprintf(tmp, "\r\nBAUD has been set to %d\r\n", iBaud);
+                    sprintf(tmp, "\r\nBAUD has been set to %d", iBaud);
                     write(fdSerial, tmp, strlen(tmp));
                 }
                 else
@@ -210,6 +211,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     sprintf(tmp, "\r\nBAUD rate '%d' is not valid.\r\n", iBaud);
                     write(fdSerial, tmp, strlen(tmp));
                 }
+                write(fdSerial, "\r\nOK\r\n", 6);
             } 
             else if (memcmp(lineBuf, "ATIP", 4) == 0)
             {
@@ -332,7 +334,7 @@ void * midi1in_thread_function (void * x)
 // write_socket_packet()
 // this is for TCP/IP
 //
-void write_socket_packet(char * buf, int bufLen)
+void write_socket_packet(char * buf, int bufLen, int TCP)
 {
     if (TCP)
         tcpsock_write(socket_out, buf, bufLen);
@@ -420,7 +422,7 @@ int main(int argc, char *argv[])
     int MUNTGM = FALSE;
     int FSYNTH = FALSE;
     int UDP    = FALSE;
-    //int TCP    = FALSE;
+    int TCP    = FALSE;
 
     if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice))
     {
@@ -513,7 +515,8 @@ int main(int argc, char *argv[])
             } while (TRUE);
         }
         else
-        {   close_fd();
+        {   
+            close_fd();
             return -2;
         }
         close_fd();
@@ -608,7 +611,7 @@ int main(int argc, char *argv[])
                 write_midi_packet(buf, rdLen);
             if(socket_out != -1)
             {
-                write_socket_packet(buf,rdLen);
+                write_socket_packet(buf, rdLen, TCP);
                 if (TCP == TRUE)
                     do_check_modem_hangup(buf, rdLen);
             }

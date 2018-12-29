@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <linux/soundcard.h>
+#include <errno.h>
 #include "misc.h"
 static struct sockaddr_in server_addr;
 
@@ -20,7 +21,7 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
     int sock = 0, valread;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Socket creation error\r\n\n");
+        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
         if (fdSerial > 0)
            write(fdSerial, tmp, strlen(tmp));
         return -1;
@@ -28,11 +29,10 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
-    //server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     
     if (inet_pton(AF_INET, ipAddr, &server_addr.sin_addr) <= 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address\r\n");
+        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : %s", ipAddr);
         if (fdSerial > 0)
            write(fdSerial, tmp, strlen(tmp));
         return -1;
@@ -40,7 +40,7 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
 
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
-        sprintf(tmp,"\r\nERROR: tcpsock_client_connect()--> Connect Failed\r\n");
+        sprintf(tmp,"\r\nERROR: tcpsock_client_connect() --> %s", strerror(errno));
         if (fdSerial > 0)
            write(fdSerial, tmp, strlen(tmp));
         return -1;
