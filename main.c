@@ -35,7 +35,8 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
 
-
+enum MODE {ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeNONE};
+ 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void show_debug_buf(char * descr, char * buf, int bufLen) 
@@ -356,9 +357,9 @@ void * midi1in_thread_function (void * x)
 // write_socket_packet()
 // this is for TCP/IP
 //
-void write_socket_packet(char * buf, int bufLen, int TCP)
+void write_socket_packet(char * buf, int bufLen, int mode)
 {
-    if (TCP)
+    if (mode == ModeTCP)
         tcpsock_write(socket_out, buf, bufLen);
     else
         udpsock_write(socket_out, buf, bufLen);
@@ -440,32 +441,29 @@ int main(int argc, char *argv[])
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
 
-    int MUNT   = FALSE;
-    int MUNTGM = FALSE;
-    int FSYNTH = FALSE;
-    int UDP    = FALSE;
-    int TCP    = FALSE;
-
+    enum MODE mode = ModeNONE; 
+    
     if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice))
     {
-        if (misc_check_file("/tmp/ML_MUNT"))   MUNT   = TRUE;
-        if (misc_check_file("/tmp/ML_MUNTGM")) MUNTGM = TRUE;
-        if (misc_check_file("/tmp/ML_FSYNTH")) FSYNTH = TRUE;
-        if (misc_check_file("/tmp/ML_UDP"))    UDP    = TRUE;
-        if (misc_check_file("/tmp/ML_TCP"))    TCP    = TRUE;
-        if (!MUNT && !MUNTGM && !FSYNTH && !UDP)
+        if (misc_check_file("/tmp/ML_MUNT"))   mode   = ModeMUNT;
+        if (misc_check_file("/tmp/ML_MUNTGM")) mode   = ModeMUNTGM;
+        if (misc_check_file("/tmp/ML_FSYNTH")) mode   = ModeFSYNTH;
+        if (misc_check_file("/tmp/ML_UDP"))    mode   = ModeUDP;
+        if (misc_check_file("/tmp/ML_TCP"))    mode   = ModeTCP;
+        if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH && 
+            mode != ModeTCP && mode != ModeUDP)
         {
             misc_print("AUTO --> TCP\n");
-            TCP = TRUE;
+            mode = ModeTCP;
         }
     }
     else
     {
-        MUNT   = misc_check_args_option(argc, argv, "MUNT");
-        MUNTGM = misc_check_args_option(argc, argv, "MUNTGM");
-        FSYNTH = misc_check_args_option(argc, argv, "FSYNTH");
-        UDP    = misc_check_args_option(argc, argv, "UDP");
-        TCP    = misc_check_args_option(argc, argv, "TCP");
+        if(misc_check_args_option(argc, argv, "MUNT"))   mode = ModeMUNT;
+        if(misc_check_args_option(argc, argv, "MUNTGM")) mode = ModeMUNTGM;
+        if(misc_check_args_option(argc, argv, "FSYNTH")) mode = ModeFSYNTH;
+        if(misc_check_args_option(argc, argv, "UDP"))    mode = ModeUDP;
+        if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
     }
 
     misc_print("Killing --> fluidsynth\n");
@@ -474,14 +472,14 @@ int main(int argc, char *argv[])
     system("killall -q mt32d");
     sleep(3);
 
-    if (MUNT || MUNTGM)
+    if (mode == ModeMUNT || mode == ModeMUNTGM)
     {
         set_pcm_volume(muntVolume);
         misc_print("Starting --> mt32d\n");
         system("mt32d &");
         sleep(2);
     }
-    else if (FSYNTH)
+    else if (mode == ModeFSYNTH)
     {
         set_pcm_volume(fsynthVolume);
         misc_print("Starting --> fluidsynth\n");
@@ -500,11 +498,11 @@ int main(int argc, char *argv[])
 
     serial_set_interface_attribs(fdSerial);
 
-    if (UDP && midiServerBaud != -1)
+    if (mode == ModeUDP && midiServerBaud != -1)
     {
         //do nothing. 
     }
-    else if (TCP)
+    else if (mode == ModeTCP)
     {
         midiServerBaud = 115200;
     }
@@ -520,9 +518,9 @@ int main(int argc, char *argv[])
 
     serial_do_tcdrain(fdSerial);
 
-    if (MUNT || MUNTGM || FSYNTH)
+    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
-        if(alsa_open_seq(128, MUNTGM))
+        if(alsa_open_seq(128, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
             do
@@ -545,7 +543,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (UDP)
+    if (mode == ModeUDP)
     {
         if (strlen(midiServer) > 7)
         {
@@ -572,7 +570,7 @@ int main(int argc, char *argv[])
             return -4;
         }
     }
-    else if (!TCP)
+    else if (mode != ModeTCP)
     {
         fdMidi = open(midiDevice, O_RDWR);
         if (fdMidi < 0)
@@ -633,12 +631,12 @@ int main(int argc, char *argv[])
                 write_midi_packet(buf, rdLen);
             if(socket_out != -1)
             {
-                if (TCP == TRUE)
+                if (mode == ModeTCP)
                     do_check_modem_hangup(buf, rdLen);
                 if(socket_out != -1)
-                    write_socket_packet(buf, rdLen, TCP);
+                    write_socket_packet(buf, rdLen, mode);
             }
-            else if (TCP == TRUE)
+            else if (mode == ModeTCP)
                 do_modem_emulation(buf, rdLen);
         }
         else if (rdLen < 0)
