@@ -8,5 +8,7 @@ void misc_print( const char* format, ... );
 int  misc_is_ip_addr(char *ipAddr);
 int  misc_hostname_to_ip(char * hostname , char* ipAddr);
 int  misc_get_ipaddr(char * interface, char * buf);
+int  misc_is_number(char *testStr);
+
 #define TRUE 1
 #define FALSE 0

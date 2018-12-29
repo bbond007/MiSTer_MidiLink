@@ -140,6 +140,23 @@ int misc_is_ip_addr(char *ipAddr)
             return FALSE;
     return TRUE;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_is_number(char *testStr)
+//
+int misc_is_number(char *testStr)
+{
+    char validChr[] = "0987654321";
+    int bNum = FALSE;
+    for(int i = 0; i < strlen(testStr); i++)
+        if (strchr(validChr, testStr[i]) == NULL)
+            return FALSE;
+        else
+            bNum = TRUE;    
+    return bNum;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int misc_hostname_to_ip(char * hostname , char* ip)
@@ -184,3 +201,4 @@ int misc_get_ipaddr(char * interface, char * buf)
     sprintf(buf, "%s --> %s", interface, (result == 0)?inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr):"N/A");
     return 0;
 }
+

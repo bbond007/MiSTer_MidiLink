@@ -174,9 +174,11 @@ void do_modem_emulation(char * buf, int bufLen)
                 if (strlen(ipAddr) < 3)
                 {
                     char serror   [] = "\r\nSyntax Error";
+                    char line[] = "\r\n----------------------------------";
                     char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
                     char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999\r\nOK\r\n";
                     write(fdSerial, serror,   strlen(serror));
+                    write(fdSerial, line, sizeof(line));
                     write(fdSerial, example1, strlen(example1));
                     write(fdSerial, example2, strlen(example2));
                 }
@@ -210,7 +212,9 @@ void do_modem_emulation(char * buf, int bufLen)
             else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
             {
                 char * baud = &lineBuf[6];
-                int iBaud = strtol(baud, &endPtr, 10);
+                int iBaud   = strtol(baud, &endPtr, 10);
+                int iTemp   = setbaud_baud_at_index(iBaud);
+                iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;  
                 if (setbaud_is_valid_rate (iBaud))
                 {
                     int sec = 10;
@@ -224,8 +228,10 @@ void do_modem_emulation(char * buf, int bufLen)
                 }
                 else
                 {
-                    sprintf(tmp, "\r\nBAUD rate '%d' is not valid.\r\n", iBaud);
+                    if(baud[0] != 0x00)
+                        sprintf(tmp, "\r\nBAUD rate '%s' is not valid.", baud);
                     write(fdSerial, tmp, strlen(tmp));
+                    setbaud_show_menu(fdSerial);
                 }
                 write(fdSerial, "\r\nOK\r\n", 6);
             } 
