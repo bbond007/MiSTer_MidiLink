@@ -98,7 +98,7 @@ void * udpsock_thread_function (void * x)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// do_check_modem_hangup(char * buf, int bufLen) 
+// void do_check_modem_hangup(char * buf, int bufLen) 
 //  
 //
 void do_check_modem_hangup(char * buf, int bufLen)
@@ -123,7 +123,7 @@ void do_check_modem_hangup(char * buf, int bufLen)
                 if(MIDI_DEBUG)
                     misc_print("HANG-UP Detected.\n");
                 write(fdSerial, tmp, strlen(tmp));
-                write(fdSerial, "OK\r\n", 4);                
+                write(fdSerial, "OK\r\n", 4);
             }          
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
@@ -627,9 +627,10 @@ int main(int argc, char *argv[])
                 write_midi_packet(buf, rdLen);
             if(socket_out != -1)
             {
-                write_socket_packet(buf, rdLen, TCP);
                 if (TCP == TRUE)
                     do_check_modem_hangup(buf, rdLen);
+                if(socket_out != -1)
+                    write_socket_packet(buf, rdLen, TCP);
             }
             else if (TCP == TRUE)
                 do_modem_emulation(buf, rdLen);
