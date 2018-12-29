@@ -32,7 +32,7 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
     
     if (inet_pton(AF_INET, ipAddr, &server_addr.sin_addr) <= 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : %s", ipAddr);
+        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : '%s'", ipAddr);
         if (fdSerial > 0)
            write(fdSerial, tmp, strlen(tmp));
         return -1;
