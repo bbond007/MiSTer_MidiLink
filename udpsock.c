@@ -30,7 +30,7 @@ int udpsock_client_connect(char * ipAddr, int port)
         server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     else if(inet_pton(AF_INET, ipAddr, &server_addr.sin_addr)<=0)
     {
-        misc_print("ERROR: socket_client_connect() --> Invalid IP address\n");
+        misc_print("ERROR: udpsock_client_connect() --> Invalid IP address\n");
         return -1;
     }
 
@@ -41,7 +41,7 @@ int udpsock_client_connect(char * ipAddr, int port)
         if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, (void *)
                        &multicastTTL, sizeof(multicastTTL)) < 0)
         {
-            misc_print("ERROR: socket_client_connect() --> setsockopt MULTICAST failed\n");
+            misc_print("ERROR: udpsock_client_connect() --> setsockopt MULTICAST failed\n");
             return -1;
         }
     }
@@ -73,7 +73,7 @@ int udpsock_server_open(int port)
     // Creating socket file descriptor
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
     {
-        misc_print("ERROR: socket_server_open() --> socket creation failed");
+        misc_print("ERROR: udpsock_server_open() --> socket creation failed");
         return -1;
     }
     memset(&servaddr, 0, sizeof(servaddr));
@@ -85,7 +85,7 @@ int udpsock_server_open(int port)
     if (bind(sock, (const struct sockaddr *)&servaddr,
              sizeof(servaddr)) < 0 )
     {
-        misc_print("ERROR: socket_server_open() --> bind failed\n");
+        misc_print("ERROR: udpsock_server_open() --> bind failed\n");
         return -1;
     }
     return sock;

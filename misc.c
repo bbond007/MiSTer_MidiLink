@@ -2,14 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <unistd.h> // close function
-#include <sys/resource.h>
+#include <unistd.h> 
 #include <stdarg.h>
 #include <pthread.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
 #include "misc.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -121,3 +127,60 @@ int misc_ipaddr_is_multicast(char * ipAddr)
     return FALSE;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_is_ip_addr(char *ipAddr)
+//
+int misc_is_ip_addr(char *ipAddr)
+{
+    char validChr[] = ".0987654321";
+
+    for(int i = 0; i < strlen(ipAddr); i++)
+        if (strchr(validChr, ipAddr[i])!= NULL)
+            return FALSE;
+    return TRUE;
+}
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_hostname_to_ip(char * hostname , char* ip)
+//
+int misc_hostname_to_ip(char * hostname, char* ipAddr)
+{
+    struct hostent *he;
+    struct in_addr **addr_list;
+    int i;
+    if ( (he = gethostbyname( hostname ) ) == NULL)
+    {
+        // get the host info
+        misc_print("ERROR : misc_hostname_to_ip()\n");
+        return FALSE;
+    }
+    addr_list = (struct in_addr **) he->h_addr_list;
+    for(i = 0; addr_list[i] != NULL; i++)
+    {
+        //Return the first one;
+        strcpy(ipAddr, inet_ntoa(*addr_list[i]) );
+        return TRUE;
+    }
+    return FALSE;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_get_ipaddr(char * interface, char * buf)
+//
+int misc_get_ipaddr(char * interface, char * buf)
+{
+    int fd;
+    struct ifreq ifr;
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    /* I want to get an IPv4 IP address */
+    ifr.ifr_addr.sa_family = AF_INET;
+    /* I want IP address attached to "eth0" */
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
+    int result = ioctl(fd, SIOCGIFADDR, &ifr);
+    close(fd);
+    /* display result */
+    sprintf(buf, "%s --> %s", interface, (result == 0)?inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr):"N/A");
+    return 0;
+}

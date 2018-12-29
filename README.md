@@ -52,8 +52,12 @@ The 'midilink' daemon currently supports following switches / options:
       UDP      - Send MIDI to UDP Port (INI setting MIDI_SERVER /
                  MIDI_SERVER_PORT)
 
-      AUTO     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, /tmp/ML_FSYNTH 
-                 used with MiSTer Menu to set mode of operation. 
+      TCP      - Works like a modem with AT commands: 
+                 (ATDT, ATBAUD, ATIPADDR, +++ATH)
+
+      AUTO     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
+                 /tmp/ML_FSYNTH, /tmp/ML_TCP used with MiSTer
+                 Menu to set mode of operation. 
 
 The Midilink INI file:
 

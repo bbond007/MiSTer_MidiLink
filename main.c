@@ -6,15 +6,19 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <linux/soundcard.h>
+#include <ctype.h>
+
 #include "setbaud.h"
 #include "serial.h"
 #include "config.h"
 #include "misc.h"
 #include "udpsock.h"
+#include "tcpsock.h"
 #include "alsa.h"
 #include "ini.h"
 
 int                     MIDI_DEBUG	       = TRUE;
+static int              TCP                    = FALSE;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
 static int		fdMidi1		       = -1;
@@ -32,31 +36,219 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void show_debug_buf(char * descr, char * buf, int bufLen) 
+//
+void show_debug_buf(char * descr, char * buf, int bufLen)
+{
+    if(MIDI_DEBUG)
+    {
+        misc_print("%s[%02d] -->", descr, bufLen);
+        for (unsigned char * byte = buf; bufLen-- > 0; byte++)
+            misc_print(" %02x", *byte);
+        misc_print("\n");
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * socket_thread_function(void * x)
 // Thread function for /dev/midi input
 //
-void * udpsock_thread_function (void * x)
+void * tcpsock_thread_function (void * x)
 {
     unsigned char buf[100];
-    unsigned char * byte;
     int rdLen;
-    do 
+    do
     {
-        rdLen = udpsock_read(socket_in, (char *) buf, sizeof(buf));
+        rdLen = tcpsock_read(socket_out, (char *) buf, sizeof(buf));
         if (rdLen > 0)
         {
             write(fdSerial, buf, rdLen);
-            if(MIDI_DEBUG)
-            {
-                misc_print("SOCK IN  [%02d] -->", rdLen);
-                for (byte = buf; rdLen-- > 0; byte++)
-                    misc_print(" %02x", *byte);
-                misc_print("\n");
-            }
-        }        
+            show_debug_buf("TSOCK IN ", buf, rdLen);            
+        }
+    } while (socket_out != -1);
+    if(MIDI_DEBUG)
+       misc_print("TCPSOCK Thread fuction exiting.\n", socket_out);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void * udpsock_thread_function(void * x)
+// Thread function for /dev/midi input
+//
+void * udpsock_thread_function (void * x)
+{
+    unsigned char buf[100];
+    int rdLen;
+    do
+    {
+        rdLen = udpsock_read(socket_in,  (char *) buf, sizeof(buf));
+        if (rdLen > 0)
+        {
+            write(fdSerial, buf, rdLen);
+            show_debug_buf("USOCK IN ", buf, rdLen);            
+        }
     } while (TRUE);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// do_check_modem_hangup(char * buf, int bufLen) 
+//  
+//
+void do_check_modem_hangup(char * buf, int bufLen)
+{
+    static char lineBuf[8];    
+    static char iLineBuf = 0;
+    static char lastChar = 0x00;
+    char tmp[100] = "";
+    
+    for (char * p = buf; bufLen-- > 0; p++)
+    {
+        //*p = toupper(*p);
+        switch(*p)
+        {
+        case 0x0d:// [RETURN]
+            if(memcmp(lineBuf, "+++ATH", 6) == 0)
+            {
+                close(socket_out);
+                socket_out = -1;
+                sleep(1);
+                sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
+                if(MIDI_DEBUG)
+                    misc_print("HANG-UP Detected.\n");
+                write(fdSerial, tmp, strlen(tmp));
+                write(fdSerial, "OK\r\n", 4);                
+            }          
+            iLineBuf = 0;
+            lineBuf[iLineBuf] = 0x00;
+            lastChar = 0x0d;
+            break;
+        case '+': // RESET BUFFER
+            if (lastChar != '+')
+                iLineBuf = 0;
+        default:  
+            if (iLineBuf < sizeof(lineBuf)-1)
+            {
+                lineBuf[iLineBuf++] = *p;
+                lineBuf[iLineBuf] = 0x00;
+            }
+            lastChar = *p;
+            break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void do_modem_emulation(char * buf, int bufLen)
+//
+//
+void do_modem_emulation(char * buf, int bufLen)
+{
+    static char lineBuf[150] = "";
+    static char iLineBuf = 0;
+    char tmp[100]  = "";
+    char * endPtr;
+    
+    show_debug_buf("SER OUT  ", buf, bufLen);
+    for (char * p = buf; bufLen-- > 0; p++)
+    {
+        *p = toupper(*p);
+        switch(*p)
+        {
+        case ' ':  // [SPACE] no space
+            break;
+        case 0x0D: // [RETURN]
+            if(memcmp(lineBuf, "ATDT", 4) == 0)
+            {
+                char * colon  = strchr(lineBuf, ':');
+                char * port   = (colon == NULL)?NULL:(colon + 1);
+                char * ipAddr = &lineBuf[4];
+                if (colon != NULL) *colon = 0x00;
+                if (strlen(ipAddr) < 3)
+                {
+                    char example [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999\r\n";
+                    write(fdSerial, example, strlen(example));
+                }
+                else
+                {
+                    int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
+                    if (!misc_is_ip_addr(ipAddr))
+                        misc_hostname_to_ip(ipAddr, ipAddr);
+                    sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
+                    write(fdSerial, tmp, strlen(tmp));
+                    socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
+                    if(socket_out > 0)
+                    {
+                        sprintf(tmp, "\r\nCONNECTED %d\r\n", midiServerBaud);
+                        write(fdSerial, tmp, strlen(tmp));
+                        int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
+                    }
+                }
+            }
+            else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
+            {
+                char * baud = &lineBuf[6];
+                int iBaud = strtol(baud, &endPtr, 10);
+                if (setbaud_is_valid_rate (iBaud))
+                {
+                    int sec = 10;
+                    sprintf(tmp, "\r\nSetting BAUD to %d in %d seconds...\r\n", iBaud, sec);
+                    write(fdSerial, tmp, strlen(tmp));
+                    sleep(sec);
+                    setbaud_set_baud(serialDevice, fdSerial, iBaud);
+                    midiServerBaud = iBaud;
+                    sprintf(tmp, "\r\nBAUD has been set to %d\r\n", iBaud);
+                    write(fdSerial, tmp, strlen(tmp));
+                }
+                else
+                {
+                    sprintf(tmp, "\r\nBAUD rate '%d' is not valid.\r\n", iBaud);
+                    write(fdSerial, tmp, strlen(tmp));
+                }
+            } 
+            else if (memcmp(lineBuf, "ATIP", 4) == 0)
+            {
+                sprintf(tmp, "\r\n---------------------\r\n");
+                write(fdSerial, tmp, strlen(tmp));
+                misc_get_ipaddr("eth0", tmp);
+                write(fdSerial, " ", 1);
+                write(fdSerial, tmp, strlen(tmp));
+                write(fdSerial, "\r\n", 2);
+                misc_get_ipaddr("wlan0", tmp);
+                write(fdSerial, tmp, strlen(tmp));
+                write(fdSerial, "\r\nOK\r\n", 6);
+            }
+            else
+            {
+                write(fdSerial, "\r\n", 2);
+                write(fdSerial, lineBuf, iLineBuf);
+                write(fdSerial, "\r\n", 2);
+            }
+            iLineBuf = 0;
+            lineBuf[iLineBuf] = 0x00;
+            break;
+        case 0x08: // [DELETE]
+        case 0xf8: // [BACKSPACE]
+            if (iLineBuf > 0)
+            {
+                lineBuf[--iLineBuf] = 0x00;
+                write(fdSerial, p, 1);
+            }
+            break;
+        default:
+            if (iLineBuf < 80)
+            {
+                lineBuf[iLineBuf++] = *p;
+                write(fdSerial, p, 1);
+                lineBuf[iLineBuf] = 0x00;
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +259,6 @@ void * udpsock_thread_function (void * x)
 void * midi_thread_function (void * x)
 {
     unsigned char buf [100];
-    unsigned char * byte;
     int rdLen;
     do
     {
@@ -75,13 +266,7 @@ void * midi_thread_function (void * x)
         if (rdLen > 0)
         {
             write(fdSerial, buf, rdLen);
-            if (MIDI_DEBUG)
-            {
-                misc_print("MIDI IN  [%02d]-->", rdLen);
-                for (byte = buf; rdLen-- > 0; byte++)
-                    misc_print(" %02x",*byte);                
-                misc_print("\n");
-            }
+            show_debug_buf("MIDI IN  ", buf, rdLen);
         }
         else
         {
@@ -98,13 +283,7 @@ void * midi_thread_function (void * x)
 void write_midi_packet(char * buf, int bufLen)
 {
     write(fdMidi, buf, bufLen);
-    if (MIDI_DEBUG)
-    {
-        misc_print("MIDI OUT [%02d] -->", bufLen);
-        for (char * p = buf; bufLen-- > 0; p++)
-            misc_print(" %02x", *p);
-        misc_print("\n");
-    }
+    show_debug_buf("MIDI OUT ", buf, bufLen);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +304,6 @@ void test_midi_device()
 void * midi1in_thread_function (void * x)
 {
     unsigned char buf[100];             // bytes from sequencer driver
-    unsigned char * byte;
     int rdLen;
     do
     {
@@ -141,16 +319,10 @@ void * midi1in_thread_function (void * x)
             }
         }
         else
-        {    
+        {
             write(fdSerial, buf, rdLen);
             write(fdMidi, buf, rdLen);
-            if (MIDI_DEBUG)
-            {
-                misc_print("MIDI1 IN [%02d] -->", rdLen);
-                for (byte = buf; rdLen-- > 0; byte++)
-                    misc_print(" %02x", *byte);
-                misc_print("\n");
-            }
+            show_debug_buf("MIDI1 IN ", buf, rdLen);
         }
     } while (TRUE);
 }
@@ -162,14 +334,12 @@ void * midi1in_thread_function (void * x)
 //
 void write_socket_packet(char * buf, int bufLen)
 {
-    udpsock_write(socket_out, buf, bufLen);
-    if (MIDI_DEBUG)
-    {
-        misc_print("SOCK OUT [%02d] -->", bufLen);
-        for (char * p = buf; bufLen-- > 0; p++)
-            misc_print(" %02x", *p);
-        misc_print("\n");
-    }
+    if (TCP)
+        tcpsock_write(socket_out, buf, bufLen);
+    else
+        udpsock_write(socket_out, buf, bufLen);
+
+    show_debug_buf("SOCK OUT ", buf, bufLen);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -180,13 +350,7 @@ void write_socket_packet(char * buf, int bufLen)
 void write_alsa_packet(char * buf, int bufLen)
 {
     alsa_send_midi_raw(buf, bufLen);
-    if (MIDI_DEBUG)
-    {     
-        misc_print("SEQU OUT [%02d] -->", bufLen);
-        for (char * p = buf; bufLen-- > 0; p++)
-            misc_print(" %02x", *p);
-        misc_print("\n");
-    }
+    show_debug_buf("SEQU OUT ", buf, bufLen);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -235,54 +399,57 @@ void close_fd()
 // int main(int argc, char *argv[])
 //
 int main(int argc, char *argv[])
-{	
+{
     int status;
     unsigned char buf[256];
-    
-    misc_print("\e[2J\e[H"); 
+
+    misc_print("\e[2J\e[H");
     misc_print(helloStr);
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI);
-   
+
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
     else
         MIDI_DEBUG = TRUE;
-    
+
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
-             
+
     int MUNT   = FALSE;
     int MUNTGM = FALSE;
-    int FSYNTH = FALSE; 
-    int UDP    = FALSE; 
-    
-    if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice)) 
+    int FSYNTH = FALSE;
+    int UDP    = FALSE;
+    //int TCP    = FALSE;
+
+    if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice))
     {
         if (misc_check_file("/tmp/ML_MUNT"))   MUNT   = TRUE;
         if (misc_check_file("/tmp/ML_MUNTGM")) MUNTGM = TRUE;
         if (misc_check_file("/tmp/ML_FSYNTH")) FSYNTH = TRUE;
         if (misc_check_file("/tmp/ML_UDP"))    UDP    = TRUE;
+        if (misc_check_file("/tmp/ML_TCP"))    TCP    = TRUE;
         if (!MUNT && !MUNTGM && !FSYNTH && !UDP)
-        { 
-            misc_print("AUTO --> UDP\n");
-            UDP = TRUE;
+        {
+            misc_print("AUTO --> TCP\n");
+            TCP = TRUE;
         }
     }
     else
     {
         MUNT   = misc_check_args_option(argc, argv, "MUNT");
         MUNTGM = misc_check_args_option(argc, argv, "MUNTGM");
-        FSYNTH = misc_check_args_option(argc, argv, "FSYNTH"); 
-        UDP    = misc_check_args_option(argc, argv, "UDP"); 
+        FSYNTH = misc_check_args_option(argc, argv, "FSYNTH");
+        UDP    = misc_check_args_option(argc, argv, "UDP");
+        TCP    = misc_check_args_option(argc, argv, "TCP");
     }
-    
+
     misc_print("Killing --> fluidsynth\n");
     system("killall -q fluidsynth");
     misc_print("Killing --> mt32d\n");
     system("killall -q mt32d");
     sleep(3);
-        
+
     if (MUNT || MUNTGM)
     {
         set_pcm_volume(muntVolume);
@@ -298,7 +465,7 @@ int main(int argc, char *argv[])
         system(buf);
         sleep(2);
     }
-        
+
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
@@ -307,20 +474,30 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    serial_set_interface_attribs(fdSerial); //SETS SERIAL PORT 38400 <-- perfect for ao486 / SoftMPU
-    
-    if (UDP && midiServerBaud > 0)
-        setbaud_set_baud(serialDevice, fdSerial, midiServerBaud);
+    serial_set_interface_attribs(fdSerial);
+
+    if (UDP && midiServerBaud != -1)
+    {
+        //do nothing. 
+    }
+    else if (TCP)
+    {
+        midiServerBaud = 115200;
+    }
     else
-    if (!misc_check_args_option(argc, argv, "38400"))
-        setbaud_set_baud(serialDevice, fdSerial, 31200);  // <-- not so good for Amiga where we need midi speed
-    else
-        misc_print("Setting %s to 38400 baud.\n",serialDevice);
+    {
+        if (misc_check_args_option(argc, argv, "38400"))
+            midiServerBaud = 38400;
+        else
+            midiServerBaud = 31250;
+    }
+
+    setbaud_set_baud(serialDevice, fdSerial, midiServerBaud);
 
     serial_do_tcdrain(fdSerial);
-      
+
     if (MUNT || MUNTGM || FSYNTH)
-    {        
+    {
         if(alsa_open_seq(128, MUNTGM))
         {
             show_line();
@@ -329,14 +506,17 @@ int main(int argc, char *argv[])
                 int rdLen = read(fdSerial, buf, sizeof(buf));
                 if (rdLen > 0)
                 {
-                    write_alsa_packet(buf, rdLen); 
+                    write_alsa_packet(buf, rdLen);
                 }
                 else if (rdLen < 0)
                     misc_print("ERROR: from read --> %d: %s\n", rdLen, strerror(errno));
             } while (TRUE);
         }
         else
-            return -2;            
+        {   close_fd();
+            return -2;
+        }
+        close_fd();
         return 0;
     }
 
@@ -348,7 +528,7 @@ int main(int argc, char *argv[])
             socket_out = udpsock_client_connect(midiServer, midiServerPort);
             socket_in  = udpsock_server_open(midiServerPort);
             if(socket_in > 0)
-            {   
+            {
                 misc_print("Socket Listener created on port %d.\n", midiServerPort);
                 status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
                 if (status == -1)
@@ -359,14 +539,15 @@ int main(int argc, char *argv[])
                 }
                 misc_print("Socket input thread created.\n");
             }
-        }   
+        }
         else
         {
             misc_print("ERROR: in INI File (MIDI_SERVER) --> %s\n", midiLinkINI);
+            close_fd();
             return -4;
-        }            
+        }
     }
-    else
+    else if (!TCP)
     {
         fdMidi = open(midiDevice, O_RDWR);
         if (fdMidi < 0)
@@ -376,7 +557,6 @@ int main(int argc, char *argv[])
             return -5;
         }
 
-#ifdef MIDI_INPUT
         //if (misc_check_args_option(argc, argv, "MIDI1")
         if (misc_check_device(midi1Device))
         {
@@ -388,14 +568,12 @@ int main(int argc, char *argv[])
                 return -6;
             }
         }
-#endif
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
         {
             misc_print("Testing --> %s\n", midiDevice);
             test_midi_device();
         }
 
-#ifdef MIDI_INPUT
         if (fdMidi1 != -1)
         {
             status = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
@@ -418,9 +596,6 @@ int main(int argc, char *argv[])
         }
         misc_print("MIDI input thread created.\n");
         misc_print("CONNECT : %s <--> %s\n", serialDevice, midiDevice);
-#else
-        misc_print("CONNECT : %s --> %s\n", serialDevice, midiDevice);
-#endif
     }
     show_line();
     //  Main thread handles MIDI output
@@ -432,7 +607,13 @@ int main(int argc, char *argv[])
             if(fdMidi != -1)
                 write_midi_packet(buf, rdLen);
             if(socket_out != -1)
+            {
                 write_socket_packet(buf,rdLen);
+                if (TCP == TRUE)
+                    do_check_modem_hangup(buf, rdLen);
+            }
+            else if (TCP == TRUE)
+                do_modem_emulation(buf, rdLen);
         }
         else if (rdLen < 0)
             misc_print("ERROR: from read: %d: %s\n", rdLen, strerror(errno));

@@ -21,8 +21,8 @@ int serial_set_interface_attribs(int fd)
         return -1;
     }
 
-    cfsetospeed(&tty, (speed_t)B38400);
-    cfsetispeed(&tty, (speed_t)B38400);
+//    cfsetospeed(&tty, (speed_t)B38400);
+//    cfsetispeed(&tty, (speed_t)B38400);
 
     tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
     tty.c_cflag &= ~CSIZE;
