@@ -177,7 +177,11 @@ void do_modem_emulation(char * buf, int bufLen)
                 {
                     int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
                     if (!misc_is_ip_addr(ipAddr))
-                        misc_hostname_to_ip(ipAddr, ipAddr);
+                        if(!misc_hostname_to_ip(ipAddr, ipAddr))
+                        {
+                            sprintf(tmp, "\r\nERROR: Unable to convert hostname '%s' to IP address.", ipAddr);
+                            write(fdSerial, tmp, strlen(tmp));
+                        }   
                     sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
                     write(fdSerial, tmp, strlen(tmp));
                     socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
