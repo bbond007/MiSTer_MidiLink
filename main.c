@@ -42,7 +42,7 @@ static pthread_t	socketInThread;
 //
 void show_debug_buf(char * descr, char * buf, int bufLen)
 {
-    if(MIDI_DEBUG)
+    if(FALSE)//MIDI_DEBUG)
     {
         misc_print("%s[%02d] -->", descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
@@ -173,8 +173,12 @@ void do_modem_emulation(char * buf, int bufLen)
                 if (colon != NULL) *colon = 0x00;
                 if (strlen(ipAddr) < 3)
                 {
-                    char example [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999\r\n";
-                    write(fdSerial, example, strlen(example));
+                    char serror   [] = "\r\nSyntax Error";
+                    char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
+                    char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999\r\nOK\r\n";
+                    write(fdSerial, serror,   strlen(serror));
+                    write(fdSerial, example1, strlen(example1));
+                    write(fdSerial, example2, strlen(example2));
                 }
                 else
                 {
