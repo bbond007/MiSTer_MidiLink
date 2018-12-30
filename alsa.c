@@ -46,10 +46,10 @@ int alsa_open_seq(int _portNo, int _devNo)
 {
     portNo = _portNo;
     devNo  = _devNo;
-    misc_print("Opening ALSA address --> %d:%d\n", portNo, devNo);
+    misc_print(0, "Opening ALSA address --> %d:%d\n", portNo, devNo);
     if(snd_seq_open(&seq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
     {
-        misc_print("ERROR: snd_seq_open(%d, %d)\n", portNo, devNo);
+        misc_print(0, "ERROR: snd_seq_open(%d, %d)\n", portNo, devNo);
         return FALSE;
     }
     alsa_reset_seq_event(&ev);

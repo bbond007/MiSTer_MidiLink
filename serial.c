@@ -17,7 +17,7 @@ int serial_set_interface_attribs(int fd)
 
     if (tcgetattr(fd, &tty) < 0)
     {
-        misc_print("ERROR: serial_set_interface_attribs() from tcgetattr: %s\n", strerror(errno));
+        misc_print(0, "ERROR: serial_set_interface_attribs() from tcgetattr: %s\n", strerror(errno));
         return -1;
     }
 
@@ -42,7 +42,7 @@ int serial_set_interface_attribs(int fd)
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0)
     {
-        misc_print("ERROR: serial_set_interface_attribs() from tcsetattr: %s\n", strerror(errno));
+        misc_print(0, "ERROR: serial_set_interface_attribs() from tcsetattr: %s\n", strerror(errno));
         return -1;
     }
     

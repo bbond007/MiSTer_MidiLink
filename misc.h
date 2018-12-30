@@ -4,7 +4,7 @@ int  misc_check_file (char * fileName);
 int  misc_check_device (char * deviceName);
 int  misc_set_priority(int priority);
 int  misc_ipaddr_is_multicast(char * ipAddr);
-void misc_print( const char* format, ... );
+void misc_print(int priority, const char* format, ... );
 int  misc_is_ip_addr(char *ipAddr);
 int  misc_hostname_to_ip(char * hostname , char* ipAddr);
 int  misc_get_ipaddr(char * interface, char * buf);

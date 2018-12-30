@@ -56,9 +56,8 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
 int tcpsock_write(int sock, char * buf, int bufLen)
 {
     int result = write(sock, buf, bufLen);
-    if(MIDI_DEBUG)
-        if (result < 0)
-            misc_print("ERROR: tcpsock_write() --> %d : %s\n", result, strerror(errno));
+    if (result < 0)
+        misc_print(1, "ERROR: tcpsock_write() --> %d : %s\n", result, strerror(errno));
     return result;
 }
 
@@ -73,7 +72,7 @@ int tcpsock_server_open(int port)
     // Creating socket file descriptor
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0 )
     {
-        misc_print("ERROR: socket_server_open() --> socket creation failed");
+        misc_print(1, "ERROR: socket_server_open() --> socket creation failed");
         return -1;
     }
     memset(&servaddr, 0, sizeof(servaddr));
@@ -85,7 +84,7 @@ int tcpsock_server_open(int port)
     if (bind(sock, (const struct sockaddr *)&servaddr,
              sizeof(servaddr)) < 0 )
     {
-        misc_print("ERROR: tcpsock_server_open() --> bind failed :%s\n",
+        misc_print(0, "ERROR: tcpsock_server_open() --> bind failed :%s\n",
                    strerror(errno));
         return -1;
     }
@@ -102,9 +101,8 @@ int tcpsock_read(int sock, char * buf,  int bufLen)
 {
     int rdLen;
     rdLen = read(sock, buf, bufLen);
-    if(MIDI_DEBUG)
         if (rdLen < 0)
-            misc_print("ERROR: tcpsock_read() --> %d : %s\n", rdLen, strerror(errno));
+            misc_print(1, "ERROR: tcpsock_read() --> %d : %s\n", rdLen, strerror(errno));
     return rdLen;
 }
 
@@ -130,8 +128,7 @@ int tcpsock_accept(int sock)
 {
     int socket = accept(sock, (struct sockaddr*)NULL, NULL);
     if (socket < 0)
-        if (MIDI_DEBUG)
-            misc_print("ERROR: tcpsock_accept(%d) --> %s\n", sock, strerror(errno));
+        misc_print(1, "ERROR: tcpsock_accept(%d) --> %s\n", sock, strerror(errno));
     return socket;
 }
 
@@ -145,8 +142,7 @@ int tcpsock_getSO_ERROR(int sock)
     socklen_t len = sizeof err;
     if (-1 == getsockopt(sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len))
 
-        if (MIDI_DEBUG)
-            misc_print("ERROR: tcpsock_getSO_RRROR(%d) --> %s\n", sock, strerror(errno));
+    misc_print(1, "ERROR: tcpsock_getSO_RRROR(%d) --> %s\n", sock, strerror(errno));
     if (err)
         errno = err;              // set errno to the socket SO_ERROR
     return err;
@@ -163,14 +159,23 @@ int tcpsock_close(int sock)
         tcpsock_getSO_ERROR(sock); // first clear any errors, which can cause close to fail
         if (shutdown(sock, SHUT_RDWR) < 0) // secondly, terminate the 'reliable' delivery
             if (errno != ENOTCONN && errno != EINVAL) // SGI causes EINVAL
-                if (MIDI_DEBUG)
-                    misc_print("ERROR: tcpsock_close(%d) --> shutdown() : %s\n", sock, strerror(errno));
+                misc_print(1, "ERROR: tcpsock_close(%d) --> shutdown() : %s\n", sock, strerror(errno));
 
         if (close(sock) < 0) // finally call close()
-            if (MIDI_DEBUG)
-                misc_print("ERROR: tcpsock_close(%d) close() --> %s\n", sock, strerror(errno));
+            misc_print(1, "ERROR: tcpsock_close(%d) close() --> %s\n", sock, strerror(errno));
     }
     else
-        misc_print("ERROR: tcpsock_close() --> Invalid File Descriptor '%s'.\n", sock);
+        misc_print(1, "ERROR: tcpsock_close() --> Invalid File Descriptor '%s'.\n", sock);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void tcpsock_get_ip(int sock, char * buf) 
+//
+void tcpsock_get_ip(int sock, char * buf) 
+{
+    struct sockaddr_in addr;
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    int res = getpeername(sock, (struct sockaddr *)&addr, &addr_size);
+    strcpy(buf, inet_ntoa(addr.sin_addr));
+}

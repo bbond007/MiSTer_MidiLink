@@ -28,7 +28,7 @@ char * baudStr[4] = {" 0-110   1-300    2-600    3-1200",
 int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
 {
     struct termios2 tio;
-    misc_print("Setting %s to %d baud.\n",serialDevice, baud);
+    misc_print(0, "Setting %s to %d baud.\n",serialDevice, baud);
     ioctl(fdSerial, TCGETS2, &tio);
     tio.c_cflag &= ~CBAUD;
     tio.c_cflag |= BOTHER;

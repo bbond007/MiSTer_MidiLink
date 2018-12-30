@@ -23,15 +23,18 @@
 //  misc_print( const char* format, ... )
 //
 pthread_mutex_t print_lock;
-
-void misc_print( const char* format, ... )
+extern int MIDI_DEBUG;
+void misc_print(int priority, const char* format, ... )
 {
-    pthread_mutex_lock(&print_lock);
-    va_list args;
-    va_start (args, format);
-    vprintf (format, args);
-    va_end (args);
-    pthread_mutex_unlock(&print_lock);
+    if(MIDI_DEBUG || priority == 0)
+    {
+        pthread_mutex_lock(&print_lock);
+        va_list args;
+        va_start (args, format);
+        vprintf (format, args);
+        va_end (args);
+        pthread_mutex_unlock(&print_lock);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -77,13 +80,13 @@ int misc_check_args_option (int argc, char *argv[], char * option)
 int misc_check_device (char * deviceName)
 {
     struct stat filestat;
-    misc_print("Checking for --> %s : ", deviceName);
+    misc_print(0, "Checking for --> %s : ", deviceName);
     if (stat(deviceName, &filestat) != 0)
     {
-        misc_print("FALSE\n");
+        misc_print(0, "FALSE\n");
         return FALSE;
     }
-    misc_print("TRUE\n");
+    misc_print(0, "TRUE\n");
     return TRUE;
 }
 
@@ -102,11 +105,11 @@ int misc_check_file(char * fileName)
 //
 int misc_set_priority(int priority)
 {
-    misc_print("Setting task priority --> %d\n", priority);
+    misc_print(0, "Setting task priority --> %d\n", priority);
     if(setpriority(PRIO_PROCESS, getpid(), priority) == 0)
         return TRUE;
     else
-        misc_print("ERROR: unable to set task priority --> %s\n", strerror(errno));
+        misc_print(0, "ERROR: unable to set task priority --> %s\n", strerror(errno));
     return FALSE;
 }
 
@@ -169,7 +172,7 @@ int misc_hostname_to_ip(char * hostname, char* ipAddr)
     if ( (he = gethostbyname( hostname ) ) == NULL)
     {
         // get the host info
-        misc_print("ERROR : misc_hostname_to_ip()\n");
+        misc_print(0, "ERROR : misc_hostname_to_ip()\n");
         return FALSE;
     }
     addr_list = (struct in_addr **) he->h_addr_list;
