@@ -71,7 +71,7 @@ int tcpsock_server_open(int port)
     int sock;
     struct sockaddr_in servaddr;
     // Creating socket file descriptor
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0 )
     {
         misc_print("ERROR: socket_server_open() --> socket creation failed");
         return -1;
@@ -85,9 +85,11 @@ int tcpsock_server_open(int port)
     if (bind(sock, (const struct sockaddr *)&servaddr,
              sizeof(servaddr)) < 0 )
     {
-        misc_print("ERROR: socket_server_open() --> bind failed\n");
+        misc_print("ERROR: tcpsock_server_open() --> bind failed :%s\n", 
+           strerror(errno));
         return -1;
     }
+    listen(sock, 10); 
     return sock;
 }
 
@@ -104,4 +106,47 @@ int tcpsock_read(int sock, char * buf,  int bufLen)
         if (rdLen < 0) 
            misc_print("ERROR: tcpsock_read() --> %d : %s\n", rdLen, strerror(errno));
     return rdLen;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  int tcpsock_set_timeout(int sock, int timeSec);
+//
+int tcpsock_set_timeout(int sock, int timeSec)
+{
+    struct timeval tv;
+    tv.tv_sec = timeSec;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    return TRUE;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  int tcpsock_close(int sock)
+//
+int tcpsock_close(int sock)
+{
+    int status;
+    sleep(1);
+    status = shutdown(sock, SHUT_RDWR);
+    sleep(1);
+    status = close(sock);
+    if (status < 0)
+       if (MIDI_DEBUG)
+           misc_print("ERROR: tcpsock_close(%d) --> %s\n", sock, strerror(errno));
+    return status; 
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  int tcpsock_accept(int sock)
+//
+int tcpsock_accept(int sock)
+{ 
+    int socket = accept(sock, (struct sockaddr*)NULL, NULL);
+    if (socket < 0)
+       if (MIDI_DEBUG)
+           misc_print("ERROR: tcpsock_accept(%d) --> %s\n", sock, strerror(errno));
+    return socket;
 }

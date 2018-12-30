@@ -23,6 +23,7 @@ static int		fdMidi		       = -1;
 static int		fdMidi1		       = -1;
 static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
+static int 		socket_lst             = -1;
 char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
 char         		midiServer [50]        = "";
 int 			muntVolume             = -1;
@@ -34,12 +35,13 @@ unsigned int            midiServerFilterIP     = FALSE;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
+static pthread_t        socketLstThread;
 
 enum MODE {ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeNONE};
- 
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void show_debug_buf(char * descr, char * buf, int bufLen) 
+// void show_debug_buf(char * descr, char * buf, int bufLen)
 //
 void show_debug_buf(char * descr, char * buf, int bufLen)
 {
@@ -52,6 +54,43 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void * midi_thread_function(void * x)
+// Thread function for /dev/midi input
+//
+void * tcplst_thread_function (void * x)
+{
+    unsigned char buf[100];
+    int rdLen;
+
+    do
+    {
+        socket_in = tcpsock_accept(socket_lst);
+        tcpsock_set_timeout(socket_in, 10);
+        misc_print("Incomming connection\n");
+        char ringStr[] = "\r\nRING";
+        write(fdSerial, ringStr, strlen(ringStr));
+        sprintf(buf, "\r\nCONNECT %d\r\n", midiServerBaud);
+        write(fdSerial, buf, strlen(buf));
+        do
+        {
+            rdLen = read(socket_in, buf, sizeof(buf));
+            //printf("rdLen --> %d\n", rdLen);
+            if (rdLen > 0)
+            {
+                write(fdSerial, buf, rdLen);
+                show_debug_buf("TSERV IN", buf, rdLen);
+            }
+            else if (rdLen == 0)
+            {
+                close(socket_in);
+                socket_in = -1;
+                misc_print("tcplst_thread_function() --> Connection Closed.\n");
+            }
+        } while (socket_in != -1);
+    } while(TRUE);
+}
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * socket_thread_function(void * x)
@@ -67,14 +106,14 @@ void * tcpsock_thread_function (void * x)
         if (rdLen > 0)
         {
             write(fdSerial, buf, rdLen);
-            show_debug_buf("TSOCK IN ", buf, rdLen);            
+            show_debug_buf("TSOCK IN ", buf, rdLen);
         }
         else if(rdLen < 0)
             if (MIDI_DEBUG)
                 misc_print("ERROR: tcpsock_thread_function() --> rdLen < 0\n");
     } while (socket_out != -1);
     if(MIDI_DEBUG)
-       misc_print("TCPSOCK Thread fuction exiting.\n", socket_out);
+        misc_print("TCPSOCK Thread fuction exiting.\n", socket_out);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -92,23 +131,23 @@ void * udpsock_thread_function (void * x)
         if (rdLen > 0)
         {
             write(fdSerial, buf, rdLen);
-            show_debug_buf("USOCK IN ", buf, rdLen);            
+            show_debug_buf("USOCK IN ", buf, rdLen);
         }
     } while (TRUE);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void do_check_modem_hangup(char * buf, int bufLen) 
-//  
+// void do_check_modem_hangup(char * buf, int bufLen)
 //
-void do_check_modem_hangup(char * buf, int bufLen)
+//
+void do_check_modem_hangup(int * socket, char * buf, int bufLen)
 {
-    static char lineBuf[8];    
+    static char lineBuf[8];
     static char iLineBuf = 0;
     static char lastChar = 0x00;
     char tmp[100] = "";
-    
+
     for (char * p = buf; bufLen-- > 0; p++)
     {
         //*p = toupper(*p);
@@ -117,15 +156,15 @@ void do_check_modem_hangup(char * buf, int bufLen)
         case 0x0d:// [RETURN]
             if(memcmp(lineBuf, "+++ATH", 6) == 0)
             {
-                close(socket_out);
-                socket_out = -1;
+                tcpsock_close(*socket);
+                *socket =  -1;
                 sleep(1);
                 sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                 if(MIDI_DEBUG)
                     misc_print("HANG-UP Detected.\n");
                 write(fdSerial, tmp, strlen(tmp));
                 write(fdSerial, "OK\r\n", 4);
-            }          
+            }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
             lastChar = 0x0d;
@@ -133,7 +172,7 @@ void do_check_modem_hangup(char * buf, int bufLen)
         case '+': // RESET BUFFER
             if (lastChar != '+')
                 iLineBuf = 0;
-        default:  
+        default:
             if (iLineBuf < sizeof(lineBuf)-1)
             {
                 lineBuf[iLineBuf++] = *p;
@@ -156,7 +195,7 @@ void do_modem_emulation(char * buf, int bufLen)
     static char iLineBuf = 0;
     char tmp[100]  = "";
     char * endPtr;
-    
+
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
@@ -184,7 +223,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     write(fdSerial, example2, strlen(example2));
                 }
                 else
-                { 
+                {
                     int ipError = FALSE;
                     int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
                     if (!misc_is_ip_addr(ipAddr))
@@ -193,7 +232,7 @@ void do_modem_emulation(char * buf, int bufLen)
                             sprintf(tmp, "\r\nERROR: Unable to convert hostname '%s' to IP address.", ipAddr);
                             write(fdSerial, tmp, strlen(tmp));
                             ipError = TRUE;
-                        }   
+                        }
                     if(!ipError)
                     {
                         sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
@@ -215,7 +254,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 char * baud = &lineBuf[6];
                 int iBaud   = strtol(baud, &endPtr, 10);
                 int iTemp   = setbaud_baud_at_index(iBaud);
-                iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;  
+                iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;
                 if (setbaud_is_valid_rate (iBaud))
                 {
                     int sec = 10;
@@ -235,7 +274,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     setbaud_show_menu(fdSerial);
                 }
                 write(fdSerial, "\r\nOK\r\n", 6);
-            } 
+            }
             else if (memcmp(lineBuf, "ATIP", 4) == 0)
             {
                 sprintf(tmp, "\r\n-------------------------\r\n");
@@ -251,8 +290,8 @@ void do_modem_emulation(char * buf, int bufLen)
             else
             {
                 write(fdSerial, "\r\n", 2);
-                write(fdSerial, lineBuf, iLineBuf);
-                write(fdSerial, "\r\n", 2);
+                //write(fdSerial, lineBuf, iLineBuf);
+                //write(fdSerial, "\r\n", 2);
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
@@ -357,12 +396,12 @@ void * midi1in_thread_function (void * x)
 // write_socket_packet()
 // this is for TCP/IP
 //
-void write_socket_packet(char * buf, int bufLen, int mode)
+void write_socket_packet(int sock, char * buf, int bufLen, int mode)
 {
     if (mode == ModeTCP)
-        tcpsock_write(socket_out, buf, bufLen);
+        tcpsock_write(sock, buf, bufLen);
     else
-        udpsock_write(socket_out, buf, bufLen);
+        udpsock_write(sock, buf, bufLen);
 
     show_debug_buf("SOCK OUT ", buf, bufLen);
 }
@@ -415,8 +454,8 @@ void set_pcm_volume(int value)
 void close_fd()
 {
     if (fdSerial > 0) close (fdSerial);
-    if (fdMidi > 0)   close (fdMidi);
-    if (fdMidi1 > 0)  close (fdMidi1);
+    if (fdMidi   > 0) close (fdMidi);
+    if (fdMidi1  > 0) close (fdMidi1);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -441,8 +480,8 @@ int main(int argc, char *argv[])
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
 
-    enum MODE mode = ModeNONE; 
-    
+    enum MODE mode = ModeNONE;
+
     if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice))
     {
         if (misc_check_file("/tmp/ML_MUNT"))   mode   = ModeMUNT;
@@ -450,8 +489,8 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_FSYNTH")) mode   = ModeFSYNTH;
         if (misc_check_file("/tmp/ML_UDP"))    mode   = ModeUDP;
         if (misc_check_file("/tmp/ML_TCP"))    mode   = ModeTCP;
-        if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH && 
-            mode != ModeTCP && mode != ModeUDP)
+        if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
+                mode != ModeTCP && mode != ModeUDP)
         {
             misc_print("AUTO --> TCP\n");
             mode = ModeTCP;
@@ -500,7 +539,7 @@ int main(int argc, char *argv[])
 
     if (mode == ModeUDP && midiServerBaud != -1)
     {
-        //do nothing. 
+        //do nothing.
     }
     else if (mode == ModeTCP)
     {
@@ -535,7 +574,7 @@ int main(int argc, char *argv[])
             } while (TRUE);
         }
         else
-        {   
+        {
             close_fd();
             return -2;
         }
@@ -570,14 +609,26 @@ int main(int argc, char *argv[])
             return -4;
         }
     }
-    else if (mode != ModeTCP)
+    else if (mode == ModeTCP)
+    {
+        socket_lst = tcpsock_server_open(midiServerPort);
+        status = pthread_create(&socketLstThread, NULL, tcplst_thread_function, NULL);
+        if (status == -1)
+        {
+           misc_print("ERROR: unable to create socket listener thread.\n");
+           close_fd();
+           return -5;
+        }
+        misc_print("Socket listener thread created.\n");
+    }
+    else
     {
         fdMidi = open(midiDevice, O_RDWR);
         if (fdMidi < 0)
         {
             misc_print("ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
-            return -5;
+            return -6;
         }
 
         //if (misc_check_args_option(argc, argv, "MIDI1")
@@ -588,7 +639,7 @@ int main(int argc, char *argv[])
             {
                 misc_print("ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
                 close_fd();
-                return -6;
+                return -7;
             }
         }
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
@@ -604,7 +655,7 @@ int main(int argc, char *argv[])
             {
                 misc_print("ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
-                return -7;
+                return -8;
             }
             misc_print("MIDI1 input thread created.\n");
             misc_print("CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
@@ -615,7 +666,7 @@ int main(int argc, char *argv[])
         {
             misc_print("ERROR: unable to create MIDI input thread.\n");
             close_fd();
-            return -8;
+            return -9;
         }
         misc_print("MIDI input thread created.\n");
         misc_print("CONNECT : %s <--> %s\n", serialDevice, midiDevice);
@@ -629,14 +680,22 @@ int main(int argc, char *argv[])
         {
             if(fdMidi != -1)
                 write_midi_packet(buf, rdLen);
+
+            if(mode == ModeTCP && socket_in != -1)
+            {
+                do_check_modem_hangup(&socket_in, buf, rdLen);
+                if(socket_in != -1)
+                    write_socket_packet(socket_in, buf, rdLen, mode);
+            }
+
             if(socket_out != -1)
             {
                 if (mode == ModeTCP)
-                    do_check_modem_hangup(buf, rdLen);
+                    do_check_modem_hangup(&socket_out, buf, rdLen);
                 if(socket_out != -1)
-                    write_socket_packet(buf, rdLen, mode);
+                    write_socket_packet(socket_out, buf, rdLen, mode);
             }
-            else if (mode == ModeTCP)
+            else if (mode == ModeTCP && socket_in == -1)
                 do_modem_emulation(buf, rdLen);
         }
         else if (rdLen < 0)
