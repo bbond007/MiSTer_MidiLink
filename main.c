@@ -241,7 +241,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     if(socket_out > 0)
                     {
-                        sprintf(tmp, "\r\nCONNECTED %d\r\n", midiServerBaud);
+                        sprintf(tmp, "\r\nCONNECT %d\r\n", midiServerBaud);
                         write(fdSerial, tmp, strlen(tmp));
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
