@@ -78,7 +78,7 @@ The Midilink INI file:
       UDP_SERVER_PORT    = 1999         --> Port for UDP SERVER and local
                                             listening port
       
-      UDP__BAUD          = 2400         --> Set a different BPS for socket
+      UDP_BAUD           = 2400         --> Set a different BPS for socket
                                             connection (this is useful 
                                             this for serial connection
                                             for gaming (Populous)). This 
