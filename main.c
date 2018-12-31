@@ -32,6 +32,7 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+unsigned int            DELAYSYSEX	       = FALSE;
 unsigned int 		UDPServerPort          = 1999;
 unsigned int 		TCPServerPort          = 23;
 unsigned int            UDPServerFilterIP      = FALSE;
@@ -366,8 +367,37 @@ void * midi_thread_function (void * x)
 //
 void write_midi_packet(char * buf, int bufLen)
 {
-    write(fdMidi, buf, bufLen);
-    show_debug_buf("MIDI OUT ", buf, bufLen);
+    static int SYSEX = FALSE;
+    if (DELAYSYSEX) // This is for MT-32 Rev0 - 
+    {               // spoon-feed the SYSEX data and delay after  
+        misc_print(2, "MIDI OUT [%02d] -->", bufLen);
+        for (unsigned char * byte = buf; bufLen-- > 0; byte++)
+        {
+            switch (*byte)
+            {
+                case 0xF0: // SYSEX START
+                    misc_print(2, " SXD+ f0");
+                    SYSEX = TRUE;	   
+                    break;
+            	case 0xF7: // SYSEX END
+                    misc_print(2, " f7 SXD-");	   
+            	    SYSEX = FALSE;
+            	    usleep(20000);
+            	    break;
+                default:
+                    misc_print(2, " %02x", *byte);
+                    break;
+            }
+            if (SYSEX) usleep(100); 
+            write(fdMidi, byte, 1);
+        }
+        misc_print(2, "\n");
+    }
+    else
+    {
+        write(fdMidi, buf, bufLen);
+        show_debug_buf("MIDI OUT ", buf, bufLen);
+    }   
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

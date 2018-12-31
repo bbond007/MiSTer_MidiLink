@@ -15,6 +15,7 @@ extern unsigned int TCPServerPort;
 extern int          UDPBaudRate;
 extern int          TCPBaudRate;
 extern unsigned int UDPServerFilterIP;
+extern unsigned int DELAYSYSEX;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -81,6 +82,19 @@ char ini_process_key_value_pair(char * key, char * value)
         else
             UDPServerFilterIP = FALSE;
     }
+    else if (strcmp("DELAYSYSEX", key) == 0)
+    {
+        if (strlen(value) > 0)
+        {
+            char c = toupper(value[0]);
+            if (c == 'T' || c == 'Y')
+                DELAYSYSEX = TRUE;
+            else
+                DELAYSYSEX = FALSE;
+        }
+        else
+            DELAYSYSEX = FALSE;
+    }
     else if (strcmp("FSYNTH_SOUNDFONT", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
@@ -128,6 +142,7 @@ void ini_print_settings()
     misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
     misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
+    misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
         misc_ipaddr_is_multicast(UDPServer)?" MULTICAST":"");
     misc_print(0, "  - UDP_SERVER_PORT    --> %d\n",   UDPServerPort);
@@ -141,7 +156,7 @@ void ini_print_settings()
     else
     misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
     misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",   TCPServerPort);
-    misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
+    misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "\n");
 }
 
