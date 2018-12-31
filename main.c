@@ -17,7 +17,10 @@
 #include "alsa.h"
 #include "ini.h"
 
+enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
+
 int                     MIDI_DEBUG	       = TRUE;
+static enum MODE        mode                   = ModeNULL;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
 static int		fdMidi1		       = -1;
@@ -40,8 +43,6 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
 static pthread_t        socketLstThread;
-
-enum MODE {ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeNONE};
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -168,7 +169,6 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
 
     for (char * p = buf; bufLen-- > 0; p++)
     {
-        //*p = toupper(*p);
         switch(*p)
         {
         case 0x0d:// [RETURN]
@@ -376,20 +376,23 @@ void write_midi_packet(char * buf, int bufLen)
             switch (*byte)
             {
                 case 0xF0: // SYSEX START
+                    SYSEX = TRUE;
                     misc_print(2, " SXD+ f0");
-                    SYSEX = TRUE;	   
+                    write(fdMidi, byte, 1);
+                    usleep(100);	   
                     break;
             	case 0xF7: // SYSEX END
+                    SYSEX = FALSE;
                     misc_print(2, " f7 SXD-");	   
-            	    SYSEX = FALSE;
+            	    write(fdMidi, byte, 1);
             	    usleep(20000);
             	    break;
                 default:
                     misc_print(2, " %02x", *byte);
+                    write(fdMidi, byte, 1);
+                    if (SYSEX) usleep(100);
                     break;
             }
-            if (SYSEX) usleep(100); 
-            write(fdMidi, byte, 1);
         }
         misc_print(2, "\n");
     }
@@ -446,7 +449,7 @@ void * midi1in_thread_function (void * x)
 // write_socket_packet()
 // this is for TCP/IP
 //
-void write_socket_packet(int sock, char * buf, int bufLen, int mode)
+void write_socket_packet(int sock, char * buf, int bufLen)
 {
     if (mode == ModeTCP)
         tcpsock_write(sock, buf, bufLen);
@@ -531,8 +534,6 @@ int main(int argc, char *argv[])
 
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
-
-    enum MODE mode = ModeNONE;
 
     if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice))
     {
@@ -735,20 +736,18 @@ int main(int argc, char *argv[])
         {
             if(fdMidi != -1)
                 write_midi_packet(buf, rdLen);
-
             if(mode == ModeTCP && socket_in != -1)
             {
                 do_check_modem_hangup(&socket_in, buf, rdLen);
                 if(socket_in != -1)
-                    write_socket_packet(socket_in, buf, rdLen, mode);
+                    write_socket_packet(socket_in, buf, rdLen);
             }
-
             if(socket_out != -1)
             {
                 if (mode == ModeTCP)
                     do_check_modem_hangup(&socket_out, buf, rdLen);
                 if(socket_out != -1)
-                    write_socket_packet(socket_out, buf, rdLen, mode);
+                    write_socket_packet(socket_out, buf, rdLen);
             }
             else if (mode == ModeTCP && socket_in == -1)
                 do_modem_emulation(buf, rdLen);
