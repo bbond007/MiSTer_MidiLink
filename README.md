@@ -41,7 +41,7 @@ The 'midilink' daemon currently supports following switches / options:
       QUIET    - this option suppresses MIDI debug output.  
 
       38400    - this option sets the serial speed to 38400 baud 
-                 (default is 31200 baud) - used with ao486 core.
+                 (default is 31250 baud) - used with ao486 core.
       
       MUNT     - Use MUNT SoftSynth (no USB MIDI adapter 
                  required)
