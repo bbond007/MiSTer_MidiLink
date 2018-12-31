@@ -24,14 +24,17 @@ static int		fdMidi1		       = -1;
 static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
+static int 		baudRate	       = -1;
 char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
-char         		midiServer [50]        = "";
+char         		UDPServer [50]         = "";
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
-int 			midiServerBaud	       = -1;
-unsigned int 		midiServerPort         = 1999;
-unsigned int            midiServerFilterIP     = FALSE;
+int                     UDPBaudRate            = -1;
+int                     TCPBaudRate            = -1;
+unsigned int 		UDPServerPort          = 1999;
+unsigned int 		TCPServerPort          = 23;
+unsigned int            UDPServerFilterIP      = FALSE;
 static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
@@ -75,7 +78,7 @@ void * tcplst_thread_function (void * x)
         {
             char ringStr[] = "\r\nRING";
             write(fdSerial, ringStr, strlen(ringStr));
-            sprintf(buf, "\r\nCONNECT %d\r\n", midiServerBaud);
+            sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
             write(fdSerial, buf, strlen(buf));
             do
             {
@@ -220,20 +223,24 @@ void do_modem_emulation(char * buf, int bufLen)
         case 0x0D: // [RETURN]
             if(memcmp(lineBuf, "ATDT", 4) == 0)
             {
-                char * colon  = strchr(lineBuf, ':');
-                char * port   = (colon == NULL)?NULL:(colon + 1);
+                char * prtSep  = strchr(lineBuf, ':');
+                if(prtSep == NULL) 
+                    prtSep = strchr(lineBuf, '*'); // with NCOMM? 
+                char * port   = (prtSep == NULL)?NULL:(prtSep + 1);
                 char * ipAddr = &lineBuf[4];
-                if (colon != NULL) *colon = 0x00;
+                if (prtSep != NULL) *prtSep = 0x00;
                 if (strlen(ipAddr) < 3)
                 {
                     char serror   [] = "\r\nSyntax Error";
                     char line[] = "\r\n----------------------------------";
                     char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
-                    char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999\r\nOK\r\n";
+                    char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999";
+                    char example3 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999\r\nOK\r\n";
                     write(fdSerial, serror,   strlen(serror));
                     write(fdSerial, line, sizeof(line));
                     write(fdSerial, example1, strlen(example1));
                     write(fdSerial, example2, strlen(example2));
+                    write(fdSerial, example3, strlen(example3));
                 }
                 else
                 {
@@ -254,7 +261,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     if(socket_out > 0)
                     {
-                        sprintf(tmp, "\r\nCONNECT %d\r\n", midiServerBaud);
+                        sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
@@ -275,7 +282,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     write(fdSerial, tmp, strlen(tmp));
                     sleep(sec);
                     setbaud_set_baud(serialDevice, fdSerial, iBaud);
-                    midiServerBaud = iBaud;
+                    baudRate = iBaud;
                     sprintf(tmp, "\r\nBAUD has been set to %d", iBaud);
                     write(fdSerial, tmp, strlen(tmp));
                 }
@@ -552,23 +559,26 @@ int main(int argc, char *argv[])
 
     serial_set_interface_attribs(fdSerial);
 
-    if (mode == ModeUDP && midiServerBaud != -1)
+    if (mode == ModeUDP && UDPBaudRate != -1)
     {
-        //do nothing.
+        baudRate = UDPBaudRate;
     }
     else if (mode == ModeTCP)
     {
-        midiServerBaud = 115200;
+        if(TCPBaudRate != -1)
+            baudRate = TCPBaudRate;
+        else
+            baudRate = 115200;
     }
     else
     {
         if (misc_check_args_option(argc, argv, "38400"))
-            midiServerBaud = 38400;
+            baudRate = 38400;
         else
-            midiServerBaud = 31250;
+            baudRate = 31250;
     }
 
-    setbaud_set_baud(serialDevice, fdSerial, midiServerBaud);
+    setbaud_set_baud(serialDevice, fdSerial, baudRate);
 
     serial_do_tcdrain(fdSerial);
 
@@ -599,14 +609,14 @@ int main(int argc, char *argv[])
 
     if (mode == ModeUDP)
     {
-        if (strlen(midiServer) > 7)
+        if (strlen(UDPServer) > 7)
         {
-            misc_print(0, "Connecting to server --> %s:%d\n",midiServer, midiServerPort);
-            socket_out = udpsock_client_connect(midiServer, midiServerPort);
-            socket_in  = udpsock_server_open(midiServerPort);
+            misc_print(0, "Connecting to server --> %s:%d\n", UDPServer, UDPServerPort);
+            socket_out = udpsock_client_connect(UDPServer, UDPServerPort);
+            socket_in  = udpsock_server_open(UDPServerPort);
             if(socket_in > 0)
             {
-                misc_print(0, "Socket Listener created on port %d.\n", midiServerPort);
+                misc_print(0, "Socket Listener created on port %d.\n", UDPServerPort);
                 status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
                 if (status == -1)
                 {
@@ -626,7 +636,7 @@ int main(int argc, char *argv[])
     }
     else if (mode == ModeTCP)
     {
-        socket_lst = tcpsock_server_open(midiServerPort);
+        socket_lst = tcpsock_server_open(TCPServerPort);
         status = pthread_create(&socketLstThread, NULL, tcplst_thread_function, NULL);
         if (status == -1)
         {

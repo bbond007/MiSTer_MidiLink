@@ -64,20 +64,35 @@ The Midilink INI file:
       #This is a sample MidiLink.INI FILE  _[DESCRIPTION]_ 
 
       MIDILINK_PRIORITY  = -20          --> Sets the task priority of MidiLink
+      
       MUNT_VOLUME        = 71           --> Volume for MUNT (0 - 100)  
+      
       FSYNTH_VOLUME      = 83           --> Volume for FluidSynth (0 - 100)
-      MIDI_SERVER        = 192.168.1.52 --> MIDI server for UDP 
-      MIDI_SERVER_PORT   = 1999         --> Port for MIDI SERVER and local
+      
+      UDP_SERVER         = 192.168.1.52 --> MIDI server for UDP 
+      
+      UDP_SERVER_PORT    = 1999         --> Port for UDP SERVER and local
                                             listening port
-      #MIDI_SERVER_BAUD  = 2400         --> Set a different BPS for socket
+      
+      #UDP__BAUD         = 2400         --> Set a different BPS for socket
+                                            connection (this is useful 
+                                            this for serial connection
+                                            for gaming (Populous)). This 
+                                            overrides arg '38400' (UDP only) 
+      
+      UDP_SERVER_FILTER  = FALSE        --> Only accept Socket data from 
+                                            MIDI_SERVER IP (UDP only)
+
+      #TCP_BAUD          = 9600         --> Set a different BPS for socket
                                             connection (this is useful 
                                             this for serial connection
                                             for gaming (Populous)). This 
                                             overrides arg '38400' but only 
                                             when used with arg 'UDP'
-      MIDI_SERVER_FILTER = FALSE        --> Only accept Socket data from 
-                                            MIDI_SERVER IP
-														 
+      
+      TCP_SERVER_PORT    = 23           --> Port for TCP Listener
+                                 
+      														 
       FSYNTH_SOUNDFONT   = /media/fat/SOUNDFONT/default.sf2
                                         --> This is the soundfont For 
                                             FluidSynth. 

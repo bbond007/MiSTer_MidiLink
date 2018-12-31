@@ -100,7 +100,7 @@ int udpsock_server_open(int port)
 //
 // int udpsock_read(int sock, char * buf, int bufLen)
 //
-extern unsigned int midiServerFilterIP;
+extern unsigned int UDPServerFilterIP;
 
 int udpsock_read(int sock, char * buf,  int bufLen)
 {
@@ -116,7 +116,7 @@ int udpsock_read(int sock, char * buf,  int bufLen)
                      &addrLen);
 
     //throw out stuff not from the MIDI server
-    if (midiServerFilterIP && (client_addr.sin_addr.s_addr != server_addr.sin_addr.s_addr))
+    if (UDPServerFilterIP && (client_addr.sin_addr.s_addr != server_addr.sin_addr.s_addr))
     {
         char server_str[20];
         char client_str[20];

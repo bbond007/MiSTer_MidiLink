@@ -201,7 +201,8 @@ int misc_get_ipaddr(char * interface, char * buf)
     int result = ioctl(fd, SIOCGIFADDR, &ifr);
     close(fd);
     /* display result */
-    sprintf(buf, "%s --> %s", interface, (result == 0)?inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr):"N/A");
+    sprintf(buf, "%s --> %s", interface, (result == 0)?
+        inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr):"N/A");
     return 0;
 }
 

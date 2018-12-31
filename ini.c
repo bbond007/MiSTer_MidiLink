@@ -6,13 +6,15 @@
 #include "misc.h"
 
 char                fsynthSoundFont[150];
-extern char         midiServer[50];
+extern char         UDPServer[50];
 extern int          muntVolume;
 extern int          fsynthVolume;
 extern int          midilinkPriority;
-extern unsigned int midiServerPort;
-extern int          midiServerBaud;
-extern unsigned int midiServerFilterIP;
+extern unsigned int UDPServerPort;
+extern unsigned int TCPServerPort;
+extern int          UDPBaudRate;
+extern int          TCPBaudRate;
+extern unsigned int UDPServerFilterIP;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -48,30 +50,36 @@ char ini_process_key_value_pair(char * key, char * value)
         if(iTmp != 0)
             fsynthVolume = iTmp;
     }
-    else if(strcmp("MIDI_SERVER_PORT", key) == 0)
+    else if(strcmp("UDP_SERVER_PORT", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
         if(iTmp != 0)
-            midiServerPort = iTmp;
+            UDPServerPort = iTmp;
     }
-    else if (strcmp("MIDI_SERVER", key) == 0)
+    else if(strcmp("TCP_SERVER_PORT", key) == 0)
+    {
+        iTmp = strtol(value, &endPtr, 10);
+        if(iTmp != 0)
+            TCPServerPort = iTmp;
+    }
+    else if (strcmp("UDP_SERVER", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
         if(strlen(value) > 1)
-            strcpy(midiServer, value);
+            strcpy(UDPServer, value);
     }
-    else if (strcmp("MIDI_SERVER_FILTER", key) == 0)
+    else if (strcmp("UDP_SERVER_FILTER", key) == 0)
     {
         if (strlen(value) > 0)
         {
             char c = toupper(value[0]);
             if (c == 'T' || c == 'Y')
-                midiServerFilterIP = TRUE;
+                UDPServerFilterIP = TRUE;
             else
-                midiServerFilterIP = FALSE;
+                UDPServerFilterIP = FALSE;
         }
         else
-            midiServerFilterIP = FALSE;
+            UDPServerFilterIP = FALSE;
     }
     else if (strcmp("FSYNTH_SOUNDFONT", key) == 0)
     {
@@ -85,11 +93,17 @@ char ini_process_key_value_pair(char * key, char * value)
         if(iTmp != 0)
             midilinkPriority = iTmp;
     }
-    else if (strcmp("MIDI_SERVER_BAUD", key) == 0)
+    else if (strcmp("UDP_BAUD", key) == 0)
     {
         iTmp = strtol(value, &endPtr, 10);
         if(iTmp != 0)
-            midiServerBaud = iTmp;
+            UDPBaudRate = iTmp;
+    }
+    else if (strcmp("TCP_BAUD", key) == 0)
+    {
+        iTmp = strtol(value, &endPtr, 10);
+        if(iTmp != 0)
+            TCPBaudRate = iTmp;
     }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
@@ -102,6 +116,10 @@ char ini_process_key_value_pair(char * key, char * value)
 void ini_print_settings()
 {
     misc_print(0, "Settings:\n");
+    if(midilinkPriority != 0)
+    misc_print(0, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
+    else
+    misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");    
     if(muntVolume != -1)
     misc_print(0, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
@@ -110,19 +128,20 @@ void ini_print_settings()
     misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
     misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
-    misc_print(0, "  - MIDI_SERVER        --> '%s'%s\n", midiServer,
-        misc_ipaddr_is_multicast(midiServer)?" MULTICAST":"");
-    misc_print(0, "  - MIDI_SERVER_PORT   --> %d\n",   midiServerPort);
-    if(midiServerBaud > 0)
-    misc_print(0, "  - MIDI_SERVER_BAUD   --> %d\n",   midiServerBaud);
+    misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
+        misc_ipaddr_is_multicast(UDPServer)?" MULTICAST":"");
+    misc_print(0, "  - UDP_SERVER_PORT    --> %d\n",   UDPServerPort);
+    if(UDPBaudRate > 0)
+    misc_print(0, "  - UDP_BAUD           --> %d\n",   UDPBaudRate);
     else
-    misc_print(0, "  - MIDI_SERVER_BAUD   --> Default (don't change)\n");
-    misc_print(0, "  - MIDI_SERVER_FILTER --> %s\n", midiServerFilterIP?"TRUE":"FALSE");
+    misc_print(0, "  - UDP_BAUD           --> Default (don't change)\n");
+    misc_print(0, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
+    if(TCPBaudRate > 0)
+    misc_print(0, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
+    else
+    misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
+    misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",   TCPServerPort);
     misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
-    if(midilinkPriority != 0)
-    misc_print(0, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
-    else
-    misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");
     misc_print(0, "\n");
 }
 
