@@ -28,7 +28,7 @@ static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
-char         		fsynthSoundFont [150]  = "/media/fat/SOUNDFONT/default.sf2";
+char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/default.sf2";
 char         		UDPServer [50]         = "";
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
@@ -231,18 +231,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 char * ipAddr = &lineBuf[4];
                 if (prtSep != NULL) *prtSep = 0x00;
                 if (strlen(ipAddr) < 3)
-                {
-                    char serror   [] = "\r\nSyntax Error";
-                    char line[] = "\r\n----------------------------------";
-                    char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
-                    char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999";
-                    char example3 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999\r\nOK\r\n";
-                    write(fdSerial, serror,   strlen(serror));
-                    write(fdSerial, line, sizeof(line));
-                    write(fdSerial, example1, strlen(example1));
-                    write(fdSerial, example2, strlen(example2));
-                    write(fdSerial, example3, strlen(example3));
-                }
+                    misc_show_atdt(fdSerial);
                 else
                 {
                     int ipError = FALSE;
@@ -298,15 +287,7 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATIP", 4) == 0)
             {
-                sprintf(tmp, "\r\n-------------------------\r\n");
-                write(fdSerial, tmp, strlen(tmp));
-                misc_get_ipaddr("eth0", tmp);
-                write(fdSerial, " ", 1);
-                write(fdSerial, tmp, strlen(tmp));
-                write(fdSerial, "\r\n", 2);
-                misc_get_ipaddr("wlan0", tmp);
-                write(fdSerial, tmp, strlen(tmp));
-                write(fdSerial, "\r\nOK\r\n", 6);
+                misc_show_atip(fdSerial);
             }
             else
             {

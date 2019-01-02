@@ -9,6 +9,7 @@ int  misc_is_ip_addr(char *ipAddr);
 int  misc_hostname_to_ip(char * hostname , char* ipAddr);
 int  misc_get_ipaddr(char * interface, char * buf);
 int  misc_is_number(char *testStr);
-
+void misc_show_atdt(int fdSerial);
+void misc_show_atip(int fdSerial);
 #define TRUE 1
 #define FALSE 0

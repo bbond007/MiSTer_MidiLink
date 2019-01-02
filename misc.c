@@ -206,3 +206,38 @@ int misc_get_ipaddr(char * interface, char * buf)
     return 0;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_show_atdt(int fdSerial)
+//
+void misc_show_atdt(int fdSerial)
+{
+    char serror   [] = "\r\nSyntax Error";
+    char line[] = "\r\n----------------------------------";
+    char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
+    char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999";
+    char example3 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999\r\nOK\r\n";
+    write(fdSerial, serror,   strlen(serror));
+    write(fdSerial, line,     strlen(line));
+    write(fdSerial, example1, strlen(example1));
+    write(fdSerial, example2, strlen(example2));
+    write(fdSerial, example3, strlen(example3));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_show_atip(int fdSerial)
+//
+void misc_show_atip(int fdSerial)
+{
+    char tmp[50];
+    sprintf(tmp, "\r\n-------------------------\r\n");
+    write(fdSerial, tmp, strlen(tmp));
+    misc_get_ipaddr("eth0", tmp);
+    write(fdSerial, " ", 1);
+    write(fdSerial, tmp, strlen(tmp));
+    write(fdSerial, "\r\n", 2);
+    misc_get_ipaddr("wlan0", tmp);
+    write(fdSerial, tmp, strlen(tmp));
+    write(fdSerial, "\r\nOK\r\n", 6);
+}
