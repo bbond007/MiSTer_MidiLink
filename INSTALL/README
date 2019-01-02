@@ -24,6 +24,8 @@ Post install:
 
         -  CM32L_CONTROL.ROM
         -  CM32L_PCM.ROM
+
+   -  look over /media/fat/config/MidiLink.INI and make any necessary changes.
           
 What is in "MidiLink.tar.gz"?
 
