@@ -511,6 +511,7 @@ void close_fd()
     if (fdMidi1    > 0) close (fdMidi1);
     if (socket_in  > 0) tcpsock_close(socket_in);
     if (socket_out > 0) tcpsock_close(socket_out);
+    if (socket_out > 0) tcpsock_close(socket_lst);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -535,7 +536,7 @@ int main(int argc, char *argv[])
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
 
-    if (misc_check_args_option(argc, argv, "AUTO") && !misc_check_device(midiDevice))
+    if (misc_check_args_option(argc, argv, "MENU") && !misc_check_device(midiDevice))
     {
         if (misc_check_file("/tmp/ML_MUNT"))   mode   = ModeMUNT;
         if (misc_check_file("/tmp/ML_MUNTGM")) mode   = ModeMUNTGM;
@@ -545,7 +546,7 @@ int main(int argc, char *argv[])
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
         {
-            misc_print(0, "AUTO --> TCP\n");
+            misc_print(0, "MENU --> TCP\n");
             mode = ModeTCP;
         }
     }

@@ -13,7 +13,7 @@
 
 static char          * midiLinkINI      = "/media/fat/config/MidiLink.INI";
 static char          * serialDevice     = "/dev/ttyS1";
-static char          * helloStr         = "BinaryBond007 MidiLink 1.6\n";
+static char          * helloStr         = "BinaryBond007 MidiLink 2.0\n";
 static unsigned char   test_note[3]     = {0x90, 60, 127};
 static char          * midi1Device      = "/dev/midi1";
 static char          * midiDevice       = "/dev/midi";

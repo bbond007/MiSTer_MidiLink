@@ -1,0 +1,31 @@
+How to install:
+
+   -  upload (via WinSCP) MidiLink.tar.gz to /media/fat
+   -  conenct to MiSTer via SSH (Putty)
+   -  #cd /
+   -  #uartmode 0
+   -  #tar -xvzf /media/fat/MidiLink.tar.gz
+   -  delete /media/fat/MiSTer
+   -  upload new MiSTer to /media/fat
+   -  upload zImage_dtb to /media/fat/linux <-- required for MUNT/FluidSynth 
+
+Post install:
+   
+   -  upload FluidSynth soundfont ".sf2" file to /meda/fat/soundfonts/default.sf2
+   
+   -  upload MT-32 or CM-32 ROM files to /media/fat/mt32-rom-data
+
+        suggested (for Roland Computer Music module): 
+
+        -  CM32L_CONTROL.ROM
+        -  CM32L_PCM.ROM
+        
+        or (for Roland MT-32 Multi-Timbre Sound Module) : 
+
+        -  CM32L_CONTROL.ROM
+        -  CM32L_PCM.ROM
+          
+         
+        
+         
+            
