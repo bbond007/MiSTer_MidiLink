@@ -12,8 +12,11 @@ How to install:
 Post install:
    
    -  upload FluidSynth soundfont ".sf2" file to /meda/fat/soundfonts/default.sf2
+
+        -  https://www.youtube.com/watch?v=_J8-CgvC-As <-- Sounfont I'm using. 
    
-   -  upload MT-32 or CM-32 ROM files to /media/fat/mt32-rom-data
+   -  upload MT-32 or CM-32 ROM files to /media/fat/mt32-rom-data - these are 
+      property of Roland and I can't provide them.
 
         suggested (for Roland Computer Music module): 
 
