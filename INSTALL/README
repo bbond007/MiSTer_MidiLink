@@ -29,35 +29,32 @@ Post install:
           
 What is in "MidiLink.tar.gz"?
 
-    -  sbin/midilink
-    -  sbin/uartmode
-    -  sbin/fluidsynth
-    -  sbin/mt32d
-    -  usr/lib/libasound.so              (symlink libasound.so.2.0.0)
-    -  usr/lib/libasound.so.2            (symlink libasound.so.2.0.0)
-    -  usr/lib/libasound.so.2.0.0
-    -  usr/lib/libfluidsynth.so          (symlink libfluidsynth.so.2.0.1)
-    -  usr/lib/libfluidsynth.so.2        (symlink libfluidsynth.so.2.0.1)
-    -  usr/lib/libfluidsynth.so.2.0.1
-    -  usr/lib/libjack.so                (symlink libjack.so.0.0.28)
-    -  usr/lib/libjack.so.0              (symlink libjack.so.0.0.28)
-    -  usr/lib/libjack.so.0.0.28
-    -  bin/aconnect                      (not required - used for testing)
-    -  bin/amidi                         (not required - used for testing)
-    -  bin/amixer
-    -  bin/aplay                         (not required - used for testing)
-    -  bin/aplaymidi                     (not required - used for testing)
-    -  usr/share/alsa/
-    -  usr/share/alsa/alsa.conf
-    -  usr/share/alsa/pcm/
-    -  usr/share/alsa/pcm/default.conf
-    -  usr/share/alsa/pcm/dsnoop.conf
-    -  usr/share/alsa/pcm/dmix.conf
-    -  usr/share/alsa/cards/
-    -  usr/share/alsa/cards/aliases.conf
-    -  media/fat/config/MidiLink.INI
-    -  media/fat/soundfonts/README       (not required / information only)
-    -  media/fat/mt32-rom-data/README    (not required / information only)
+    -  /sbin/midilink                     
+    -  /sbin/uartmode                     (Update to existing script)
+    -  /sbin/fluidsynth                   (FluidSynth ALSA daemon)
+    -  /sbin/mt32d                        (MUNT ALSA daemon)
+    -  /usr/lib/libasound.so              (symlink libasound.so.2.0.0)
+    -  /usr/lib/libasound.so.2            (symlink libasound.so.2.0.0)
+    -  /usr/lib/libasound.so.2.0.0        (Required for MUNT and FluidSynth)
+    -  /usr/lib/libfluidsynth.so          (symlink libfluidsynth.so.2.0.1)
+    -  /usr/lib/libfluidsynth.so.2        (symlink libfluidsynth.so.2.0.1)
+    -  /usr/lib/libfluidsynth.so.2.0.1    (Required for FluidSynth) 
+    -  /usr/lib/libjack.so                (symlink libjack.so.0.0.28)
+    -  /usr/lib/libjack.so.0              (symlink libjack.so.0.0.28)
+    -  /usr/lib/libjack.so.0.0.28         (Required for FluidSynth)
+    -  /bin/aconnect                      (*not required - diagnostic tool)
+    -  /bin/amidi                         (*not required - diagnostic tool)
+    -  /bin/amixer                        (Used by MidiLink)  
+    -  /bin/aplay                         (*not required - diagnostic tool)
+    -  /bin/aplaymidi                     (*not required - diagnostic tool)
+    -  /usr/share/alsa/alsa.conf          (Required for ALSA)
+    -  /usr/share/alsa/pcm/default.conf   (Required for ALSA)
+    -  /usr/share/alsa/pcm/dsnoop.conf    (Required for ALSA)
+    -  /usr/share/alsa/pcm/dmix.conf      (Required for ALSA)
+    -  /usr/share/alsa/cards/aliases.conf (Required for ALSA)
+    -  /media/fat/config/MidiLink.INI     (Required for MidiLink)
+    -  /media/fat/soundfonts/README       (not required / placeholder for soundfonts)
+    -  /media/fat/mt32-rom-data/README    (not required / placeholder for MUNT ROMS)
          
         
          
