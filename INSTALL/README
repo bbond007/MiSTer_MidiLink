@@ -33,14 +33,14 @@ What is in "MidiLink.tar.gz"?
     -  sbin/uartmode
     -  sbin/fluidsynth
     -  sbin/mt32d
-    -  usr/lib/libasound.so
-    -  usr/lib/libasound.so.2
+    -  usr/lib/libasound.so              (simlink libasound.so.2.0.0)
+    -  usr/lib/libasound.so.2            (simlink libasound.so.2.0.0)
     -  usr/lib/libasound.so.2.0.0
-    -  usr/lib/libfluidsynth.so
-    -  usr/lib/libfluidsynth.so.2
+    -  usr/lib/libfluidsynth.so          (simlink libfluidsynth.so.2.0.1)
+    -  usr/lib/libfluidsynth.so.2        (simlink libfluidsynth.so.2.0.1)
     -  usr/lib/libfluidsynth.so.2.0.1
-    -  usr/lib/libjack.so
-    -  usr/lib/libjack.so.0
+    -  usr/lib/libjack.so                (simlink libjack.so.0.0.28)
+    -  usr/lib/libjack.so.0              (simlink libjack.so.0.0.28)
     -  usr/lib/libjack.so.0.0.28
     -  bin/aconnect                      (not required used for testing)
     -  bin/amidi                         (not required used for testing)
