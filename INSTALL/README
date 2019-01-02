@@ -42,11 +42,11 @@ What is in "MidiLink.tar.gz"?
     -  usr/lib/libjack.so                (simlink libjack.so.0.0.28)
     -  usr/lib/libjack.so.0              (simlink libjack.so.0.0.28)
     -  usr/lib/libjack.so.0.0.28
-    -  bin/aconnect                      (not required used for testing)
-    -  bin/amidi                         (not required used for testing)
+    -  bin/aconnect                      (not required - used for testing)
+    -  bin/amidi                         (not required - used for testing)
     -  bin/amixer
-    -  bin/aplay                         (not required used for testing)
-    -  bin/aplaymidi                     (not required used for testing)
+    -  bin/aplay                         (not required - used for testing)
+    -  bin/aplaymidi                     (not required - used for testing)
     -  usr/share/alsa/
     -  usr/share/alsa/alsa.conf
     -  usr/share/alsa/pcm/
