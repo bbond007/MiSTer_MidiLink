@@ -11,7 +11,7 @@ int  misc_get_ipaddr(char * interface, char * buf);
 int  misc_is_number(char *testStr);
 void misc_show_atdt(int fdSerial);
 void misc_show_atip(int fdSerial);
-long misc_get_timeval_diff(struct timeval start, struct timeval stop);
+long misc_get_timeval_diff(struct timeval * start, struct timeval * stop);
 
 #define TRUE 1
 #define FALSE 0

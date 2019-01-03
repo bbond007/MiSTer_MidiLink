@@ -57,7 +57,7 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
         if(start.tv_sec == 0)
             gettimeofday(&start, NULL);
         gettimeofday(&time, NULL); 
-        misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (start, time), descr, bufLen);
+        misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (&start, &time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
             misc_print(2, " %02x", *byte);
         misc_print(2, "\n");
@@ -181,7 +181,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         case 0x0d:// [RETURN]
             if(memcmp(lineBuf, "+++ATH", 6) == 0)
             {   
-                int delay = misc_get_timeval_diff(start, stop);
+                int delay = misc_get_timeval_diff(&start, &stop);
                 if(delay > 900)
                 {  
                     tcpsock_close(*socket);

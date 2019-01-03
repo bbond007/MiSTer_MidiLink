@@ -247,9 +247,9 @@ void misc_show_atip(int fdSerial)
 //
 // long misc_get_time_diff(struct timeval start, struct timeval stop)
 //
-long misc_get_timeval_diff(struct timeval start, struct timeval stop)
+long misc_get_timeval_diff(struct timeval * start, struct timeval * stop)
 {
-    long secs  = stop.tv_sec  - start.tv_sec;
-    long usecs = stop.tv_usec - start.tv_usec;
+    long secs  = stop->tv_sec  - start->tv_sec;
+    long usecs = stop->tv_usec - start->tv_usec;
     return ((secs) * 1000 + usecs/1000.0);
 }
