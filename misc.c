@@ -14,6 +14,7 @@
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include "misc.h"
@@ -240,4 +241,15 @@ void misc_show_atip(int fdSerial)
     misc_get_ipaddr("wlan0", tmp);
     write(fdSerial, tmp, strlen(tmp));
     write(fdSerial, "\r\nOK\r\n", 6);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// long misc_get_time_diff(struct timeval start, struct timeval stop)
+//
+long misc_get_timeval_diff(struct timeval start, struct timeval stop)
+{
+    long secs  = stop.tv_sec  - start.tv_sec;
+    long usecs = stop.tv_usec - start.tv_usec;
+    return ((secs) * 1000 + usecs/1000.0);
 }

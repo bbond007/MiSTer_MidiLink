@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <linux/soundcard.h>
 #include <ctype.h>
-
+#include <sys/time.h>
 #include "setbaud.h"
 #include "serial.h"
 #include "config.h"
@@ -49,10 +49,15 @@ static pthread_t        socketLstThread;
 // void show_debug_buf(char * descr, char * buf, int bufLen)
 //
 void show_debug_buf(char * descr, char * buf, int bufLen)
-{
+{    
+    static struct timeval start = {0, 0};
+    struct timeval time;
     if(MIDI_DEBUG)
     {
-        misc_print(2, "%s[%02d] -->", descr, bufLen);
+        if(start.tv_sec == 0)
+            gettimeofday(&start, NULL);
+        gettimeofday(&time, NULL); 
+        misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (start, time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
             misc_print(2, " %02x", *byte);
         misc_print(2, "\n");
@@ -85,7 +90,6 @@ void * tcplst_thread_function (void * x)
             do
             {
                 rdLen = read(socket_in, buf, sizeof(buf));
-                //printf("rdLen --> %d\n", rdLen);
                 if (rdLen > 0)
                 {
                     write(fdSerial, buf, rdLen);
@@ -165,7 +169,9 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static char lineBuf[8];
     static char iLineBuf = 0;
     static char lastChar = 0x00;
-    static clock_t start, stop;
+    static struct timeval start;
+    static struct timeval stop;
+    
     char tmp[100] = "";
 
     for (char * p = buf; bufLen-- > 0; p++)
@@ -174,29 +180,32 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         {
         case 0x0d:// [RETURN]
             if(memcmp(lineBuf, "+++ATH", 6) == 0)
-            {
-                if((stop - start) > 75)
+            {   
+                int delay = misc_get_timeval_diff(start, stop);
+                if(delay > 900)
                 {  
                     tcpsock_close(*socket);
                     *socket =  -1;
-                    sleep(1);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
-                    misc_print(1, "HANG-UP Detectedd.\n");
+                    misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     write(fdSerial, tmp, strlen(tmp));
+                    sleep(1);
                     write(fdSerial, "OK\r\n", 4);
                 }
+                else
+                    misc_print(1, "HANG-UP Rejected --> %d.\n", delay);                
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
             lastChar = 0x0d;
             break;
         case '+': // RESET BUFFER
-            start = clock();
+            gettimeofday(&start, NULL);
             if (lastChar != '+')
                 iLineBuf = 0;
         default:
             if (lastChar == '+' && *p != '+')
-                stop = clock();
+                gettimeofday(&stop, NULL);         
             if (iLineBuf < sizeof(lineBuf)-1)
             {
                 lineBuf[iLineBuf++] = *p;
