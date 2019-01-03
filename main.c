@@ -165,6 +165,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static char lineBuf[8];
     static char iLineBuf = 0;
     static char lastChar = 0x00;
+    static clock_t start, stop;
     char tmp[100] = "";
 
     for (char * p = buf; bufLen-- > 0; p++)
@@ -174,22 +175,28 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         case 0x0d:// [RETURN]
             if(memcmp(lineBuf, "+++ATH", 6) == 0)
             {
-                tcpsock_close(*socket);
-                *socket =  -1;
-                sleep(1);
-                sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
-                misc_print(1, "HANG-UP Detected.\n");
-                write(fdSerial, tmp, strlen(tmp));
-                write(fdSerial, "OK\r\n", 4);
+                if((stop - start) > 75)
+                {  
+                    tcpsock_close(*socket);
+                    *socket =  -1;
+                    sleep(1);
+                    sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
+                    misc_print(1, "HANG-UP Detectedd.\n");
+                    write(fdSerial, tmp, strlen(tmp));
+                    write(fdSerial, "OK\r\n", 4);
+                }
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
             lastChar = 0x0d;
             break;
         case '+': // RESET BUFFER
+            start = clock();
             if (lastChar != '+')
                 iLineBuf = 0;
         default:
+            if (lastChar == '+' && *p != '+')
+                stop = clock();
             if (iLineBuf < sizeof(lineBuf)-1)
             {
                 lineBuf[iLineBuf++] = *p;
@@ -200,6 +207,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         }
     }
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -360,7 +368,7 @@ void write_midi_packet(char * buf, int bufLen)
                     SYSEX = TRUE;
                     misc_print(2, " SXD+ f0");
                     write(fdMidi, byte, 1);
-                    usleep(100);	   
+                    usleep(1000);	   
                     break;
             	case 0xF7: // SYSEX END
                     SYSEX = FALSE;
@@ -371,7 +379,7 @@ void write_midi_packet(char * buf, int bufLen)
                 default:
                     misc_print(2, " %02x", *byte);
                     write(fdMidi, byte, 1);
-                    if (SYSEX) usleep(100);
+                    if (SYSEX) usleep(1000);
                     break;
             }
         }
