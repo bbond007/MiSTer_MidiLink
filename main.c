@@ -193,7 +193,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                     write(fdSerial, "OK\r\n", 4);
                 }
                 else
-                    misc_print(1, "HANG-UP Rejected --> %d.\n", delay);                
+                    misc_print(1, "HANG-UP Rejected --> %d\n", delay);                
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
