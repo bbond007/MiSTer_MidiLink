@@ -245,7 +245,7 @@ void misc_show_atip(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// long misc_get_time_diff(struct timeval start, struct timeval stop)
+// long misc_get_time_diff(struct timeval * start, struct timeval * stop)
 //
 long misc_get_timeval_diff(struct timeval * start, struct timeval * stop)
 {
