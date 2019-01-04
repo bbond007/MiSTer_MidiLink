@@ -10,7 +10,7 @@ then
   echo "No Internet connection"
   exit 1
 fi
-echo "Installing Midilink"
+echo "Installing MidiLink"
 uartmode 0
 sleep 1
 if [ -f $MIDILINK ]; then
