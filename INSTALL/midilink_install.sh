@@ -15,12 +15,13 @@ cd /
 echo Extracting ML Archive
 tar -xvzf $MIDILINK
 rm $MIDILINK
-echo Installing Kernel
+echo Backing up Kernel
 if [ -f $KERNELOLD ]; then 
-  echo Removing old Kernel
+  echo RM old backup Kernel
   rm $KERNELOLD
 fi 
 mv $KERNEL $KERNELOLD
+echo Installing Kernel
 curl -kL https://github.com/bbond007/MiSTer_MidiLink/blob/master/INSTALL/zImage_dtb?raw=true? -o $KERNEL
 echo Rebooting in:
 sleep 1
