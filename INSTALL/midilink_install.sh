@@ -13,7 +13,8 @@ fi
 echo "Installing MidiLink"
 uartmode 0
 sleep 1
-if [ -f $MIDILINK ]; then
+if [ -f $MIDILINK ]; 
+then
   echo "Removing old ML archive"
   rm $MIDILINK
 fi
@@ -24,7 +25,8 @@ echo "Extracting ML Archive"
 tar -xvzf $MIDILINK
 rm $MIDILINK
 echo "Backing up Kernel"
-if [ -f $KERNELOLD ]; then 
+if [ -f $KERNELOLD ]; 
+then 
   echo "RM old backup Kernel"
   rm $KERNELOLD
 fi 
