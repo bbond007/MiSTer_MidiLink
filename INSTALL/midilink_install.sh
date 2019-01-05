@@ -5,7 +5,7 @@ KERNEL=/media/fat/linux/zImage_dtb
 KERNELOLD=/media/fat/linux/zImage_dtb.old
 SF_FILEID="1hO88em6bmTklHWo_WwEFnOgSFhlMEhws"
 SF_FILENAME="/media/fat/soundfonts/SC-55.sf2"
-GD_COOKIE="/tmp/goole_drive_cookie"
+GD_COOKIE="/tmp/google_drive_cookie"
 MT32_ROM_DIR="/media/fat/mt32-rom-data/"
 MT32_ROM_ZIP="$MT32_ROM_DIR/mt32_roms.zip"
 echo "Checking Internet..."
