@@ -35,7 +35,7 @@ curl -kc $GD_COOKIE -s -L "https://drive.google.com/uc?export=download&id=${SF_F
 echo "Downloading SC-55 soundfont"
 curl -kLb $GD_COOKIE "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' $GD_COOKIE`&id=${SF_FILEID}" -o ${SF_FILENAME}
 echo "Downloading MT-32/CM-32 ROMS"
-curl -kf "https://www.deceifermedia.com/files/applications/Roland_MT32_ROMs.zip" -o $MT32_ROM_ZIP
+curl -k "https://www.deceifermedia.com/files/applications/Roland_MT32_ROMs.zip" -o $MT32_ROM_ZIP
 echo "Unzipping CM-32 ROMS"
 unzip -o $MT32_ROM_ZIP CM32L* -d $MT32_ROM_DIR
 echo "Backing up Kernel"
