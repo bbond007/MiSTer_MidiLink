@@ -41,7 +41,7 @@ unzip -o $MT32_ROM_ZIP CM32L* -d $MT32_ROM_DIR
 echo "Backing up Kernel"
 if [ -f $KERNELOLD ]; 
 then 
-  echo "RM old backup Kernel"
+  echo "Removing old backup Kernel"
   rm $KERNELOLD
 fi 
 mv $KERNEL $KERNELOLD
