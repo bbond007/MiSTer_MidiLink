@@ -5,8 +5,9 @@
 #include "ini.h"
 #include "misc.h"
 
-char                fsynthSoundFont[150];
-extern char         UDPServer[50];
+extern char         fsynthSoundFont[150];
+extern char         UDPServer[100];
+extern char         mixerControl[20]; 
 extern int          muntVolume;
 extern int          fsynthVolume;
 extern int          midilinkPriority;
@@ -30,94 +31,113 @@ char ini_replace_char(char * str, int strLen, char old, char new)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// void ini_bool(char * value, int * dest)
+//
+void ini_bool(char * value, int * dest)
+{
+    if (strlen(value) > 0)
+    {
+        char c = toupper(value[0]);
+        if (c == 'T' || c == 'Y')
+            *dest = TRUE;
+        else
+            *dest = FALSE;
+    }
+    else
+        *dest = FALSE;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void int_str(char * dest)
+//
+void ini_str(char * value, char * dest)
+{
+   if(strlen(value) > 1)     
+       strcpy(dest, value);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void ini_int(char * value, int * dest)
+//
+void ini_int(char * value, int * dest)
+{
+  char * endPtr;
+  int iTmp = strtol(value, &endPtr, 10);
+  if(iTmp != 0)
+       *dest = iTmp;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void ini_uint(char * value, unsigned int * iValue )
+//
+void ini_uint(char * value, unsigned int * dest )
+{
+  char * endPtr;
+  unsigned int iTmp = strtol(value, &endPtr, 10);
+  if(iTmp != 0)
+       *dest = iTmp;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // char ini_process_key_value_pair(char * key, char * value)
 //
 char ini_process_key_value_pair(char * key, char * value)
 {
-    char * strPort, * endPtr;
-    int iTmp;
 
     if(strcmp("MUNT_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            muntVolume = iTmp;
+        ini_int(value, &muntVolume);
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            fsynthVolume = iTmp;
+        ini_int(value, &fsynthVolume);
+    }
+    else if (strcmp("MIXER_DEVICE", key) == 0)
+    {
+        ini_str(value, mixerControl);
     }
     else if(strcmp("UDP_SERVER_PORT", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            UDPServerPort = iTmp;
+        ini_uint(value, &UDPServerPort);
     }
     else if(strcmp("TCP_SERVER_PORT", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            TCPServerPort = iTmp;
+        ini_uint(value, &TCPServerPort);
     }
     else if (strcmp("UDP_SERVER", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(strlen(value) > 1)
-            strcpy(UDPServer, value);
+        ini_str(value, UDPServer);
     }
     else if (strcmp("UDP_SERVER_FILTER", key) == 0)
     {
-        if (strlen(value) > 0)
-        {
-            char c = toupper(value[0]);
-            if (c == 'T' || c == 'Y')
-                UDPServerFilterIP = TRUE;
-            else
-                UDPServerFilterIP = FALSE;
-        }
-        else
-            UDPServerFilterIP = FALSE;
+        ini_bool(value, &UDPServerFilterIP);
     }
     else if (strcmp("DELAYSYSEX", key) == 0)
     {
-        if (strlen(value) > 0)
-        {
-            char c = toupper(value[0]);
-            if (c == 'T' || c == 'Y')
-                DELAYSYSEX = TRUE;
-            else
-                DELAYSYSEX = FALSE;
-        }
-        else
-            DELAYSYSEX = FALSE;
+        ini_bool(value, &DELAYSYSEX);
     }
     else if (strcmp("FSYNTH_SOUNDFONT", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(strlen(value) > 1)
-            strcpy(fsynthSoundFont, value);
+        ini_str(value, fsynthSoundFont);
     }
     else if (strcmp("MIDILINK_PRIORITY", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            midilinkPriority = iTmp;
+        ini_int(value, &midilinkPriority);
     }
     else if (strcmp("UDP_BAUD", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            UDPBaudRate = iTmp;
+        ini_int(value, &UDPBaudRate);
     }
     else if (strcmp("TCP_BAUD", key) == 0)
     {
-        iTmp = strtol(value, &endPtr, 10);
-        if(iTmp != 0)
-            TCPBaudRate = iTmp;
+        ini_int(value, &TCPBaudRate);
     }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
@@ -142,6 +162,7 @@ void ini_print_settings()
     misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
     misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
+    misc_print(0, "  - MIXER_CONTROL      --> %s\n",   mixerControl);
     misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
         misc_ipaddr_is_multicast(UDPServer)?" MULTICAST":"");

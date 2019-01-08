@@ -28,8 +28,9 @@ static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
-char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/default.sf2";
-char         		UDPServer [50]         = "";
+char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
+char         		UDPServer [100]        = "";
+char 			mixerControl [20]      = "PCM";
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
@@ -492,8 +493,8 @@ void set_pcm_volume(int value)
     if(value != -1)
     {
         char buf[30];
-        sprintf(buf, "amixer set PCM %d%c", value, '%');
-        misc_print(0, "Setting 'PCM' to %d%\n", value);
+        sprintf(buf, "amixer set %s %d%c", mixerControl, value, '%');
+        misc_print(0, "Setting '%s' to %d%\n", mixerControl, value);
         system(buf);
     }
 }
@@ -575,6 +576,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
             system ("modprobe snd-dummy");
+            strcpy(mixerControl, "Master");
         }        
     }
     
