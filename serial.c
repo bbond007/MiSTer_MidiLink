@@ -17,10 +17,9 @@ int serial_set_interface_attribs(int fdSerial)
 
     if (tcgetattr(fdSerial, &tty) < 0)
     {
-        misc_print(0, "ERROR: serial_set_interface_attribs() from tcgetattr: %s\n", strerror(errno));
+        misc_print(0, "ERROR: serial_set_interface_attribs() from tcgetattr --> %s\n", strerror(errno));
         return -1;
     }
-
     tty.c_cflag |= (CLOCAL | CREAD);               // ignore modem controls 
     tty.c_cflag &= ~CSIZE;
     tty.c_cflag |= CS8;                            // 8-bit characters 
@@ -28,22 +27,18 @@ int serial_set_interface_attribs(int fdSerial)
     tty.c_cflag &= ~CSTOPB;                        // only need 1 stop bit 
     tty.c_cflag &= ~(IXON | IXOFF | IXANY);        // Disable XON/XOFF flowcontrol
     tty.c_cflag |= CRTSCTS;                        // CTS/RTS hardware flowcontrol 
-
     /* setup for non-canonical mode */
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
     tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
     tty.c_oflag &= ~OPOST;
-
     /* fetch bytes as they become available */
     tty.c_cc[VMIN] = 1;
     tty.c_cc[VTIME] = 1;
-
     if (tcsetattr(fdSerial, TCSANOW, &tty) != 0)
     {
-        misc_print(0, "ERROR: serial_set_interface_attribs() from tcsetattr: %s\n", strerror(errno));
+        misc_print(0, "ERROR: serial_set_interface_attribs() from tcsetattr --> %s\n", strerror(errno));
         return -1;
     }
-    
     return 0;
 }
 
@@ -58,7 +53,7 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
     int VALID;    
     if (tcgetattr(fdSerial, &tty) < 0)
     {
-        misc_print(0, "ERROR: serial_set_flow_control(%d) from tcgetattr: %s\n", 
+        misc_print(0, "ERROR: serial_set_flow_control(%d) from tcgetattr --> %s\n", 
             hayesMode, strerror(errno));
         return FALSE;
     }
@@ -93,7 +88,7 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
     if (VALID)
         if (tcsetattr(fdSerial, TCSANOW, &tty) != 0)
         {
-            misc_print(0, "ERROR: serial_set_flow_control(%d) from tcsetattr: %s\n", 
+            misc_print(0, "ERROR: serial_set_flow_control(%d) from tcsetattr -->  %s\n", 
                 hayesMode, strerror(errno));
             return FALSE;
         }
