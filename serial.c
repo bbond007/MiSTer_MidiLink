@@ -9,13 +9,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int serial_set_interface_attribs(int fd, int speed) to 38400 8N1 RTS/CTS flow control 
+// int serial_set_interface_attribs(int fdSerial, int speed) to 38400 8N1 RTS/CTS flow control 
 //
-int serial_set_interface_attribs(int fd)
+int serial_set_interface_attribs(int fdSerial)
 {
     struct termios tty;
 
-    if (tcgetattr(fd, &tty) < 0)
+    if (tcgetattr(fdSerial, &tty) < 0)
     {
         misc_print(0, "ERROR: serial_set_interface_attribs() from tcgetattr: %s\n", strerror(errno));
         return -1;
@@ -40,7 +40,7 @@ int serial_set_interface_attribs(int fd)
     tty.c_cc[VMIN] = 1;
     tty.c_cc[VTIME] = 1;
 
-    if (tcsetattr(fd, TCSANOW, &tty) != 0)
+    if (tcsetattr(fdSerial, TCSANOW, &tty) != 0)
     {
         misc_print(0, "ERROR: serial_set_interface_attribs() from tcsetattr: %s\n", strerror(errno));
         return -1;
@@ -51,9 +51,62 @@ int serial_set_interface_attribs(int fd)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//void serial_do_tcdrain(int fd)
+// int serial_set_flow_control(int fdSerial, int hayesMode) 
 //
-void serial_do_tcdrain(int fd)
+int serial_set_flow_control(int fdSerial, int hayesMode)
 {
-    tcdrain(fd);
+    char tmp [50] = "";
+    struct termios tty;
+    int VALID;    
+    if (tcgetattr(fdSerial, &tty) < 0)
+    {
+        misc_print(0, "ERROR: serial_set_flow_control(%d) from tcgetattr: %s\n", 
+            hayesMode, strerror(errno));
+        return FALSE;
+    }
+    switch (hayesMode)
+    {  
+        case 0:
+            tty.c_cflag &= ~(CRTSCTS | IXON | IXOFF | IXANY);
+            VALID = TRUE;
+            break;
+        case 3:
+            tty.c_cflag &= ~(IXON | IXOFF | IXANY);
+            tty.c_cflag |= CRTSCTS; 
+            VALID = TRUE;
+            break;
+        case 4:   
+            tty.c_cflag &= ~(CRTSCTS | IXANY);
+            tty.c_cflag |= IXON | IXOFF;
+            VALID = TRUE;
+            break;
+        default:
+            sprintf(tmp, "\r\nUnsupported flow-Control --> '%d'", hayesMode);
+            char example[] =  "\r\nSupported modes are:"
+                              "\r\n  0 - Disble flow-control"
+                              "\r\n  3 - RTS/CTS"
+                              "\r\n  4 - XON/XOFF";
+            VALID = FALSE;
+            if (hayesMode >= 0)
+                write(fdSerial, tmp, strlen(tmp));
+            write(fdSerial, example, strlen(example));
+    }
+    if (VALID)
+        if (tcsetattr(fdSerial, TCSANOW, &tty) != 0)
+        {
+            misc_print(0, "ERROR: serial_set_flow_control(%d) from tcsetattr: %s\n", 
+                hayesMode, strerror(errno));
+            return FALSE;
+        }
+    return TRUE;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//void serial_do_tcdrain(int fdSerial)
+//
+void serial_do_tcdrain(int fdSerial)
+{
+    tcdrain(fdSerial);
+}
+

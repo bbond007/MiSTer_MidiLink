@@ -322,6 +322,18 @@ void do_modem_emulation(char * buf, int bufLen)
             {
                 misc_show_atip(fdSerial);
             }
+            else if (memcmp(lineBuf, "AT&K", 4) == 0)
+            {
+                char * hayesMode = &lineBuf[4];
+                if(misc_is_number(hayesMode))
+                {
+                    int iHayesMode = strtol(hayesMode, &endPtr, 10);
+                    serial_set_flow_control(fdSerial, iHayesMode);
+                }
+                else
+                    serial_set_flow_control(fdSerial, -1);
+                write(fdSerial, "\r\nOK\r\n", 6);
+            }
             else
             {
                 write(fdSerial, "\r\n", 2);
