@@ -30,6 +30,8 @@ echo "Remounting Linux Filesystem"
 echo "Extracting MidiLink Archive"
 tar -xvzf $MIDILINK
 rm $MIDILINK
+echo "Running depmod -a"
+depmod -a
 echo "Downloading sondfont cookie"
 curl -kc $GD_COOKIE -s -L "https://drive.google.com/uc?export=download&id=${SF_FILEID}" > /dev/null
 echo "Downloading SC-55 soundfont"

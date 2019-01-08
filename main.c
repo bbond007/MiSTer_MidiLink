@@ -520,7 +520,7 @@ int main(int argc, char *argv[])
 {
     int status;
     unsigned char buf[256];
-
+          
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
     if(misc_check_file(midiLinkINI))
@@ -563,6 +563,21 @@ int main(int argc, char *argv[])
     system("killall -q mt32d");
     sleep(3);
 
+    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
+    {
+        if(!misc_check_device("/dev/MrAudioBuffer") && misc_check_file("/etc/asound.conf"))
+        {   
+            misc_print(0, "Loading --> MrBuffer\n");
+            system("modprobe MrBuffer");
+        }
+        
+        if (!misc_check_device("/dev/snd/pcmC0D0p"))
+        {
+            misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
+            system ("modprobe snd-dummy");
+        }        
+    }
+    
     if (mode == ModeMUNT || mode == ModeMUNTGM)
     {
         set_pcm_volume(muntVolume);
