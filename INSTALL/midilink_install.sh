@@ -32,14 +32,24 @@ tar -xvzf $MIDILINK
 rm $MIDILINK
 echo "Running depmod -a"
 depmod -a
-echo "Downloading sondfont cookie"
-curl -kc $GD_COOKIE -s -L "https://drive.google.com/uc?export=download&id=${SF_FILEID}" > /dev/null
-echo "Downloading SC-55 soundfont"
-curl -kLb $GD_COOKIE "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' $GD_COOKIE`&id=${SF_FILEID}" -o ${SF_FILENAME}
-echo "Downloading MT-32/CM-32 ROMS"
-curl -k "https://www.deceifermedia.com/files/applications/Roland_MT32_ROMs.zip" -o $MT32_ROM_ZIP
-echo "Unzipping CM-32 ROMS"
-unzip -o $MT32_ROM_ZIP CM32L* -d $MT32_ROM_DIR
+if [ -f $SF_FILENAME ];
+then 
+  echo "SC-55 Soundfont found"
+else
+  echo "Downloading sondfont cookie"
+  curl -kc $GD_COOKIE -s -L "https://drive.google.com/uc?export=download&id=${SF_FILEID}" > /dev/null
+  echo "Downloading SC-55 soundfont"
+  curl -kLb $GD_COOKIE "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' $GD_COOKIE`&id=${SF_FILEID}" -o ${SF_FILENAME}
+fi
+if [ -f $MT32_ROM_ZIP ];
+then
+  echo "MT-32/CM-32 ROMS found"
+else
+  echo "Downloading MT-32/CM-32 ROMS"
+  curl -k "https://www.deceifermedia.com/files/applications/Roland_MT32_ROMs.zip" -o $MT32_ROM_ZIP
+  echo "Unzipping CM-32 ROMS"
+  unzip -o $MT32_ROM_ZIP CM32L* -d $MT32_ROM_DIR
+fi
 echo "Backing up Kernel"
 if [ -f $KERNELOLD ]; 
 then 
