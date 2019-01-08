@@ -21,15 +21,13 @@ int serial_set_interface_attribs(int fdSerial)
         return -1;
     }
 
-//    cfsetospeed(&tty, (speed_t)B38400);
-//    cfsetispeed(&tty, (speed_t)B38400);
-
-    tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
+    tty.c_cflag |= (CLOCAL | CREAD);               // ignore modem controls 
     tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;         /* 8-bit characters */
-    tty.c_cflag &= ~PARENB;     /* no parity bit */
-    tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-    tty.c_cflag |= CRTSCTS;     /* hardware flowcontrol */
+    tty.c_cflag |= CS8;                            // 8-bit characters 
+    tty.c_cflag &= ~PARENB;                        // no parity bit 
+    tty.c_cflag &= ~CSTOPB;                        // only need 1 stop bit 
+    tty.c_cflag &= ~(IXON | IXOFF | IXANY);        // Disable XON/XOFF flowcontrol
+    tty.c_cflag |= CRTSCTS;                        // CTS/RTS hardware flowcontrol 
 
     /* setup for non-canonical mode */
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
@@ -82,7 +80,8 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
             break;
         default:
             sprintf(tmp, "\r\nUnsupported flow-Control --> '%d'", hayesMode);
-            char example[] =  "\r\nSupported modes are:"
+            char example[] =  "\r\n---------------------------"
+                              "\r\nSupported modes are:"
                               "\r\n  0 - Disble flow-control"
                               "\r\n  3 - RTS/CTS"
                               "\r\n  4 - XON/XOFF";
