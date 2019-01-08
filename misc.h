@@ -12,6 +12,7 @@ int  misc_is_number(char *testStr);
 void misc_show_atdt(int fdSerial);
 void misc_show_atip(int fdSerial);
 long misc_get_timeval_diff(struct timeval * start, struct timeval * stop);
+int  misc_check_module_loaded (char * modName);
 
 #define TRUE 1
 #define FALSE 0

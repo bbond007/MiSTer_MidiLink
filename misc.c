@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <stdarg.h>
 #include <pthread.h>
 #include <netdb.h>
@@ -157,7 +157,7 @@ int misc_is_number(char *testStr)
         if (strchr(validChr, testStr[i]) == NULL)
             return FALSE;
         else
-            bNum = TRUE;    
+            bNum = TRUE;
     return bNum;
 }
 
@@ -203,7 +203,7 @@ int misc_get_ipaddr(char * interface, char * buf)
     close(fd);
     /* display result */
     sprintf(buf, "%s --> %s", interface, (result == 0)?
-        inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr):"N/A");
+            inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr):"N/A");
     return 0;
 }
 
@@ -252,4 +252,37 @@ long misc_get_timeval_diff(struct timeval * start, struct timeval * stop)
     long secs  = stop->tv_sec  - start->tv_sec;
     long usecs = stop->tv_usec - start->tv_usec;
     return ((secs) * 1000 + usecs/1000.0);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_check_module_loaded (char * modName)
+//
+int misc_check_module_loaded (char * modName)
+{
+    char str[1024];
+    FILE * file;
+    char fileName[] = "/proc/modules";
+    misc_print(0, "Checking kernel module loaded --> %s : ", modName);
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        while (fgets(str, sizeof(str), file)!= NULL)
+        {
+            if (strstr(str, modName))
+            {
+                fclose(file);
+                misc_print(0, "TRUE\n");
+                return TRUE;
+            }
+        }
+        fclose(file);
+        misc_print(0, "FALSE\n");
+        return FALSE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_check_module_loaded() : Unable to open --> '%s'\n", fileName);
+        return FALSE;
+    }
 }

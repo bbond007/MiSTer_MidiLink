@@ -99,7 +99,7 @@ char ini_process_key_value_pair(char * key, char * value)
         ini_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &fsynthVolume);
     }
-    else if (strcmp("MIXER_DEVICE", key) == 0)
+    else if (strcmp("MIXER_CONTROL", key) == 0)
     {
         ini_str(value, mixerControl);
     }
