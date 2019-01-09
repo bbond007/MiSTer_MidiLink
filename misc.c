@@ -314,6 +314,8 @@ int misc_get_midi_port(char * descr)
                         tmp++;                       
                         iPort = strtol(tmp, &endPtr, 10);
                         fclose(pipe);
+                        sprintf(tmp, "echo %d > /tmp/DEBUG_ML_PORT", iPort);
+                        system(tmp);
                         return iPort;
                     }
                 }

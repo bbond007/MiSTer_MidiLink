@@ -614,8 +614,14 @@ int main(int argc, char *argv[])
         set_pcm_volume(muntVolume);
         misc_print(0, "Starting --> mt32d\n");
         system("mt32d &");
-        sleep(2);
-        midiPort = misc_get_midi_port("MT-32");
+        int loop = 0;
+        do
+        {
+            sleep(2);
+            midiPort = alsa_get_midi_port("MT-32");
+            loop++;
+        }
+        while(midiPort < 0 && loop < 3);
     }
     else if (mode == ModeFSYNTH)
     {
@@ -623,16 +629,28 @@ int main(int argc, char *argv[])
         misc_print(0, "Starting --> fluidsynth\n");
         sprintf(buf, "fluidsynth -is -a alsa -m alsa_seq %s &", fsynthSoundFont);
         system(buf);
-        sleep(2);
-        midiPort = misc_get_midi_port("FLUID Synth");
+        int loop = 0;
+        do
+        {	
+            sleep(2);
+            midiPort = alsa_get_midi_port("FLUID Synth");
+            loop++;
+        }
+        while(midiPort < 0 && loop < 3);
     }
-
+    if (midiPort < 0)
+    {
+        misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
+        close_fd();
+        return -1;
+    }
+    
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
         misc_print(0, "ERROR: opening %s: %s\n", serialDevice, strerror(errno));
         close_fd();
-        return -1;
+        return -2;
     }
     //printf("TST --> serial_set_interface_attribs - start\n"); 
     serial_set_interface_attribs(fdSerial);
@@ -678,7 +696,7 @@ int main(int argc, char *argv[])
         else
         {
             close_fd();
-            return -2;
+            return -3;
         }
         close_fd();
         return 0;
@@ -699,7 +717,7 @@ int main(int argc, char *argv[])
                 {
                     misc_print(0, "ERROR: unable to create socket input thread.\n");
                     close_fd();
-                    return -3;
+                    return -4;
                 }
                 misc_print(0, "Socket input thread created.\n");
             }
@@ -708,7 +726,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: in INI File (MIDI_SERVER) --> %s\n", midiLinkINI);
             close_fd();
-            return -4;
+            return -5;
         }
     }
     else if (mode == ModeTCP)
@@ -719,7 +737,7 @@ int main(int argc, char *argv[])
         {
            misc_print(0, "ERROR: unable to create socket listener thread.\n");
            close_fd();
-           return -5;
+           return -6;
         }
         misc_print(0, "Socket listener thread created.\n");
     }
@@ -730,7 +748,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
-            return -6;
+            return -7;
         }
 
         //if (misc_check_args_option(argc, argv, "MIDI1")
@@ -741,7 +759,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
                 close_fd();
-                return -7;
+                return -8;
             }
         }
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
@@ -757,7 +775,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
-                return -8;
+                return -9;
             }
             misc_print(0, "MIDI1 input thread created.\n");
             misc_print(0, "CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
@@ -768,7 +786,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create MIDI input thread.\n");
             close_fd();
-            return -9;
+            return -10;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
