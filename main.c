@@ -631,9 +631,9 @@ int main(int argc, char *argv[])
         close_fd();
         return -1;
     }
-
+    //printf("TST --> serial_set_interface_attribs - start\n"); 
     serial_set_interface_attribs(fdSerial);
-
+    //printf("TST --> serial_set_interface_attribs - end\n");
     if (mode == ModeUDP && UDPBaudRate != -1)
     {
         baudRate = UDPBaudRate;
@@ -654,9 +654,8 @@ int main(int argc, char *argv[])
     }
 
     setbaud_set_baud(serialDevice, fdSerial, baudRate);
-
     serial_do_tcdrain(fdSerial);
-
+         
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
         if(alsa_open_seq(128, (mode == ModeMUNTGM)?1:0))

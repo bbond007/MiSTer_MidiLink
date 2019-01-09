@@ -25,7 +25,7 @@ int serial_set_interface_attribs(int fdSerial)
     tty.c_cflag |= CS8;                            // 8-bit characters 
     tty.c_cflag &= ~PARENB;                        // no parity bit 
     tty.c_cflag &= ~CSTOPB;                        // only need 1 stop bit 
-    tty.c_cflag &= ~(IXON | IXOFF | IXANY);        // Disable XON/XOFF flowcontrol
+    tty.c_cflag &= ~(IXON | IXOFF );               // Disable XON/XOFF flowcontrol
     tty.c_cflag |= CRTSCTS;                        // CTS/RTS hardware flowcontrol 
     /* setup for non-canonical mode */
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
@@ -60,16 +60,16 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
     switch (hayesMode)
     {  
         case 0:
-            tty.c_cflag &= ~(CRTSCTS | IXON | IXOFF | IXANY);
+            tty.c_cflag &= ~(CRTSCTS | IXON | IXOFF);
             VALID = TRUE;
             break;
         case 3:
-            tty.c_cflag &= ~(IXON | IXOFF | IXANY);
+            tty.c_cflag &= ~(IXON | IXOFF);
             tty.c_cflag |= CRTSCTS; 
             VALID = TRUE;
             break;
         case 4:   
-            tty.c_cflag &= ~(CRTSCTS | IXANY);
+            tty.c_cflag &= ~(CRTSCTS);
             tty.c_cflag |= IXON | IXOFF;
             VALID = TRUE;
             break;
