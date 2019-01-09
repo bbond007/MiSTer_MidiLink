@@ -286,3 +286,45 @@ int misc_check_module_loaded (char * modName)
         return FALSE;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_get_midi_port(char * descr)
+int misc_get_midi_port(char * descr)
+{
+    char str[80];
+    FILE * pipe;
+    char * endPtr;
+    char * tmp;
+    int iPort = -1;
+    pipe = popen("aconnect -o", "r");
+    if (pipe)
+    {
+        while (fgets(str, sizeof(str), pipe)!= NULL)
+        {
+            if(strstr(str, descr) && strlen(str) > 10)
+            {
+                tmp = strchr(str, ':');
+                if (tmp)
+                {
+                    *tmp = (char) 0x00; 
+                    tmp = strchr(str, ' ');
+                    if (tmp)
+                    {
+                        tmp++;                       
+                        iPort = strtol(tmp, &endPtr, 10);
+                        fclose(pipe);
+                        return iPort;
+                    }
+                }
+            }
+        }
+        fclose(pipe);
+        return iPort;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_get_midi_port('%s') : Unable to open --> '%s'\n", descr, "aconnect");
+        return FALSE;
+    }
+}

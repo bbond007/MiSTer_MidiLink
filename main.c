@@ -549,6 +549,7 @@ void close_fd()
 int main(int argc, char *argv[])
 {
     int status;
+    int midiPort;
     unsigned char buf[256];
           
     misc_print(0, "\e[2J\e[H");
@@ -614,6 +615,7 @@ int main(int argc, char *argv[])
         misc_print(0, "Starting --> mt32d\n");
         system("mt32d &");
         sleep(2);
+        midiPort = misc_get_midi_port("MT-32");
     }
     else if (mode == ModeFSYNTH)
     {
@@ -622,6 +624,7 @@ int main(int argc, char *argv[])
         sprintf(buf, "fluidsynth -is -a alsa -m alsa_seq %s &", fsynthSoundFont);
         system(buf);
         sleep(2);
+        midiPort = misc_get_midi_port("FLUID Synth");
     }
 
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
@@ -658,7 +661,7 @@ int main(int argc, char *argv[])
          
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
-        if(alsa_open_seq(128, (mode == ModeMUNTGM)?1:0))
+        if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
             do
