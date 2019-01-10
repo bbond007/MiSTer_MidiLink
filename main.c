@@ -415,6 +415,12 @@ void do_modem_emulation(char * buf, int bufLen)
                 write(fdSerial, tmp, strlen(tmp));
                 misc_write_ok(fdSerial);
             }
+            else if (memcmp(lineBuf, "ATVER", 5) == 0)
+            {
+                write(fdSerial, "\r\n",2);
+                write(fdSerial, helloStr, strlen(helloStr));
+                misc_write_ok(fdSerial);
+            }
             else
             {
                 write(fdSerial, "\r\n", 2);
@@ -635,6 +641,8 @@ int main(int argc, char *argv[])
 
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
+    misc_print(0, "\r");
+    
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI);
 
