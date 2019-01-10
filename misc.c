@@ -209,6 +209,15 @@ int misc_get_ipaddr(char * interface, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// void misc_write_ok(int fdSerial)
+//
+void misc_write_ok(int fdSerial)
+{
+    write(fdSerial, "\r\nOK\r\n", 6);  
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // void misc_show_atdt(int fdSerial)
 //
 void misc_show_atdt(int fdSerial)
@@ -217,12 +226,13 @@ void misc_show_atdt(int fdSerial)
     char line[] = "\r\n----------------------------------";
     char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
     char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999";
-    char example3 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999\r\nOK\r\n";
+    char example3 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999";
     write(fdSerial, serror,   strlen(serror));
     write(fdSerial, line,     strlen(line));
     write(fdSerial, example1, strlen(example1));
     write(fdSerial, example2, strlen(example2));
     write(fdSerial, example3, strlen(example3));
+    misc_write_ok(fdSerial);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -240,7 +250,7 @@ void misc_show_atip(int fdSerial)
     write(fdSerial, "\r\n", 2);
     misc_get_ipaddr("wlan0", tmp);
     write(fdSerial, tmp, strlen(tmp));
-    write(fdSerial, "\r\nOK\r\n", 6);
+    misc_write_ok(fdSerial);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -253,6 +263,7 @@ long misc_get_timeval_diff(struct timeval * start, struct timeval * stop)
     long usecs = stop->tv_usec - start->tv_usec;
     return ((secs) * 1000 + usecs/1000.0);
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //

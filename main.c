@@ -65,14 +65,14 @@ static pthread_t        socketLstThread;
 // void show_debug_buf(char * descr, char * buf, int bufLen)
 //
 void show_debug_buf(char * descr, char * buf, int bufLen)
-{    
+{
     static struct timeval start = {0, 0};
     struct timeval time;
     if(MIDI_DEBUG)
     {
         if(start.tv_sec == 0)
             gettimeofday(&start, NULL);
-        gettimeofday(&time, NULL); 
+        gettimeofday(&time, NULL);
         misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (&start, &time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
             misc_print(2, " %02x", *byte);
@@ -128,7 +128,7 @@ void * tcplst_thread_function (void * x)
             tcpsock_close(socket_in);
             socket_in = -1;
         }
-        
+
     } while(TRUE);
 }
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +149,7 @@ void * tcpsock_thread_function (void * x)
             show_debug_buf("TSOCK IN ", buf, rdLen);
         }
         else if(rdLen < 0)
-                misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 0\n");
+            misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 0\n");
     } while (socket_out != -1);
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
@@ -187,7 +187,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static char lastChar = 0x00;
     static struct timeval start;
     static struct timeval stop;
-    
+
     char tmp[100] = "";
 
     for (char * p = buf; bufLen-- > 0; p++)
@@ -196,10 +196,10 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         {
         case 0x0d:// [RETURN]
             if(memcmp(lineBuf, "+++ATH", 6) == 0)
-            {   
+            {
                 int delay = misc_get_timeval_diff(&start, &stop);
                 if(delay > 900)
-                {  
+                {
                     tcpsock_close(*socket);
                     *socket =  -1;
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
@@ -209,7 +209,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                     write(fdSerial, "OK\r\n", 4);
                 }
                 else
-                    misc_print(1, "HANG-UP Rejected --> %d\n", delay);                
+                    misc_print(1, "HANG-UP Rejected --> %d\n", delay);
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
@@ -221,7 +221,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                 iLineBuf = 0;
         default:
             if (lastChar == '+' && *p != '+')
-                gettimeofday(&stop, NULL);         
+                gettimeofday(&stop, NULL);
             if (iLineBuf < sizeof(lineBuf)-1)
             {
                 lineBuf[iLineBuf++] = *p;
@@ -236,6 +236,76 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// void do_telnet_negotiate()
+//
+//
+#define DO   0xfd
+#define WONT 0xfc
+#define WILL 0xfb
+#define DONT 0xfe
+#define CMD  0xff
+#define CMD_ECHO 1
+#define CMD_WINDOW_SIZE 31
+
+void do_telnet_negotiate()
+{
+    char buf[3];
+    int rdLen1;
+    int rdLen2;
+    int rdLen3;
+    int wrLen = 0;
+    unsigned char msg1[] = {0xff, 0xfb, 0x1f};
+    unsigned char msg2[] = {0xff, 0xfa, 0x1f, 0x00, 0x50, 0x00, 0x18, 0xff, 0xf0};
+
+    tcpsock_set_timeout(socket_out, 3);
+    misc_print(1, "Telnet negotiation --> START\n");
+    do
+    {
+        rdLen1  = tcpsock_read(socket_out, &buf[0], 1);
+        if (rdLen1 == 1 && buf[0] == CMD)
+        {
+            //misc_print(1, "Telnet negotiation --> CMD\n");
+            rdLen2 = tcpsock_read(socket_out, &buf[1], 1);
+            rdLen3 = tcpsock_read(socket_out, &buf[2], 1);
+            if (buf[1] == DO && buf[2] == CMD_WINDOW_SIZE)
+            {
+                //misc_print(1, "Telnet negotiation --> N1\n");
+                wrLen = tcpsock_write(socket_out, msg1, sizeof(msg1));
+                if (wrLen < 0)
+                    goto end;
+                wrLen = tcpsock_write(socket_out, msg2, sizeof(msg2));
+                if (wrLen < 0)
+                    goto end;
+            }
+            else
+            {
+                //misc_print(1, "Telnet negotiation --> N2\n");
+                for (int i = 0; i < sizeof(buf); i++)
+                {
+                    if (buf[i] == DO)
+                        buf[i] = WONT;
+                    else if (buf[i] == WILL)
+                        buf[i] = DO;
+                }
+                if (wrLen = tcpsock_write(socket_out, buf, sizeof(buf)) < 0)
+                    goto end;
+                buf[0] = CMD;
+            }
+        }
+        else if(rdLen1 = 1)
+            write(fdSerial, &buf[0], 1);
+    } while (buf[0] == CMD && rdLen1 == 1);
+end:
+    misc_print(1, "Telnet negotiation --> END\n");
+    if (wrLen < 0)
+    {
+        //TODO something went wrong --> do something...
+    }
+    tcpsock_set_timeout(socket_out, 0);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // void do_modem_emulation(char * buf, int bufLen)
 //
 //
@@ -245,6 +315,7 @@ void do_modem_emulation(char * buf, int bufLen)
     static char iLineBuf = 0;
     char tmp[100]  = "";
     char * endPtr;
+    static int TELNET_NEGOTIATE = TRUE;
 
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
@@ -258,8 +329,8 @@ void do_modem_emulation(char * buf, int bufLen)
             if(memcmp(lineBuf, "ATDT", 4) == 0)
             {
                 char * prtSep  = strchr(lineBuf, ':');
-                if(prtSep == NULL) 
-                    prtSep = strchr(lineBuf, '*'); // with NCOMM? 
+                if(prtSep == NULL)
+                    prtSep = strchr(lineBuf, '*'); // with NCOMM?
                 char * port   = (prtSep == NULL)?NULL:(prtSep + 1);
                 char * ipAddr = &lineBuf[4];
                 if (prtSep != NULL) *prtSep = 0x00;
@@ -286,10 +357,12 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
+                        if (TELNET_NEGOTIATE)
+                            do_telnet_negotiate();
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
                     else
-                        write(fdSerial, "\r\nOK\r\n", 6);
+                        misc_write_ok(fdSerial);
                 }
             }
             else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
@@ -316,7 +389,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     write(fdSerial, tmp, strlen(tmp));
                     setbaud_show_menu(fdSerial);
                 }
-                write(fdSerial, "\r\nOK\r\n", 6);
+                misc_write_ok(fdSerial);
             }
             else if (memcmp(lineBuf, "ATIP", 4) == 0)
             {
@@ -332,7 +405,17 @@ void do_modem_emulation(char * buf, int bufLen)
                 }
                 else
                     serial_set_flow_control(fdSerial, -1);
-                write(fdSerial, "\r\nOK\r\n", 6);
+                misc_write_ok(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATTEL", 5) == 0)
+            {
+                if (lineBuf[5] == '0')
+                    TELNET_NEGOTIATE = FALSE;
+                else if (lineBuf[5] == '1')
+                    TELNET_NEGOTIATE = TRUE;
+                sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
+                write(fdSerial, tmp, strlen(tmp));
+                misc_write_ok(fdSerial);
             }
             else
             {
@@ -394,30 +477,30 @@ void * midi_thread_function (void * x)
 void write_midi_packet(char * buf, int bufLen)
 {
     static int SYSEX = FALSE;
-    if (DELAYSYSEX) // This is for MT-32 Rev0 - 
-    {               // spoon-feed the SYSEX data and delay after  
+    if (DELAYSYSEX) // This is for MT-32 Rev0 -
+    {   // spoon-feed the SYSEX data and delay after
         misc_print(2, "MIDI OUT [%02d] -->", bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
         {
             switch (*byte)
             {
-                case 0xF0: // SYSEX START
-                    SYSEX = TRUE;
-                    misc_print(2, " SXD+ f0");
-                    write(fdMidi, byte, 1);
-                    usleep(1000);	   
-                    break;
-            	case 0xF7: // SYSEX END
-                    SYSEX = FALSE;
-                    misc_print(2, " f7 SXD-");	   
-            	    write(fdMidi, byte, 1);
-            	    usleep(20000);
-            	    break;
-                default:
-                    misc_print(2, " %02x", *byte);
-                    write(fdMidi, byte, 1);
-                    if (SYSEX) usleep(1000);
-                    break;
+            case 0xF0: // SYSEX START
+                SYSEX = TRUE;
+                misc_print(2, " SXD+ f0");
+                write(fdMidi, byte, 1);
+                usleep(1000);
+                break;
+            case 0xF7: // SYSEX END
+                SYSEX = FALSE;
+                misc_print(2, " f7 SXD-");
+                write(fdMidi, byte, 1);
+                usleep(20000);
+                break;
+            default:
+                misc_print(2, " %02x", *byte);
+                write(fdMidi, byte, 1);
+                if (SYSEX) usleep(1000);
+                break;
             }
         }
         misc_print(2, "\n");
@@ -426,7 +509,7 @@ void write_midi_packet(char * buf, int bufLen)
     {
         write(fdMidi, buf, bufLen);
         show_debug_buf("MIDI OUT ", buf, bufLen);
-    }   
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -551,7 +634,7 @@ int main(int argc, char *argv[])
     int status;
     int midiPort;
     unsigned char buf[256];
-          
+
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
     if(misc_check_file(midiLinkINI))
@@ -597,18 +680,18 @@ int main(int argc, char *argv[])
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
         if(!misc_check_device("/dev/MrAudioBuffer") && misc_check_file("/etc/asound.conf"))
-        {   
+        {
             misc_print(0, "Loading --> MrBuffer\n");
             system("modprobe MrBuffer");
         }
-        
+
         if (!misc_check_device("/dev/snd/pcmC0D0p"))
         {
             misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
             system ("modprobe snd-dummy");
-        }        
+        }
     }
-    
+
     if (mode == ModeMUNT || mode == ModeMUNTGM)
     {
         set_pcm_volume(muntVolume);
@@ -631,7 +714,7 @@ int main(int argc, char *argv[])
         system(buf);
         int loop = 0;
         do
-        {	
+        {
             sleep(2);
             midiPort = alsa_get_midi_port("FLUID Synth");
             loop++;
@@ -644,7 +727,7 @@ int main(int argc, char *argv[])
         close_fd();
         return -1;
     }
-    
+
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
@@ -652,7 +735,7 @@ int main(int argc, char *argv[])
         close_fd();
         return -2;
     }
-    //printf("TST --> serial_set_interface_attribs - start\n"); 
+    //printf("TST --> serial_set_interface_attribs - start\n");
     serial_set_interface_attribs(fdSerial);
     //printf("TST --> serial_set_interface_attribs - end\n");
     if (mode == ModeUDP && UDPBaudRate != -1)
@@ -676,7 +759,7 @@ int main(int argc, char *argv[])
 
     setbaud_set_baud(serialDevice, fdSerial, baudRate);
     serial_do_tcdrain(fdSerial);
-         
+
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
@@ -735,9 +818,9 @@ int main(int argc, char *argv[])
         status = pthread_create(&socketLstThread, NULL, tcplst_thread_function, NULL);
         if (status == -1)
         {
-           misc_print(0, "ERROR: unable to create socket listener thread.\n");
-           close_fd();
-           return -6;
+            misc_print(0, "ERROR: unable to create socket listener thread.\n");
+            close_fd();
+            return -6;
         }
         misc_print(0, "Socket listener thread created.\n");
     }

@@ -14,6 +14,7 @@ void misc_show_atip(int fdSerial);
 long misc_get_timeval_diff(struct timeval * start, struct timeval * stop);
 int  misc_check_module_loaded (char * modName);
 int  misc_get_midi_port(char * descr);
+void misc_write_ok(int fdSerial);
 
 #define TRUE 1
 #define FALSE 0
