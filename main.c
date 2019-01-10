@@ -271,11 +271,9 @@ void do_telnet_negotiate()
             {
                 //misc_print(1, "Telnet negotiation --> N1\n");
                 wrLen = tcpsock_write(socket_out, msg1, sizeof(msg1));
-                if (wrLen < 0)
-                    goto end;
+                if (wrLen < 0) goto end;
                 wrLen = tcpsock_write(socket_out, msg2, sizeof(msg2));
-                if (wrLen < 0)
-                    goto end;
+                if (wrLen < 0) goto end;
             }
             else
             {
@@ -287,8 +285,8 @@ void do_telnet_negotiate()
                     else if (buf[i] == WILL)
                         buf[i] = DO;
                 }
-                if (wrLen = tcpsock_write(socket_out, buf, sizeof(buf)) < 0)
-                    goto end;
+                wrLen = tcpsock_write(socket_out, buf, sizeof(buf));
+                if (wrLen < 0) goto end;
                 buf[0] = CMD;
             }
         }
@@ -299,7 +297,7 @@ end:
     misc_print(1, "Telnet negotiation --> END\n");
     if (wrLen < 0)
     {
-        //TODO something went wrong --> do something...
+        misc_print(0, "ERROR: Telnet negotiation failed\n");
     }
     tcpsock_set_timeout(socket_out, 0);
 }
@@ -789,6 +787,8 @@ int main(int argc, char *argv[])
     {
         if (strlen(UDPServer) > 7)
         {
+            if(!misc_is_ip_addr(UDPServer))
+                misc_hostname_to_ip(UDPServer, UDPServer);
             misc_print(0, "Connecting to server --> %s:%d\n", UDPServer, UDPServerPort);
             socket_out = udpsock_client_connect(UDPServer, UDPServerPort);
             socket_in  = udpsock_server_open(UDPServerPort);
@@ -807,7 +807,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            misc_print(0, "ERROR: in INI File (MIDI_SERVER) --> %s\n", midiLinkINI);
+            misc_print(0, "ERROR: in INI File (UDP_SERVER) --> %s\n", midiLinkINI);
             close_fd();
             return -5;
         }
