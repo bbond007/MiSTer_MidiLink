@@ -444,10 +444,10 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
 
     struct dirent **namelist;
     int max;
-    int index  = 0;
-    int count  = 1;
-    int offset = 0;
-    int skip   = 0;
+    int index         = 0;
+    int count         = 0;
+    int offset        = 0;
+    int skip          = 0;
     char * endPtr;
     char strIdx[8];
     char c;
@@ -493,7 +493,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             else
                 skip++;
 
-            if (count > rows || index == max - 1)
+            if (count == rows || index == max - 1)
             {
                 if(index == max -1)
                     write (fdSerial, promptEnd,  strlen(promptEnd));
@@ -523,7 +523,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                     case 0x0d: // [RETURN]
                         if(strlen(prompt) > 0)
                         {
-                            int iMenu = strtol(prompt, &endPtr, 10) + offset + skip -1;
+                            int iMenu = strtol(prompt, &endPtr, 10) + offset + skip;
                             if(iMenu < max)
                             {
                                 strcpy(fileName, namelist[iMenu]->d_name);
@@ -542,7 +542,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         }
                         break;
                     }
-                } while (c != 'Q' && c != 0x0d && c != ' ');
+                } while (c != 'Q' && c != 0x0d && c != ' ' && c != 'P');
                 if (c == 'Q')
                     break;
                 write(fdSerial, clrScr, strlen(clrScr));
