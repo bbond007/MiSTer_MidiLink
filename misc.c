@@ -210,11 +210,20 @@ int misc_get_ipaddr(char * interface, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void misc_write_ok(int fdSerial)
+// void misc_write_ok6(int fdSerial)
 //
-void misc_write_ok(int fdSerial)
+void misc_write_ok6(int fdSerial)
 {
     write(fdSerial, "\r\nOK\r\n", 6);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_write_ok4(int fdSerial)
+//
+void misc_write_ok4(int fdSerial)
+{
+    write(fdSerial, "OK\r\n", 4);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -233,7 +242,7 @@ void misc_show_atdt(int fdSerial)
     write(fdSerial, example1, strlen(example1));
     write(fdSerial, example2, strlen(example2));
     write(fdSerial, example3, strlen(example3));
-    misc_write_ok(fdSerial);
+    misc_write_ok6(fdSerial);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -251,7 +260,7 @@ void misc_show_atip(int fdSerial)
     write(fdSerial, "\r\n", 2);
     misc_get_ipaddr("wlan0", tmp);
     write(fdSerial, tmp, strlen(tmp));
-    misc_write_ok(fdSerial);
+    misc_write_ok6(fdSerial);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -443,17 +452,17 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
 {
 
     struct dirent **namelist;
-    int max;
-    int index         = 0;
-    int count         = 1;
-    int page          = 0;
-    int skip          = 0;
+    int  max;
+    int  index        = 0;
+    int  count        = 0;
+    int  page         = 0;
+    int  skip         = 0;
     char * endPtr;
     char strIdx[8];
     char c;
     char prompt[10]   = "";
     char strRows[10]  = "";
-    int result        = FALSE;
+    int  result       = FALSE;
     char clrScr[]     = "\e[2J\e[H";
     char promptEnd[]  = "END  ##? --> ";
     char promptMore[] = "MORE ##? --> ";
@@ -476,9 +485,9 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
         while (index < max)
         {
             if(strlen(namelist[index]->d_name) > 0 &&
-                namelist[index]->d_name[0] != '.')
+               namelist[index]->d_name[0] != '.')
             {
-                sprintf(strIdx, "%4d", count);
+                sprintf(strIdx, "%4d", count + 1);
                 write(fdSerial,strIdx, strlen(strIdx));
                 if(namelist[index]->d_type == DT_DIR)
                     write(fdSerial, " [DIR] ", 7);
@@ -490,10 +499,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             }
             else
                 skip++;
-
-            if (count > rows || index == max - 1)
+            index++;
+            
+            if ((count == rows && rows > 0) || index == max)
             {
-                if(index == max -1)
+                if(index == max)
                     write (fdSerial, promptEnd,  strlen(promptEnd));
                 else
                     write (fdSerial, promptMore, strlen(promptMore));
@@ -526,7 +536,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                     case 0x0d: // [RETURN]
                         if(strlen(prompt) > 0)
                         {
-                            int iMenu = strtol(prompt, &endPtr, 10) + (page * rows) + skip -1;
+                            int iMenu = strtol(prompt, &endPtr, 10) + (page * rows) + skip - 1;
                             if(iMenu < max)
                             {
                                 strcpy(fileName, namelist[iMenu]->d_name);
@@ -549,19 +559,21 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                          c != 0x0d && 
                          c != ' '  && 
                          c != 'P');
-                if (c == 'Q')
-                    break;
-                write(fdSerial, clrScr, strlen(clrScr));
                 if(c == 'P')
                 {
                     page--;
-                    index -= (rows + count -1);
+                    index -= (rows + count);
                 }
                 else 
                     page++;
-                count = 1;
+                    
+                count = 0;
+                write(fdSerial, clrScr, strlen(clrScr));
+                if (c == 'Q')
+                    break;
+               //else if(index < max) //no clear on exit    
+               //   write(fdSerial, clrScr, strlen(clrScr));
             }
-            index++;
         }
         for(index = 0; index < max; index++)
             free(namelist[index]);

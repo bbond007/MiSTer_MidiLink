@@ -13,6 +13,7 @@ extern int          fsynthVolume;
 extern int          midilinkPriority;
 extern unsigned int UDPServerPort;
 extern unsigned int TCPServerPort;
+extern unsigned int TCPTermRows;
 extern int          UDPBaudRate;
 extern int          TCPBaudRate;
 extern unsigned int UDPServerFilterIP;
@@ -139,6 +140,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &TCPBaudRate);
     }
+    else if (strcmp("TCP_TERM_ROWS", key) == 0)
+    {
+        ini_uint(value, &TCPTermRows);
+    }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -177,6 +182,7 @@ void ini_print_settings()
     else
     misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
     misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",   TCPServerPort);
+    misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",   TCPTermRows);
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "\n");
 }

@@ -53,6 +53,7 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+unsigned int 		TCPTermRows            = 21;
 unsigned int            DELAYSYSEX	       = FALSE;
 unsigned int 		UDPServerPort          = 1999;
 unsigned int 		TCPServerPort          = 23;
@@ -133,6 +134,7 @@ void * tcplst_thread_function (void * x)
 
     } while(TRUE);
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * socket_thread_function(void * x)
@@ -235,7 +237,6 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void do_telnet_negotiate()
@@ -316,7 +317,7 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
     char * endPtr;
     do
     {
-        result = misc_list_files(pathBuf, fdSerial, 21, fileNameBuf, &DIR);
+        result = misc_list_files(pathBuf, fdSerial, TCPTermRows, fileNameBuf, &DIR);
         if(result)
             if (DIR)
             {
@@ -340,7 +341,7 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
                 write(fdSerial, fileNameBuf, strlen(fileNameBuf));
             }
     } while (result && DIR);
-    misc_write_ok(fdSerial);
+    misc_write_ok4(fdSerial);
     return result;
 }
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -352,9 +353,9 @@ void do_modem_emulation(char * buf, int bufLen)
 {
     static char lineBuf[150] = "";
     static char iLineBuf = 0;
+    static int TELNET_NEGOTIATE = TRUE;
     char tmp[1024]  = "";
     char * endPtr;
-    static int TELNET_NEGOTIATE = TRUE;
     char fileName [256];
              
     show_debug_buf("SER OUT  ", buf, bufLen);
@@ -402,7 +403,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
                     else
-                        misc_write_ok(fdSerial);
+                        misc_write_ok6(fdSerial);
                 }
             }
             else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
@@ -429,7 +430,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     write(fdSerial, tmp, strlen(tmp));
                     setbaud_show_menu(fdSerial);
                 }
-                misc_write_ok(fdSerial);
+                misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATIP", 4) == 0)
             {
@@ -445,7 +446,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 }
                 else
                     serial_set_flow_control(fdSerial, -1);
-                misc_write_ok(fdSerial);
+                misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATTEL", 5) == 0)
             {
@@ -455,7 +456,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     TELNET_NEGOTIATE = TRUE;
                 sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
                 write(fdSerial, tmp, strlen(tmp));
-                misc_write_ok(fdSerial);
+                misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
@@ -478,17 +479,35 @@ void do_modem_emulation(char * buf, int bufLen)
                     //misc_do_pipe(fdSerial, tmp); 
                 }
             }
+            else if (memcmp(lineBuf, "ATROWS", 6) == 0)
+            {
+                char * strRows = &lineBuf[6];
+                if(!misc_is_number(strRows))
+                {
+                    for (int i = 50; i > 0; i--)
+                    {
+                        sprintf(tmp, "\r\n%2d", i);
+                        write(fdSerial, tmp, strlen(tmp));
+                    }
+                    write(fdSerial, "\r\n",2);
+                }
+                else
+                {
+                    TCPTermRows  = strtol(strRows, &endPtr, 10);
+                    sprintf(tmp, "\r\nROWS --> %d", TCPTermRows);
+                    write(fdSerial, tmp, strlen(tmp));
+                    misc_write_ok6(fdSerial);
+                }
+            }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
                 write(fdSerial, "\r\n",2);
                 write(fdSerial, helloStr, strlen(helloStr));
-                misc_write_ok(fdSerial);
+                misc_write_ok6(fdSerial);
             }
             else
             {
                 write(fdSerial, "\r\n", 2);
-                //write(fdSerial, lineBuf, iLineBuf);
-                //write(fdSerial, "\r\n", 2);
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
