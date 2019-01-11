@@ -520,7 +520,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         c = 'Q';
                         break;
                     case 'P':
-                        //if (page == 0) 
+                        if (page == 0) 
                             c = (char) 0x00;
                         break;    
                     case 0x0d: // [RETURN]
@@ -555,7 +555,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 if(c == 'P')
                 {
                     page--;
-                    index -= rows;
+                    index -= (rows + count);
                 }
                 else 
                     page++;
