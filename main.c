@@ -339,9 +339,10 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
                 char msg[] = "Selected file --> ";
                 write (fdSerial, msg, strlen(msg));
                 write(fdSerial, fileNameBuf, strlen(fileNameBuf));
+                write(fdSerial, "\r\n", 2);
             }
     } while (result && DIR);
-    misc_write_ok6(fdSerial);
+    misc_write_ok4(fdSerial);
     return result;
 }
 ///////////////////////////////////////////////////////////////////////////////////////
