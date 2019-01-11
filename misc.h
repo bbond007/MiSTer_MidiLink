@@ -16,5 +16,6 @@ int  misc_check_module_loaded (char * modName);
 int  misc_get_midi_port(char * descr);
 void misc_write_ok(int fdSerial);
 int  misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR);
+int  misc_do_pipe(int fdSerial, char * command);
 #define TRUE 1
 #define FALSE 0

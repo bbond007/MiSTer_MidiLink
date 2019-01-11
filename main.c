@@ -44,6 +44,7 @@ static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
 static char 		MP3Path[500]           = "/media/fat/MP3";
+static char 		downloadPath[500]      = "/";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char         		UDPServer [100]        = "";
 char 			mixerControl [20]      = "PCM";
@@ -334,7 +335,7 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
             }
             else
             {
-                char msg[] = "\r\nSelected file  --> ";
+                char msg[] = "\r\nSelected file --> ";
                 write (fdSerial, msg, strlen(msg));
                 write(fdSerial, fileNameBuf, strlen(fileNameBuf));
             }
@@ -351,10 +352,11 @@ void do_modem_emulation(char * buf, int bufLen)
 {
     static char lineBuf[150] = "";
     static char iLineBuf = 0;
-    char tmp[100]  = "";
+    char tmp[1024]  = "";
     char * endPtr;
     static int TELNET_NEGOTIATE = TRUE;
-
+    char fileName [256];
+             
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
@@ -457,14 +459,23 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
-                char MP3fileName [128];
-                if(do_file_picker(MP3Path, MP3fileName))
+                if(do_file_picker(MP3Path, fileName))
                 {
-                    sprintf(tmp, "mpg123 -o alsa \"%s/%s\" &", MP3Path, MP3fileName);
+                    sprintf(tmp, "mpg123 -o alsa \"%s/%s\" &", MP3Path, fileName);
                     system("killall mpg123");
                     misc_print(1, "Play MP3 --> %s\n", tmp);
                     system(tmp); 
                     
+                }
+            }
+            else if (memcmp(lineBuf, "ATSZ", 4) == 0)
+            {
+                if(do_file_picker(downloadPath, fileName))
+                {
+                    sprintf(tmp, "sz \"%s/%s\"", downloadPath, fileName);
+                    misc_print(1, "Zmodem download --> %s\n", tmp);
+                    //misc_do_pipe(fdSerial, "ls -la /media/fat/AMIGA");//, tmp); 
+                    //misc_do_pipe(fdSerial, tmp); 
                 }
             }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)

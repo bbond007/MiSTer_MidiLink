@@ -343,32 +343,100 @@ int misc_get_midi_port(char * descr)
     }
 }
 
+/*
 
-int misc_list_files_old(char * path, int fdSerial)
+int misc_do_pipr(int fdSerial, char * command, char * args)
+//static boolstart_subprocess(char *const command[], int *pid, int *infd, int *outfd)
 {
-    DIR *d;
-    struct dirent *dir;
-    int index = 0;
-    char strIdx[8];
-    char * path2 = malloc(strlen(path) + 3);
-    sprintf(path2, "%s/.", path);
-    d = opendir(path2);
-    if (d)
-    {
-        while ((dir = readdir(d)) != NULL)
-        {
-            sprintf(strIdx, "%d", index);
-            write(fdSerial, "\r\n", 2);
-            write(fdSerial,strIdx, strlen(strIdx));
-            write(fdSerial, " --> ", 5);
-            write(fdSerial, dir->d_name, strlen(dir->d_name));
-            index++;
-        }
+    int p1[2], p2[2];
 
-        closedir(d);
+    if (!pid || !infd || !outfd)
+        return false;
+
+    if (pipe(p1) == -1)
+        goto err_pipe1;
+    if (pipe(p2) == -1)
+        goto err_pipe2;
+    if ((*pid = fork()) == -1)
+        goto err_fork;
+
+    if (*pid) {
+        // Parent process. 
+        *infd = p1[1];
+        *outfd = p2[0];
+        close(p1[0]);
+        close(p2[1]);
+        return true;
+    } else {
+        // Child process. 
+        dup2(p1[0], 0);
+        dup2(p2[1], 1);
+        close(p1[0]);
+        close(p1[1]);
+        close(p2[0]);
+        close(p2[1]);
+        execvp(command, args);
+        // Error occured. 
+        fprintf(stderr, "error running %s: %s", command, strerror(errno));
+        abort();
     }
-    free(path2);
-    return(0);
+
+err_fork:
+    close(p2[1]);
+    close(p2[0]);
+err_pipe2:
+    close(p1[1]);
+    close(p1[0]);
+err_pipe1:
+    return false;
+}
+
+*/
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_get_midi_port(char * command)
+int misc_do_pipe(int fdSerial, char * command)
+{
+    char bufIn[100];
+    char bufOut[100];
+    int rdLen = 1;
+    int wrLen = 1;
+    FILE * pipe;
+    int pipefd[2];
+    pipe = popen(command, "r");
+    if (pipe)
+    {
+        pid_t pid = fork();
+        if(pid == 0)
+        {
+            do
+            {
+                rdLen = fread(bufIn, sizeof(bufIn), 1, pipe); 
+                write(fdSerial, bufIn, rdLen);
+            }while (rdLen > 0); 
+            fclose(pipe);
+            pipe = NULL;
+            misc_print(0, "TEST misc_do_pipe() --> Pipe read Process ended\n"); 
+         
+        }
+        else
+        {
+            do
+            {
+                wrLen = read(fdSerial, bufOut,  sizeof(bufOut)); 
+                fwrite(bufOut, sizeof(bufOut), 1, pipe); 
+            }while (pipe != NULL);        
+            misc_print(0, "TEST misc_do_pipe() --> Pipe write process ended\n"); 
+            exit(0);
+        }
+        
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_do_pipe('%s') --> '%s'\n", command, strerror(errno));
+        return FALSE;
+    }
 }
 
 int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
@@ -383,10 +451,13 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     char * endPtr;
     char strIdx[8];
     char c;
-    char prompt[10] = "";
-    char strRows[10] = "";
-    int result = FALSE;
-    char clrScr[]  = "\e[2J\e[H";
+    char prompt[10]   = "";
+    char strRows[10]  = "";
+    int result        = FALSE;
+    char clrScr[]     = "\e[2J\e[H";
+    char promptEnd[]  = "END  ##? --> ";
+    char promptMore[] = "MORE ##? --> ";
+    
     fileName[0] = (char) 0x00;
     sprintf(strRows, "%d", rows);
     char * path2   = malloc(strlen(path) + 3);
@@ -424,7 +495,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
 
             if (count > rows || index == max - 1)
             {
-                write (fdSerial, "##? --> ", 8);
+                if(index == max -1)
+                    write (fdSerial, promptEnd,  strlen(promptEnd));
+                else
+                    write (fdSerial, promptMore, strlen(promptMore));
+                       
                 prompt[0] = (char) 0x00;
                 do
                 {
