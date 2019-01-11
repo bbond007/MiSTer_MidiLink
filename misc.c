@@ -445,8 +445,8 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     struct dirent **namelist;
     int max;
     int index         = 0;
-    int count         = 0;
-    int offset        = 0;
+    int count         = 1;
+    int page          = 0;
     int skip          = 0;
     char * endPtr;
     char strIdx[8];
@@ -475,8 +475,6 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
         write(fdSerial, clrScr, strlen(clrScr));
         while (index < max)
         {
-            //if(strcmp(namelist[index]->d_name, "..") != 0  &&
-            //   strcmp(namelist[index]->d_name, ".")  != 0) 
             if(strlen(namelist[index]->d_name) > 0 &&
                 namelist[index]->d_name[0] != '.')
             {
@@ -493,7 +491,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             else
                 skip++;
 
-            if (count == rows || index == max - 1)
+            if (count > rows || index == max - 1)
             {
                 if(index == max -1)
                     write (fdSerial, promptEnd,  strlen(promptEnd));
@@ -513,6 +511,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         {
                             prompt[strlen(prompt) -1] = (char) 0x00;
                             write(fdSerial, &c, 1);
+                   
                         }
                     case '-':
                         sprintf(fileName, "..");
@@ -520,10 +519,14 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         *DIR = TRUE;
                         c = 'Q';
                         break;
+                    case 'P':
+                        //if (page == 0) 
+                            c = (char) 0x00;
+                        break;    
                     case 0x0d: // [RETURN]
                         if(strlen(prompt) > 0)
                         {
-                            int iMenu = strtol(prompt, &endPtr, 10) + offset + skip;
+                            int iMenu = strtol(prompt, &endPtr, 10) + (page * rows) + skip -1;
                             if(iMenu < max)
                             {
                                 strcpy(fileName, namelist[iMenu]->d_name);
@@ -542,12 +545,21 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         }
                         break;
                     }
-                } while (c != 'Q' && c != 0x0d && c != ' ' && c != 'P');
+                } while (c != 'Q'  && 
+                         c != 0x0d && 
+                         c != ' '  && 
+                         c != 'P');
                 if (c == 'Q')
                     break;
                 write(fdSerial, clrScr, strlen(clrScr));
-                offset += count;
-                count = 0;
+                if(c == 'P')
+                {
+                    page--;
+                    index -= rows;
+                }
+                else 
+                    page++;
+                count = 1;
             }
             index++;
         }
