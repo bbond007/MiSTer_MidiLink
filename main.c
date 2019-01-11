@@ -336,12 +336,12 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
             }
             else
             {
-                char msg[] = "\r\nSelected file --> ";
+                char msg[] = "Selected file --> ";
                 write (fdSerial, msg, strlen(msg));
                 write(fdSerial, fileNameBuf, strlen(fileNameBuf));
             }
     } while (result && DIR);
-    misc_write_ok4(fdSerial);
+    misc_write_ok6(fdSerial);
     return result;
 }
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -456,7 +456,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     TELNET_NEGOTIATE = TRUE;
                 sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
                 write(fdSerial, tmp, strlen(tmp));
-                misc_write_ok6(fdSerial);
+                
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
@@ -466,7 +466,6 @@ void do_modem_emulation(char * buf, int bufLen)
                     system("killall mpg123");
                     misc_print(1, "Play MP3 --> %s\n", tmp);
                     system(tmp); 
-                    
                 }
             }
             else if (memcmp(lineBuf, "ATSZ", 4) == 0)
