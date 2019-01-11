@@ -555,7 +555,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 if(c == 'P')
                 {
                     page--;
-                    index -= (rows + count);
+                    index -= (rows + count -1);
                 }
                 else 
                     page++;
