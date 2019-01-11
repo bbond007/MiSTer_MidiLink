@@ -43,6 +43,7 @@ static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
+static char 		MP3Path[500]           = "/media/fat/MP3";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char         		UDPServer [100]        = "";
 char 			mixerControl [20]      = "PCM";
@@ -304,6 +305,45 @@ end:
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// int do_file_picker(char * pathBuf, char * resultBuf)
+//
+//
+int do_file_picker(char * pathBuf, char * fileNameBuf)
+{
+    int DIR = 0;
+    int result;
+    char * endPtr;
+    do
+    {
+        result = misc_list_files(pathBuf, fdSerial, 21, fileNameBuf, &DIR);
+        if(result)
+            if (DIR)
+            {
+                if(strcmp(fileNameBuf, ".") == 0 || 
+                   strcmp(fileNameBuf, "..") == 0)
+                {
+                    endPtr = strrchr(pathBuf, '/');
+                    if (endPtr != NULL && strlen(pathBuf) > 1)
+                        *endPtr = (char) 0x00;
+                }    
+                else
+                {
+                    strcat(pathBuf, "/");
+                    strcat(pathBuf, fileNameBuf);
+                }
+            }
+            else
+            {
+                char msg[] = "\r\nSelected file  --> ";
+                write (fdSerial, msg, strlen(msg));
+                write(fdSerial, fileNameBuf, strlen(fileNameBuf));
+            }
+    } while (result && DIR);
+    misc_write_ok(fdSerial);
+    return result;
+}
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // void do_modem_emulation(char * buf, int bufLen)
 //
 //
@@ -414,6 +454,18 @@ void do_modem_emulation(char * buf, int bufLen)
                 sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
                 write(fdSerial, tmp, strlen(tmp));
                 misc_write_ok(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATMP3", 5) == 0)
+            {
+                char MP3fileName [128];
+                if(do_file_picker(MP3Path, MP3fileName))
+                {
+                    sprintf(tmp, "mpg123 -o alsa \"%s/%s\" &", MP3Path, MP3fileName);
+                    system("killall mpg123");
+                    misc_print(1, "Play MP3 --> %s\n", tmp);
+                    system(tmp); 
+                    
+                }
             }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
@@ -642,7 +694,7 @@ int main(int argc, char *argv[])
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
     misc_print(0, "\r");
-    
+
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI);
 

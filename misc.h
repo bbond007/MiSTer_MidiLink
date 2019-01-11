@@ -15,6 +15,6 @@ long misc_get_timeval_diff(struct timeval * start, struct timeval * stop);
 int  misc_check_module_loaded (char * modName);
 int  misc_get_midi_port(char * descr);
 void misc_write_ok(int fdSerial);
-
+int  misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR);
 #define TRUE 1
 #define FALSE 0

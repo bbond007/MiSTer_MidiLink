@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <pthread.h>
 #include <netdb.h>
+#include <dirent.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -213,7 +214,7 @@ int misc_get_ipaddr(char * interface, char * buf)
 //
 void misc_write_ok(int fdSerial)
 {
-    write(fdSerial, "\r\nOK\r\n", 6);  
+    write(fdSerial, "\r\nOK\r\n", 6);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -318,11 +319,11 @@ int misc_get_midi_port(char * descr)
                 tmp = strchr(str, ':');
                 if (tmp)
                 {
-                    *tmp = (char) 0x00; 
+                    *tmp = (char) 0x00;
                     tmp = strchr(str, ' ');
                     if (tmp)
                     {
-                        tmp++;                       
+                        tmp++;
                         iPort = strtol(tmp, &endPtr, 10);
                         fclose(pipe);
                         sprintf(tmp, "echo %d > /tmp/DEBUG_ML_PORT", iPort);
@@ -340,4 +341,145 @@ int misc_get_midi_port(char * descr)
         misc_print(0, "ERROR: misc_get_midi_port('%s') : Unable to open --> '%s'\n", descr, "aconnect");
         return FALSE;
     }
+}
+
+
+int misc_list_files_old(char * path, int fdSerial)
+{
+    DIR *d;
+    struct dirent *dir;
+    int index = 0;
+    char strIdx[8];
+    char * path2 = malloc(strlen(path) + 3);
+    sprintf(path2, "%s/.", path);
+    d = opendir(path2);
+    if (d)
+    {
+        while ((dir = readdir(d)) != NULL)
+        {
+            sprintf(strIdx, "%d", index);
+            write(fdSerial, "\r\n", 2);
+            write(fdSerial,strIdx, strlen(strIdx));
+            write(fdSerial, " --> ", 5);
+            write(fdSerial, dir->d_name, strlen(dir->d_name));
+            index++;
+        }
+
+        closedir(d);
+    }
+    free(path2);
+    return(0);
+}
+
+int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
+{
+
+    struct dirent **namelist;
+    int max;
+    int index  = 0;
+    int count  = 1;
+    int offset = 0;
+    int skip   = 0;
+    char * endPtr;
+    char strIdx[8];
+    char c;
+    char prompt[10] = "";
+    char strRows[10] = "";
+    int result = FALSE;
+    char clrScr[]  = "\e[2J\e[H";
+    fileName[0] = (char) 0x00;
+    sprintf(strRows, "%d", rows);
+    char * path2   = malloc(strlen(path) + 3);
+    sprintf(path2, "%s/.", path);
+    max = scandir(path2, &namelist, NULL, alphasort);
+    if (max < 0)
+    {
+        char err[] = "\r\nBad Path --> ";
+        write(fdSerial, err, strlen(err));
+        write(fdSerial, path, strlen(path));
+    }
+    else
+    {
+        //write(fdSerial, "\r\n", 2);
+        write(fdSerial, clrScr, strlen(clrScr));
+        while (index < max)
+        {
+            //if(strcmp(namelist[index]->d_name, "..") != 0  &&
+            //   strcmp(namelist[index]->d_name, ".")  != 0) 
+            if(strlen(namelist[index]->d_name) > 0 &&
+                namelist[index]->d_name[0] != '.')
+            {
+                sprintf(strIdx, "%4d", count);
+                write(fdSerial,strIdx, strlen(strIdx));
+                if(namelist[index]->d_type == DT_DIR)
+                    write(fdSerial, " [DIR] ", 7);
+                else
+                    write(fdSerial, "  -->  ", 7);
+                write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
+                write(fdSerial, "\r\n", 2);
+                count++;
+            }
+            else
+                skip++;
+
+            if (count > rows || index == max - 1)
+            {
+                write (fdSerial, "##? --> ", 8);
+                prompt[0] = (char) 0x00;
+                do
+                {
+                    read(fdSerial, &c, 1);
+                    c = toupper(c);
+                    switch(c)
+                    {
+                    case 0x08: // [DELETE]
+                    case 0xf8: // [BACKSPACE]
+                        if (strlen(prompt) > 0)
+                        {
+                            prompt[strlen(prompt) -1] = (char) 0x00;
+                            write(fdSerial, &c, 1);
+                        }
+                    case '-':
+                        sprintf(fileName, "..");
+                        result = TRUE;
+                        *DIR = TRUE;
+                        c = 'Q';
+                        break;
+                    case 0x0d: // [RETURN]
+                        if(strlen(prompt) > 0)
+                        {
+                            int iMenu = strtol(prompt, &endPtr, 10) + offset + skip -1;
+                            if(iMenu < max)
+                            {
+                                strcpy(fileName, namelist[iMenu]->d_name);
+                                result = TRUE;
+                                *DIR = (namelist[iMenu]->d_type == DT_DIR)?TRUE:FALSE;
+                            }
+                            c = 'Q';
+                        }
+                        break;
+                    default:
+                        if(isdigit(c) && strlen(prompt) < strlen(strRows))
+                        {
+                            write(fdSerial, &c, 1);
+                            prompt[strlen(prompt)+ 1] = (char) 0x00;
+                            prompt[strlen(prompt)] = c;
+                        }
+                        break;
+                    }
+                } while (c != 'Q' && c != 0x0d && c != ' ');
+                if (c == 'Q')
+                    break;
+                write(fdSerial, clrScr, strlen(clrScr));
+                offset += count;
+                count = 0;
+            }
+            index++;
+        }
+        for(index = 0; index < max; index++)
+            free(namelist[index]);
+        free(namelist);
+    }
+    free(path2);
+    return result;
 }
