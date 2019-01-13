@@ -473,6 +473,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         system("killall mpg123");
                         sprintf(tmp, "\r\nMP3 --> OFF");
+                        write(fdSerial, tmp, strlen(tmp));
                         system(tmp);
                     }
                     else if(do_file_picker(MP3Path, fileName))
