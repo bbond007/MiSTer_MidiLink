@@ -24,7 +24,7 @@
 //
 //  misc_print( const char* format, ... )
 //
-pthread_mutex_t print_lock;
+static pthread_mutex_t print_lock;
 extern int MIDI_DEBUG;
 void misc_print(int priority, const char* format, ... )
 {
@@ -376,7 +376,7 @@ int misc_do_pipe(int fdSerial,  char * command, char * arg)
         else
         {
             // parent
-            char rdBuf[1014];
+            char rdBuf[1024];
             int  rdLen;
             close(pipefd[1]);                // close the write end of the
             do                               // pipe in the parent
@@ -497,7 +497,6 @@ void misc_d_type_to_str(unsigned char type, char * buf)
 //
 int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
 {
-
     struct dirent **namelist;
     int  max;
     int  index        = 0;
@@ -535,7 +534,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             if(strlen(namelist[index]->d_name) > 0 &&
                     namelist[index]->d_name[0] != '.')
             {
-                sprintf(strIdx, "%4d", count + 1);
+                sprintf(strIdx, "%6d", count + 1);
                 write(fdSerial,strIdx, strlen(strIdx));
                 if (namelist[index]->d_type != DT_REG)
                 {
@@ -553,14 +552,12 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             else
                 skip++;
             index++;
-
             if ((count == rows && rows > 0) || index == max)
             {
                 if(index == max)
                     write (fdSerial, promptEnd,  strlen(promptEnd));
                 else
                     write (fdSerial, promptMore, strlen(promptMore));
-
                 prompt[0] = (char) 0x00;
                 do
                 {
@@ -574,7 +571,6 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         {
                             prompt[strlen(prompt) -1] = (char) 0x00;
                             write(fdSerial, &c, 1);
-
                         }
                     case '-':
                         sprintf(fileName, "..");
@@ -619,7 +615,6 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 }
                 else
                     page++;
-
                 count = 0;
                 write(fdSerial, clrScr, strlen(clrScr));
                 if (c == 'Q')

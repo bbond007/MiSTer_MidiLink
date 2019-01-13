@@ -467,14 +467,15 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
-                if(lineBuf[5] == '!')
+                if (misc_check_device("/dev/snd/pcmC0D0p"))
                 {
-                    system("killall mpg123");
-                    sprintf(tmp, "\r\nMP3 --> OFF");
-                    system(tmp);
-                }
-                else
-                    if(do_file_picker(MP3Path, fileName))
+                    if(lineBuf[5] == '!')
+                    {
+                        system("killall mpg123");
+                        sprintf(tmp, "\r\nMP3 --> OFF");
+                        system(tmp);
+                    }
+                    else if(do_file_picker(MP3Path, fileName))
                     {
                         chdir("/root");
                         sprintf(tmp, "mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", MP3Path, fileName);
@@ -485,6 +486,12 @@ void do_modem_emulation(char * buf, int bufLen)
                         sleep(1);
                         misc_file_to_serial(fdSerial, "/tmp/mpg123");
                     }
+                }
+                else
+                {
+                    sprintf(tmp, "\r\nBad news, you have no audio device --> '/dev/snd/pcmC0D0p' :(");
+                    write(fdSerial, tmp, strlen(tmp));
+                }
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATSZ", 4) == 0)
@@ -1000,7 +1007,7 @@ int main(int argc, char *argv[])
                 return -11;
             }
         }
-        
+
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
         {
             misc_print(0, "Testing --> %s\n", midiDevice);
