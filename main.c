@@ -468,7 +468,11 @@ void do_modem_emulation(char * buf, int bufLen)
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
                 if(lineBuf[5] == '!')
+                {
                     system("killall mpg123");
+                    sprintf(tmp, "\r\nMP3 --> OFF");
+                    system(tmp);
+                }
                 else
                     if(do_file_picker(MP3Path, fileName))
                     {
@@ -477,6 +481,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         system("killall mpg123");
                         misc_print(1, "Play MP3 --> %s\n", tmp);
                         system(tmp);
+                        write(fdSerial, "\r\n", 2);
                         sleep(1);
                         misc_file_to_serial(fdSerial, "/tmp/mpg123");
                     }
@@ -490,7 +495,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     misc_print(1, "Zmodem download --> %s\n", tmp);
                     serial_do_tcdrain(fdSerial);
                     misc_do_pipe(fdSerial, "/bin/sz", tmp);
-                    sleep(1);
+                    sleep(3);
                 }
                 misc_write_ok6(fdSerial);
             }
@@ -505,7 +510,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     serial_do_tcdrain(fdSerial);
                     misc_do_pipe(fdSerial, "/bin/rz", (char *) NULL);
                     chdir("/root");
-                    sleep(1);
+                    sleep(3);
                 }
                 else
                 {
