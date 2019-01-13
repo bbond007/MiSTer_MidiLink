@@ -467,16 +467,19 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
-                if(do_file_picker(MP3Path, fileName))
-                {
-                    chdir("/root");
-                    sprintf(tmp, "mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", MP3Path, fileName);
+                if(lineBuf[5] == '!')
                     system("killall mpg123");
-                    misc_print(1, "Play MP3 --> %s\n", tmp);
-                    system(tmp);
-                    sleep(1);
-                    misc_file_to_serial(fdSerial, "/tmp/mpg123");
-                }
+                else
+                    if(do_file_picker(MP3Path, fileName))
+                    {
+                        chdir("/root");
+                        sprintf(tmp, "mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", MP3Path, fileName);
+                        system("killall mpg123");
+                        misc_print(1, "Play MP3 --> %s\n", tmp);
+                        system(tmp);
+                        sleep(1);
+                        misc_file_to_serial(fdSerial, "/tmp/mpg123");
+                    }
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATSZ", 4) == 0)
