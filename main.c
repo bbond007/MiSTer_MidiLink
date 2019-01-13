@@ -43,8 +43,9 @@ static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
-static char 		MP3Path[500]           = "/media/fat/MP3";
-static char 		downloadPath[500]      = "/media/fat";
+char 		        MP3Path[500]           = "/media/fat/MP3";
+char 		        downloadPath[500]      = "/media/fat";
+char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char         		UDPServer [100]        = "";
 char 			mixerControl [20]      = "PCM";
@@ -53,7 +54,7 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
-unsigned int 		TCPTermRows            = 21;
+unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
 unsigned int 		UDPServerPort          = 1999;
 unsigned int 		TCPServerPort          = 23;
@@ -96,40 +97,47 @@ void * tcplst_thread_function (void * x)
     do
     {
         socket_in = tcpsock_accept(socket_lst);
-        tcpsock_set_timeout(socket_in, 10);
-        misc_print(1,"Incomming connection\n");
-        tcpsock_get_ip(socket_in, buf);
-        misc_print(1, "CONNECT --> %s\n", buf);
-        if(socket_out == -1)
+        if(socket_in != -1)
         {
-            char ringStr[] = "\r\nRING";
-            write(fdSerial, ringStr, strlen(ringStr));
-            sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
-            write(fdSerial, buf, strlen(buf));
-            do
+            tcpsock_set_timeout(socket_in, 10);
+            misc_print(1,"Incomming connection\n");
+            tcpsock_get_ip(socket_in, buf);
+            misc_print(1, "CONNECT --> %s\n", buf);
+            if(socket_out == -1)
             {
-                rdLen = read(socket_in, buf, sizeof(buf));
-                if (rdLen > 0)
+                char ringStr[] = "\r\nRING";
+                write(fdSerial, ringStr, strlen(ringStr));
+                sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
+                write(fdSerial, buf, strlen(buf));
+                do
                 {
-                    write(fdSerial, buf, rdLen);
-                    show_debug_buf("TSERV IN", buf, rdLen);
-                }
-                else if (rdLen == 0)
-                {
-                    tcpsock_close(socket_in);
-                    socket_in = -1;
-                    misc_print(1, "tcplst_thread_function() --> Connection Closed.\n");
-                }
-            } while (socket_in != -1);
+                    rdLen = read(socket_in, buf, sizeof(buf));
+                    if (rdLen > 0)
+                    {
+                        write(fdSerial, buf, rdLen);
+                        show_debug_buf("TSERV IN", buf, rdLen);
+                    }
+                    else if (rdLen == 0)
+                    {
+                        tcpsock_close(socket_in);
+                        socket_in = -1;
+                        misc_print(1, "tcplst_thread_function() --> Connection Closed.\n");
+                    }
+                } while (socket_in != -1);
+            }
+            else
+            {
+                char busyStr[] = "\r\nBUSY";
+                misc_print(1, "Sending BUSY message and disconnecting.,\n");
+                tcpsock_write(socket_in, busyStr, strlen(busyStr));
+                sleep(2);
+                tcpsock_close(socket_in);
+                socket_in = -1;
+            }
         }
         else
         {
-            char busyStr[] = "\r\nBUSY";
-            misc_print(1, "Sending BUSY message and disconnecting.,\n");
-            tcpsock_write(socket_in, busyStr, strlen(busyStr));
-            sleep(2);
-            tcpsock_close(socket_in);
-            socket_in = -1;
+            sleep(5);
         }
 
     } while(TRUE);
@@ -321,13 +329,13 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
         if(result)
             if (DIR)
             {
-                if(strcmp(fileNameBuf, ".") == 0 || 
-                   strcmp(fileNameBuf, "..") == 0)
+                if(strcmp(fileNameBuf, ".") == 0 ||
+                        strcmp(fileNameBuf, "..") == 0)
                 {
                     endPtr = strrchr(pathBuf, '/');
                     if (endPtr != NULL && strlen(pathBuf) > 1)
                         *endPtr = (char) 0x00;
-                }    
+                }
                 else
                 {
                     strcat(pathBuf, "/");
@@ -339,10 +347,8 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
                 char msg[] = "Selected file --> ";
                 write (fdSerial, msg, strlen(msg));
                 write(fdSerial, fileNameBuf, strlen(fileNameBuf));
-                write(fdSerial, "\r\n", 2);
             }
     } while (result && DIR);
-    misc_write_ok4(fdSerial);
     return result;
 }
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +364,7 @@ void do_modem_emulation(char * buf, int bufLen)
     char tmp[1024]  = "";
     char * endPtr;
     char fileName [256];
-             
+
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
@@ -457,27 +463,53 @@ void do_modem_emulation(char * buf, int bufLen)
                     TELNET_NEGOTIATE = TRUE;
                 sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
                 write(fdSerial, tmp, strlen(tmp));
-                
+
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
                 if(do_file_picker(MP3Path, fileName))
                 {
-                    sprintf(tmp, "mpg123 -o alsa \"%s/%s\" &", MP3Path, fileName);
+                    chdir("/root");
+                    sprintf(tmp, "mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", MP3Path, fileName);
                     system("killall mpg123");
                     misc_print(1, "Play MP3 --> %s\n", tmp);
-                    system(tmp); 
+                    system(tmp);
+                    sleep(1);
+                    misc_file_to_serial(fdSerial, "/tmp/mpg123");
                 }
+                misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATSZ", 4) == 0)
             {
                 if(do_file_picker(downloadPath, fileName))
                 {
-                    sprintf(tmp, "sz \"%s/%s\"", downloadPath, fileName);
+                    sprintf(tmp, "%s/%s", downloadPath, fileName);
                     misc_print(1, "Zmodem download --> %s\n", tmp);
-                    //misc_do_pipe(fdSerial, "ls -la /media/fat/AMIGA");//, tmp); 
-                    //misc_do_pipe(fdSerial, tmp); 
+                    serial_do_tcdrain(fdSerial);
+                    misc_do_pipe(fdSerial, "/bin/sz", tmp);
+                    sleep(1);
                 }
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATRZ", 4) == 0)
+            {
+                if(chdir (uploadPath) == 0)
+                {
+                    sprintf(tmp, "\r\nUpload path --> '%s'", uploadPath);
+                    write(fdSerial, tmp, strlen(tmp));
+                    sprintf(tmp, "\r\nUpload file using Zmodem protocol now...\r\n");
+                    write(fdSerial, tmp, strlen(tmp));
+                    serial_do_tcdrain(fdSerial);
+                    misc_do_pipe(fdSerial, "/bin/rz", (char *) NULL);
+                    chdir("/root");
+                    sleep(1);
+                }
+                else
+                {
+                    sprintf(tmp, "\r\nERROR: Upload path invalid --> '%s'", uploadPath);
+                    write(fdSerial, tmp, strlen(tmp));
+                }
+                misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATROWS", 6) == 0)
             {
@@ -496,6 +528,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     TCPTermRows  = strtol(strRows, &endPtr, 10);
                     sprintf(tmp, "\r\nROWS --> %d", TCPTermRows);
                     write(fdSerial, tmp, strlen(tmp));
+                    serial_do_tcdrain(fdSerial);
                     misc_write_ok6(fdSerial);
                 }
             }
@@ -881,38 +914,62 @@ int main(int argc, char *argv[])
                 misc_hostname_to_ip(UDPServer, UDPServer);
             misc_print(0, "Connecting to server --> %s:%d\n", UDPServer, UDPServerPort);
             socket_out = udpsock_client_connect(UDPServer, UDPServerPort);
-            socket_in  = udpsock_server_open(UDPServerPort);
-            if(socket_in > 0)
+            if(socket_out != -1)
             {
-                misc_print(0, "Socket Listener created on port %d.\n", UDPServerPort);
-                status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
-                if (status == -1)
+                socket_in  = udpsock_server_open(UDPServerPort);
+                if(socket_in > 0)
                 {
-                    misc_print(0, "ERROR: unable to create socket input thread.\n");
-                    close_fd();
-                    return -4;
+                    misc_print(0, "Socket Listener created on port %d.\n", UDPServerPort);
+                    status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
+                    if (status == -1)
+                    {
+                        misc_print(0, "ERROR: unable to create socket input thread.\n");
+                        close_fd();
+                        return -4;
+                    }
+                    misc_print(0, "Socket input thread created.\n");
                 }
-                misc_print(0, "Socket input thread created.\n");
+                else
+                {
+                    misc_print(0, "ERROR: unable to create UDP listener --> '%s'\n", strerror(errno));
+                    close_fd();
+                    return -5;
+                }
+            }
+            else
+            {
+                misc_print(0, "ERROR: unable to open UDP port --> '%s'\n", strerror(errno));
+                close_fd();
+                return -6;
             }
         }
         else
         {
             misc_print(0, "ERROR: in INI File (UDP_SERVER) --> %s\n", midiLinkINI);
             close_fd();
-            return -5;
+            return -7;
         }
     }
     else if (mode == ModeTCP)
     {
         socket_lst = tcpsock_server_open(TCPServerPort);
-        status = pthread_create(&socketLstThread, NULL, tcplst_thread_function, NULL);
-        if (status == -1)
+        if(socket_lst != -1)
         {
-            misc_print(0, "ERROR: unable to create socket listener thread.\n");
-            close_fd();
-            return -6;
+            status = pthread_create(&socketLstThread, NULL, tcplst_thread_function, NULL);
+            if (status == -1)
+            {
+                misc_print(0, "ERROR: unable to create socket listener thread.\n");
+                close_fd();
+                return -8;
+            }
+            misc_print(0, "Socket listener thread created.\n");
         }
-        misc_print(0, "Socket listener thread created.\n");
+        else
+        {
+            misc_print(0, "ERROR: unable to create socket listener --> '%s'\n", strerror(errno));
+            close_fd();
+            return -9;
+        }
     }
     else
     {
@@ -921,7 +978,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
-            return -7;
+            return -10;
         }
 
         //if (misc_check_args_option(argc, argv, "MIDI1")
@@ -932,9 +989,10 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
                 close_fd();
-                return -8;
+                return -11;
             }
         }
+        
         if (misc_check_args_option(argc, argv, "TESTMIDI")) //Play midi test note
         {
             misc_print(0, "Testing --> %s\n", midiDevice);
@@ -948,7 +1006,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
-                return -9;
+                return -12;
             }
             misc_print(0, "MIDI1 input thread created.\n");
             misc_print(0, "CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
@@ -959,7 +1017,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create MIDI input thread.\n");
             close_fd();
-            return -10;
+            return -13;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);

@@ -18,6 +18,10 @@ extern int          UDPBaudRate;
 extern int          TCPBaudRate;
 extern unsigned int UDPServerFilterIP;
 extern unsigned int DELAYSYSEX;
+extern char         MP3Path[500];
+extern char         downloadPath[500];
+extern char         uploadPath[100];
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -144,6 +148,18 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_uint(value, &TCPTermRows);
     }
+    else if (strcmp("TCP_TERM_UPLOAD", key) == 0)
+    {
+        ini_str(value, uploadPath);
+    }
+    else if (strcmp("TCP_TERM_DOWNLOAD", key) == 0)
+    {
+        ini_str(value, downloadPath);
+    }
+    else if (strcmp("TCP_TERM_MP3", key) == 0)
+    {
+        ini_str(value, MP3Path);
+    }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -183,6 +199,9 @@ void ini_print_settings()
     misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
     misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",   TCPServerPort);
     misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",   TCPTermRows);
+    misc_print(0, "  - TCP_TERM_UPLOAD    --> %s\n",   uploadPath);
+    misc_print(0, "  - TCP_TERM_DOWNLOAD  --> %s\n",   downloadPath);
+    misc_print(0, "  - TCP_TERM_MP3       --> %s\n",   MP3Path);
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "\n");
 }

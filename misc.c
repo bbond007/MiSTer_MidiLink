@@ -352,102 +352,149 @@ int misc_get_midi_port(char * descr)
     }
 }
 
-/*
-
-int misc_do_pipr(int fdSerial, char * command, char * args)
-//static boolstart_subprocess(char *const command[], int *pid, int *infd, int *outfd)
-{
-    int p1[2], p2[2];
-
-    if (!pid || !infd || !outfd)
-        return false;
-
-    if (pipe(p1) == -1)
-        goto err_pipe1;
-    if (pipe(p2) == -1)
-        goto err_pipe2;
-    if ((*pid = fork()) == -1)
-        goto err_fork;
-
-    if (*pid) {
-        // Parent process. 
-        *infd = p1[1];
-        *outfd = p2[0];
-        close(p1[0]);
-        close(p2[1]);
-        return true;
-    } else {
-        // Child process. 
-        dup2(p1[0], 0);
-        dup2(p2[1], 1);
-        close(p1[0]);
-        close(p1[1]);
-        close(p2[0]);
-        close(p2[1]);
-        execvp(command, args);
-        // Error occured. 
-        fprintf(stderr, "error running %s: %s", command, strerror(errno));
-        abort();
-    }
-
-err_fork:
-    close(p2[1]);
-    close(p2[0]);
-err_pipe2:
-    close(p1[1]);
-    close(p1[0]);
-err_pipe1:
-    return false;
-}
-
-*/
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int misc_get_midi_port(char * command)
-int misc_do_pipe(int fdSerial, char * command)
+// int misc_do_pipe(int fdSerial, char * command, char * arg)
+//
+int misc_do_pipe(int fdSerial,  char * command, char * arg)
 {
-    char bufIn[100];
-    char bufOut[100];
-    int rdLen = 1;
-    int wrLen = 1;
-    FILE * pipe;
     int pipefd[2];
-    pipe = popen(command, "r");
-    if (pipe)
+    if(pipe (pipefd) != -1)
     {
-        pid_t pid = fork();
-        if(pid == 0)
+        if (fork() == 0)
         {
-            do
-            {
-                rdLen = fread(bufIn, sizeof(bufIn), 1, pipe); 
-                write(fdSerial, bufIn, rdLen);
-            }while (rdLen > 0); 
-            fclose(pipe);
-            pipe = NULL;
-            misc_print(0, "TEST misc_do_pipe() --> Pipe read Process ended\n"); 
-         
+            // child
+            close(pipefd[0]);                // close reading end in the child
+            dup2(pipefd[1], fileno(stdout)); // fdSerial);
+            dup2(pipefd[1], fileno(stderr)); // fdSerial);
+            close(pipefd[1]);
+            dup2(fdSerial, fileno(stdin));   // change stdin to fdSerial
+            if (execl(command, command, arg, (char *) NULL) < 0)
+                misc_print(0, "ERROR: misc_do_pipe() exec failed --> %s\n", strerror(errno));
+            abort();
         }
         else
         {
-            do
+            // parent
+            char rdBuf[1014];
+            int  rdLen;
+            close(pipefd[1]);                // close the write end of the
+            do                               // pipe in the parent
             {
-                wrLen = read(fdSerial, bufOut,  sizeof(bufOut)); 
-                fwrite(bufOut, sizeof(bufOut), 1, pipe); 
-            }while (pipe != NULL);        
-            misc_print(0, "TEST misc_do_pipe() --> Pipe write process ended\n"); 
-            exit(0);
+                rdLen = read(pipefd[0], rdBuf, sizeof(rdBuf));
+                if(rdLen > 0)
+                    write(fdSerial, rdBuf, rdLen);
+            } while(rdLen > 0);
+            return TRUE;
         }
-        
     }
     else
     {
-        misc_print(0, "ERROR: misc_do_pipe('%s') --> '%s'\n", command, strerror(errno));
+        misc_print(0, "ERROR: misc_do_pipe(') pipe --> '%s'\n", command, strerror(errno));
         return FALSE;
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_do_pipe2(int fdSerial, char * command)
+//
+int misc_do_pipe2(int fdSerial,  char * command)
+{
+    char str[1024];
+    FILE * pipe;
+    pipe = popen(command, "r");
+    int fdStderr;
+    if (pipe)
+    {
+        dup2(fileno(stderr), fdStderr);
+        dup2(fdSerial, fileno(stderr));
+        while (fgets(str, sizeof(str), pipe)!= NULL)
+        {
+            write(fdSerial, str, sizeof(str));
+            write(fdSerial, "\r\n", 2);
+        }
+        fclose(pipe);
+        sleep(2);
+        dup2(fdStderr, fdStderr);
+        return TRUE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_do_pipe2('%s') --> '%s'\n", command, strerror(errno));
+        return FALSE;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_do_pipe2(int fdSerial, char * command)
+//
+int misc_file_to_serial(int fdSerial,  char * fileName)
+{
+    char str[1014];
+    FILE * file;
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        write(fdSerial, "\r\n", 2);
+        while (fgets(str, sizeof(str), file)!= NULL)
+        {
+            write(fdSerial, str, strlen(str));
+            write(fdSerial, "\r", 1);
+        }
+        fclose(file);
+        return TRUE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_file_to_serial('%s') --> '%s'\n", fileName, strerror(errno));
+        return FALSE;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_d_type_to_str(unsigned char type, char * buf)
+//
+void misc_d_type_to_str(unsigned char type, char * buf)
+{
+    switch(type)
+    {
+    case DT_BLK:      //This is a block device.
+        strcpy(buf, "BLK");
+        break;
+    case DT_CHR:      //This is a character device.
+        strcpy(buf, "CHR");
+        break;
+    case DT_DIR:      //This is a directory.
+        strcpy(buf, "DIR");
+        break;
+    case DT_FIFO:     //This is a named pipe (FIFO).
+        strcpy(buf, "FIF");
+        break;
+    case DT_LNK:      //This is a symbolic link.
+        strcpy(buf, "LNK");
+        break;
+    case DT_REG:      //This is a regular file.
+        strcpy(buf, "-->");
+        break;
+    case DT_SOCK:     //This is a UNIX domain socket.
+        strcpy(buf, "SOK");
+        break;
+    case DT_UNKNOWN:  //The file type could not be determined.
+        strcpy(buf, "???");
+        break;
+    default:
+        strcpy(buf, "???");
+        break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
+//
 int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
 {
 
@@ -466,7 +513,8 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     char clrScr[]     = "\e[2J\e[H";
     char promptEnd[]  = "END  ##? --> ";
     char promptMore[] = "MORE ##? --> ";
-    
+    char strType[4]   = "";
+
     fileName[0] = (char) 0x00;
     sprintf(strRows, "%d", rows);
     char * path2   = malloc(strlen(path) + 3);
@@ -485,14 +533,14 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
         while (index < max)
         {
             if(strlen(namelist[index]->d_name) > 0 &&
-               namelist[index]->d_name[0] != '.')
+                    namelist[index]->d_name[0] != '.')
             {
                 sprintf(strIdx, "%4d", count + 1);
                 write(fdSerial,strIdx, strlen(strIdx));
-                if(namelist[index]->d_type == DT_DIR)
-                    write(fdSerial, " [DIR] ", 7);
-                else
-                    write(fdSerial, "  -->  ", 7);
+                misc_d_type_to_str(namelist[index]->d_type, strType);
+                write (fdSerial, " ", 2);
+                write (fdSerial, strType, strlen(strType));
+                write (fdSerial, " ", 2);
                 write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
                 write(fdSerial, "\r\n", 2);
                 count++;
@@ -500,14 +548,14 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             else
                 skip++;
             index++;
-            
+
             if ((count == rows && rows > 0) || index == max)
             {
                 if(index == max)
                     write (fdSerial, promptEnd,  strlen(promptEnd));
                 else
                     write (fdSerial, promptMore, strlen(promptMore));
-                       
+
                 prompt[0] = (char) 0x00;
                 do
                 {
@@ -521,7 +569,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         {
                             prompt[strlen(prompt) -1] = (char) 0x00;
                             write(fdSerial, &c, 1);
-                   
+
                         }
                     case '-':
                         sprintf(fileName, "..");
@@ -530,9 +578,9 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         c = 'Q';
                         break;
                     case 'P':
-                        if (page == 0) 
+                        if (page == 0)
                             c = (char) 0x00;
-                        break;    
+                        break;
                     case 0x0d: // [RETURN]
                         if(strlen(prompt) > 0)
                         {
@@ -555,24 +603,24 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                         }
                         break;
                     }
-                } while (c != 'Q'  && 
-                         c != 0x0d && 
-                         c != ' '  && 
+                } while (c != 'Q'  &&
+                         c != 0x0d &&
+                         c != ' '  &&
                          c != 'P');
                 if(c == 'P')
                 {
                     page--;
                     index -= (rows + count);
                 }
-                else 
+                else
                     page++;
-                    
+
                 count = 0;
                 write(fdSerial, clrScr, strlen(clrScr));
                 if (c == 'Q')
                     break;
-               //else if(index < max) //no clear on exit    
-               //   write(fdSerial, clrScr, strlen(clrScr));
+                //else if(index < max) //no clear on exit
+                //   write(fdSerial, clrScr, strlen(clrScr));
             }
         }
         for(index = 0; index < max; index++)
