@@ -538,9 +538,9 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 sprintf(strIdx, "%4d", count + 1);
                 write(fdSerial,strIdx, strlen(strIdx));
                 misc_d_type_to_str(namelist[index]->d_type, strType);
-                write (fdSerial, " ", 2);
+                write (fdSerial, " <", 2);
                 write (fdSerial, strType, strlen(strType));
-                write (fdSerial, " ", 2);
+                write (fdSerial, "> ", 2);
                 write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
                 write(fdSerial, "\r\n", 2);
                 count++;
