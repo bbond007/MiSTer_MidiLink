@@ -547,6 +547,11 @@ void do_modem_emulation(char * buf, int bufLen)
                     misc_write_ok6(fdSerial);
                 }
             }
+            else if (memcmp(lineBuf, "ATINI", 5) == 0)
+            { 
+                misc_file_to_serial(fdSerial, midiLinkINI);
+                misc_write_ok6(fdSerial);
+            }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
                 write(fdSerial, "\r\n",2);
