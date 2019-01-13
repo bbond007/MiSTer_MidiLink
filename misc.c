@@ -477,7 +477,7 @@ void misc_d_type_to_str(unsigned char type, char * buf)
         strcpy(buf, "LNK");
         break;
     case DT_REG:      //This is a regular file.
-        strcpy(buf, "-->");
+        strcpy(buf, "REG");
         break;
     case DT_SOCK:     //This is a UNIX domain socket.
         strcpy(buf, "SOK");
@@ -511,8 +511,8 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     char strRows[10]  = "";
     int  result       = FALSE;
     char clrScr[]     = "\e[2J\e[H";
-    char promptEnd[]  = "END  ##? --> ";
-    char promptMore[] = "MORE ##? --> ";
+    char promptEnd[]  = "END  #? --> ";
+    char promptMore[] = "MORE #? --> ";
     char strType[4]   = "";
 
     fileName[0] = (char) 0x00;
@@ -537,10 +537,15 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             {
                 sprintf(strIdx, "%4d", count + 1);
                 write(fdSerial,strIdx, strlen(strIdx));
-                misc_d_type_to_str(namelist[index]->d_type, strType);
-                write (fdSerial, " <", 2);
-                write (fdSerial, strType, strlen(strType));
-                write (fdSerial, "> ", 2);
+                if (namelist[index]->d_type != DT_REG)
+                {
+                    misc_d_type_to_str(namelist[index]->d_type, strType);
+                    write (fdSerial, " <", 2);
+                    write (fdSerial, strType, strlen(strType));
+                    write (fdSerial, "> ", 2);
+                }
+                else
+                    write (fdSerial, "  -->  ", 7); 
                 write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
                 write(fdSerial, "\r\n", 2);
                 count++;
