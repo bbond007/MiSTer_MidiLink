@@ -577,10 +577,9 @@ void do_modem_emulation(char * buf, int bufLen)
                 {
                     if(lineBuf[5] == '!')
                     {
-                        system("killall mpg123");
                         sprintf(tmp, "\r\nMP3 --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
-                        system(tmp);
+                        system("killall mpg123");
                     }
                     else if(do_file_picker(MP3Path, fileName))
                     {
