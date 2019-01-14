@@ -460,16 +460,21 @@ int get_softsynth_port(int softSynth)
 // void do_modem_emulation(char * buf, int bufLen)
 //
 //
+
+#define KILL_MP3_SLEEP if(MP3){system(killMpg123CMD);sleep(1);MP3 = FALSE;}
+                    
 void do_modem_emulation(char * buf, int bufLen)
 {
-    static char lineBuf[150] = "";
-    static char iLineBuf = 0;
+    static char lineBuf[150]    = "";
+    static char iLineBuf        = 0;
     static int TELNET_NEGOTIATE = TRUE;
-    char tmp[1024]  = "";
+    static int MP3              = FALSE;
+    char tmp[1024]              = "";
     char * endPtr;
     char fileName [256];
-    char audioError[] = "\r\nBad news, you have no audio device :( --> %s";
-    char killAplayCMD[] = "killall aplaymidi";
+    char audioError[]           = "\r\nBad news, you have no audio device :( --> %s";
+    char killAplayCMD[]         = "killall aplaymidi";
+    char killMpg123CMD[]        = "killall mpg123";
 
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
@@ -579,18 +584,24 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nMP3 --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
-                        system("killall mpg123");
+                        system(killMpg123CMD);
                     }
                     else if(do_file_picker(MP3Path, fileName))
                     {
                         chdir("/root");
                         sprintf(tmp, "mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", MP3Path, fileName);
-                        system("killall mpg123");
+                        if(!MP3)
+                        {
+                            system(killAplayCMD);
+                            killall_softsynth();
+                        }    
+                        system(killMpg123CMD);
                         misc_print(1, "Play MP3 --> %s\n", tmp);
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
                         sleep(1);
                         misc_file_to_serial(fdSerial, "/tmp/mpg123");
+                        MP3 = TRUE;
                     }
                 }
                 else
@@ -605,7 +616,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 if (misc_check_device(PCMDevice))
                 {
                     if(lineBuf[5] == '!')
-                    {
+                    {    
                         system(killAplayCMD);
                         sprintf(tmp, "\r\nMIDI --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
@@ -621,6 +632,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     else if(lineBuf[5] == '1')
                     {  
+                        KILL_MP3_SLEEP;
                         system(killAplayCMD);
                         sprintf(tmp, "\r\nLoading --> MUNT");
                         write(fdSerial, tmp, strlen(tmp));
@@ -630,6 +642,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     else if(lineBuf[5] == '2')
                     {
+                        KILL_MP3_SLEEP;
                         system(killAplayCMD);
                         sprintf(tmp, "\r\nLoading --> FluidSynth");
                         write(fdSerial, tmp, strlen(tmp));
@@ -639,6 +652,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     else if(do_file_picker(MIDIPath, fileName))
                     {
+                        KILL_MP3_SLEEP;
                         system(killAplayCMD);
                         int midiPort = get_softsynth_port(TCPSoftSynth);
                         chdir("/root");
@@ -648,6 +662,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         write(fdSerial, "\r\n", 2);
                         sleep(1);
                         misc_file_to_serial(fdSerial, "/tmp/aplaymidi");
+                        MP3 = FALSE;
                     }
                 }
                 else
