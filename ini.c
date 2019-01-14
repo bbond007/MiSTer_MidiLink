@@ -16,12 +16,13 @@ extern unsigned int TCPServerPort;
 extern unsigned int TCPTermRows;
 extern int          UDPBaudRate;
 extern int          TCPBaudRate;
+extern int          TCPSoftSynth;
 extern unsigned int UDPServerFilterIP;
 extern unsigned int DELAYSYSEX;
 extern char         MP3Path[500];
+extern char 	    MIDIPath[500];
 extern char         downloadPath[500];
 extern char         uploadPath[100];
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -160,6 +161,23 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(value, MP3Path);
     }
+    else if (strcmp("TCP_TERM_MIDI", key) == 0)
+    {
+        ini_str(value, MIDIPath);
+    }
+    else if (strcmp("TCP_TERM_SYNTH", key) == 0)
+    {
+        if(strlen(key) > 0)
+            switch(toupper(value[0]))
+            {	
+                case 'M': TCPSoftSynth = MUNT;
+                    break;
+                case 'F': TCPSoftSynth = FluidSynth;
+                    break;
+                default:  TCPSoftSynth = FluidSynth;
+                    break;
+            }
+    }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -202,6 +220,8 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_UPLOAD    --> %s\n",   uploadPath);
     misc_print(0, "  - TCP_TERM_DOWNLOAD  --> %s\n",   downloadPath);
     misc_print(0, "  - TCP_TERM_MP3       --> %s\n",   MP3Path);
+    misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
+    misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "\n");
 }

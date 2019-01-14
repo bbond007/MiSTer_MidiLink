@@ -1,3 +1,4 @@
+enum SOFTSYNTH { MUNT, FluidSynth};
 int  ini_read_ini(char * fileName);
 void ini_print_settings();
 char ini_replace_char(char * str, int strLen, char old, char new);

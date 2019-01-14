@@ -44,6 +44,7 @@ static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
 char 		        MP3Path[500]           = "/media/fat/MP3";
+char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
@@ -54,6 +55,7 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
 unsigned int 		UDPServerPort          = 1999;
@@ -63,6 +65,80 @@ static pthread_t	midiInThread;
 static pthread_t	midi1InThread;
 static pthread_t	socketInThread;
 static pthread_t        socketLstThread;
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void set_pcm_valume
+//
+void set_pcm_volume(int value)
+{
+    if(value != -1)
+    {
+        if(misc_check_module_loaded("snd_dummy"))
+            strcpy(mixerControl, "Master");
+        char buf[30];
+        sprintf(buf, "amixer set %s %d%c",     mixerControl, value, '%');
+        misc_print(0, "Setting '%s' to %d%\n", mixerControl, value);
+        system(buf);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void killall_softsynth()
+//
+void killall_softsynth()
+{
+    misc_print(0, "Killing --> fluidsynth\n");
+    system("killall -q fluidsynth");
+    misc_print(0, "Killing --> mt32d\n");
+    system("killall -q mt32d");
+    sleep(3);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int start_munt()
+//
+int start_munt()
+{
+    int midiPort = -1;
+    set_pcm_volume(muntVolume);
+    misc_print(0, "Starting --> mt32d\n");
+    system("mt32d &");
+    int loop = 0;
+    do
+    {
+        sleep(2);
+        midiPort = alsa_get_midi_port("MT-32");
+        loop++;
+    }
+    while(midiPort < 0 && loop < 3);
+    return midiPort;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int start_fsynth()
+//
+int start_fsynth()
+{
+    char buf[256];
+    int midiPort = -1;
+    set_pcm_volume(fsynthVolume);
+    misc_print(0, "Starting --> fluidsynth\n");
+    sprintf(buf, "fluidsynth -is -a alsa -m alsa_seq %s &", fsynthSoundFont);
+    system(buf);
+    int loop = 0;
+    do
+    {
+        sleep(2);
+        midiPort = alsa_get_midi_port("FLUID Synth");
+        loop++;
+    }
+    while(midiPort < 0 && loop < 5);
+    return midiPort;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -351,6 +427,34 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
     } while (result && DIR);
     return result;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int get_softsynth_port(int softSynth)
+//
+//
+int get_softsynth_port(int softSynth)
+{
+    int midiPort = alsa_get_midi_port("MT-32");
+    if (midiPort == -1)
+        midiPort = alsa_get_midi_port("FLUID Synth");
+    if (midiPort == -1)
+    {
+        switch(softSynth)
+        {
+        case MUNT:
+            midiPort = start_munt();
+            break;
+        case FluidSynth:
+            midiPort = start_fsynth();
+            break;
+        case -1: //do nothing. 
+            break;
+        }
+    }
+    return midiPort;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void do_modem_emulation(char * buf, int bufLen)
@@ -364,6 +468,8 @@ void do_modem_emulation(char * buf, int bufLen)
     char tmp[1024]  = "";
     char * endPtr;
     char fileName [256];
+    char audioError[] = "\r\nBad news, you have no audio device :( --> %s";
+    char killAplayCMD[] = "killall aplaymidi";
 
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
@@ -467,7 +573,7 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
-                if (misc_check_device("/dev/snd/pcmC0D0p"))
+                if (misc_check_device(PCMDevice))
                 {
                     if(lineBuf[5] == '!')
                     {
@@ -490,7 +596,64 @@ void do_modem_emulation(char * buf, int bufLen)
                 }
                 else
                 {
-                    sprintf(tmp, "\r\nBad news, you have no audio device --> '/dev/snd/pcmC0D0p' :(");
+                    sprintf(tmp, audioError, PCMDevice);
+                    write(fdSerial, tmp, strlen(tmp));
+                }
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATMID", 5) == 0)
+            {
+                if (misc_check_device(PCMDevice))
+                {
+                    if(lineBuf[5] == '!')
+                    {
+                        system(killAplayCMD);
+                        sprintf(tmp, "\r\nMIDI --> OFF");
+                        write(fdSerial, tmp, strlen(tmp));
+                        system(tmp);
+                        sleep(2);
+                        int midiPort = get_softsynth_port(-1);
+                        if(midiPort != -1)
+                        {
+                            alsa_open_seq(midiPort, 0);
+                            alsa_send_midi_raw(all_notes_off, sizeof(all_notes_off));
+                            alsa_close_seq();
+                        }
+                    }
+                    else if(lineBuf[5] == '1')
+                    {  
+                        system(killAplayCMD);
+                        sprintf(tmp, "\r\nLoading --> MUNT");
+                        write(fdSerial, tmp, strlen(tmp));
+                        killall_softsynth();
+                        TCPSoftSynth = MUNT;
+                        get_softsynth_port(TCPSoftSynth);
+                    }
+                    else if(lineBuf[5] == '2')
+                    {
+                        system(killAplayCMD);
+                        sprintf(tmp, "\r\nLoading --> FluidSynth");
+                        write(fdSerial, tmp, strlen(tmp));
+                        killall_softsynth();
+                        TCPSoftSynth = FluidSynth;
+                        get_softsynth_port(TCPSoftSynth);
+                    }
+                    else if(do_file_picker(MIDIPath, fileName))
+                    {
+                        system(killAplayCMD);
+                        int midiPort = get_softsynth_port(TCPSoftSynth);
+                        chdir("/root");
+                        sprintf(tmp, "aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", midiPort, MIDIPath, fileName);;
+                        misc_print(1, "Play MIDI --> %s\n", tmp);
+                        system(tmp);
+                        write(fdSerial, "\r\n", 2);
+                        sleep(1);
+                        misc_file_to_serial(fdSerial, "/tmp/aplaymidi");
+                    }
+                }
+                else
+                {
+                    sprintf(tmp, audioError, PCMDevice);
                     write(fdSerial, tmp, strlen(tmp));
                 }
                 misc_write_ok6(fdSerial);
@@ -549,7 +712,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 }
             }
             else if (memcmp(lineBuf, "ATINI", 5) == 0)
-            { 
+            {
                 misc_file_to_serial(fdSerial, midiLinkINI);
                 misc_write_ok6(fdSerial);
             }
@@ -734,22 +897,6 @@ void show_line()
         misc_print(0, "QUIET mode emabled.\n");
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// void set_pcm_valume
-//
-void set_pcm_volume(int value)
-{
-    if(value != -1)
-    {
-        if(misc_check_module_loaded("snd_dummy"))
-            strcpy(mixerControl, "Master");
-        char buf[30];
-        sprintf(buf, "amixer set %s %d%c",     mixerControl, value, '%');
-        misc_print(0, "Setting '%s' to %d%\n", mixerControl, value);
-        system(buf);
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -813,11 +960,7 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
     }
 
-    misc_print(0, "Killing --> fluidsynth\n");
-    system("killall -q fluidsynth");
-    misc_print(0, "Killing --> mt32d\n");
-    system("killall -q mt32d");
-    sleep(3);
+    killall_softsynth();
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
@@ -827,7 +970,7 @@ int main(int argc, char *argv[])
             system("modprobe MrBuffer");
         }
 
-        if (!misc_check_device("/dev/snd/pcmC0D0p"))
+        if (!misc_check_device(PCMDevice))
         {
             misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
             system ("modprobe snd-dummy");
@@ -835,34 +978,10 @@ int main(int argc, char *argv[])
     }
 
     if (mode == ModeMUNT || mode == ModeMUNTGM)
-    {
-        set_pcm_volume(muntVolume);
-        misc_print(0, "Starting --> mt32d\n");
-        system("mt32d &");
-        int loop = 0;
-        do
-        {
-            sleep(2);
-            midiPort = alsa_get_midi_port("MT-32");
-            loop++;
-        }
-        while(midiPort < 0 && loop < 3);
-    }
+        midiPort = start_munt();
     else if (mode == ModeFSYNTH)
-    {
-        set_pcm_volume(fsynthVolume);
-        misc_print(0, "Starting --> fluidsynth\n");
-        sprintf(buf, "fluidsynth -is -a alsa -m alsa_seq %s &", fsynthSoundFont);
-        system(buf);
-        int loop = 0;
-        do
-        {
-            sleep(2);
-            midiPort = alsa_get_midi_port("FLUID Synth");
-            loop++;
-        }
-        while(midiPort < 0 && loop < 3);
-    }
+        midiPort = start_fsynth();
+
     if (midiPort < 0)
     {
         misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
@@ -1001,8 +1120,7 @@ int main(int argc, char *argv[])
             close_fd();
             return -10;
         }
-
-        //if (misc_check_args_option(argc, argv, "MIDI1")
+        
         if (misc_check_device(midi1Device))
         {
             fdMidi1 = open(midi1Device, O_RDONLY);
@@ -1018,8 +1136,11 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "Testing --> %s\n", midiDevice);
             test_midi_device();
+            sleep(1);
         }
 
+        write_midi_packet(all_notes_off, sizeof(all_notes_off));
+        
         if (fdMidi1 != -1)
         {
             status = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
