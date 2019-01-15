@@ -275,9 +275,8 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static char lastChar = 0x00;
     static struct timeval start;
     static struct timeval stop;
-
     char tmp[100] = "";
-
+    
     for (char * p = buf; bufLen-- > 0; p++)
     {
         switch(*p)
@@ -500,12 +499,22 @@ void do_modem_emulation(char * buf, int bufLen)
                     int ipError = FALSE;
                     int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
                     if (!misc_is_ip_addr(ipAddr))
+                    {
+                        char domainName[30];
+                        getdomainname(domainName, sizeof(domainName));
+                        if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, 'c') < 1)
+                        {
+                            misc_print(1, "Doing domain name fix\n");
+                            strcat(ipAddr, ".");
+                            strcat(ipAddr, domainName);   
+                        }
                         if(!misc_hostname_to_ip(ipAddr, ipAddr))
                         {
                             sprintf(tmp, "\r\nERROR: Unable to convert hostname '%s' to IP address.", ipAddr);
                             write(fdSerial, tmp, strlen(tmp));
                             ipError = TRUE;
                         }
+                    }
                     if(!ipError)
                     {
                         sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
@@ -574,7 +583,6 @@ void do_modem_emulation(char * buf, int bufLen)
                     TELNET_NEGOTIATE = TRUE;
                 sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
                 write(fdSerial, tmp, strlen(tmp));
-
             }
             else if (memcmp(lineBuf, "ATMP3", 5) == 0)
             {
@@ -911,7 +919,6 @@ void show_line()
         misc_print(0, "QUIET mode emabled.\n");
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void close_fd()
@@ -923,7 +930,7 @@ void close_fd()
     if (fdMidi1    > 0) close (fdMidi1);
     if (socket_in  > 0) tcpsock_close(socket_in);
     if (socket_out > 0) tcpsock_close(socket_out);
-    if (socket_out > 0) tcpsock_close(socket_lst);
+    if (socket_lst > 0) tcpsock_close(socket_lst);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

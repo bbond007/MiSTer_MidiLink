@@ -455,6 +455,17 @@ int misc_file_to_serial(int fdSerial,  char * fileName)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// int misc_count_str_char(char * str, chr chr);
+//
+int misc_count_str_chr(char * str, char chr)
+{
+   int result = 0;
+   while(*str != (char) 0x00)
+       if(*str++ == chr) result++;
+   return result;
+}
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // void misc_d_type_to_str(unsigned char type, char * buf)
 //
 void misc_d_type_to_str(unsigned char type, char * buf)
