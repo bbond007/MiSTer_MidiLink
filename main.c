@@ -504,7 +504,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         getdomainname(domainName, sizeof(domainName));
                         if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, 'c') < 1)
                         {
-                            misc_print(1, "Doing domain name fix\n");
+                            misc_print(1, "Doing domain name fix --> %s\n", ipAddr);
                             strcat(ipAddr, ".");
                             strcat(ipAddr, domainName);   
                         }
