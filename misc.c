@@ -139,9 +139,8 @@ int misc_ipaddr_is_multicast(char * ipAddr)
 int misc_is_ip_addr(char *ipAddr)
 {
     char validChr[] = ".0987654321";
-
     for(int i = 0; i < strlen(ipAddr); i++)
-        if (strchr(validChr, ipAddr[i])!= NULL)
+        if (strchr(validChr, ipAddr[i]) == NULL)
             return FALSE;
     return TRUE;
 }
