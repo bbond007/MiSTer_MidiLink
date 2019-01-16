@@ -4,7 +4,7 @@
 
 static snd_seq_event_t ev;
 static snd_midi_event_t* parser;
-static snd_seq_t * seq;
+static snd_seq_t * seq = NULL;
 static int portNo = -1;
 static int devNo  = -1;
 
@@ -63,7 +63,8 @@ int alsa_open_seq(int _portNo, int _devNo)
 //
 void alsa_close_seq()
 {
-    snd_seq_close(seq);
+    if(seq != NULL)
+        snd_seq_close(seq);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

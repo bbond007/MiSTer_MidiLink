@@ -502,7 +502,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         char domainName[30];
                         getdomainname(domainName, sizeof(domainName));
-                        if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, 'c') < 1)
+                        if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, '.') < 1)
                         {
                             strcat(ipAddr, ".");
                             strcat(ipAddr, domainName);   
@@ -687,7 +687,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     sprintf(tmp, "%s/%s", downloadPath, fileName);
                     misc_print(1, "Zmodem download --> %s\n", tmp);
                     serial_do_tcdrain(fdSerial);
-                    misc_do_pipe(fdSerial, "/bin/sz", tmp);
+                    misc_do_pipe(fdSerial, "/bin/sz","sz", tmp, NULL, NULL, NULL, NULL);
                     sleep(3);
                 }
                 misc_write_ok6(fdSerial);
@@ -701,7 +701,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     sprintf(tmp, "\r\nUpload file using Zmodem protocol now...\r\n");
                     write(fdSerial, tmp, strlen(tmp));
                     serial_do_tcdrain(fdSerial);
-                    misc_do_pipe(fdSerial, "/bin/rz", (char *) NULL);
+                    misc_do_pipe(fdSerial, "/bin/rz", "rz", NULL, NULL, NULL, NULL, NULL);
                     chdir("/root");
                     sleep(3);
                 }
@@ -931,6 +931,7 @@ void close_fd()
     if (socket_in  > 0) tcpsock_close(socket_in);
     if (socket_out > 0) tcpsock_close(socket_out);
     if (socket_lst > 0) tcpsock_close(socket_lst);
+    alsa_close_seq();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

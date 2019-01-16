@@ -356,7 +356,12 @@ int misc_get_midi_port(char * descr)
 //
 // int misc_do_pipe(int fdSerial, char * command, char * arg)
 //
-int misc_do_pipe(int fdSerial,  char * command, char * arg)
+int misc_do_pipe(int fdSerial,  char * path, char * command, 
+                 char * arg1, 
+                 char * arg2,
+                 char * arg3, 
+                 char * arg4,
+                 char * arg5)
 {
     int pipefd[2];
     if(pipe (pipefd) != -1)
@@ -369,7 +374,7 @@ int misc_do_pipe(int fdSerial,  char * command, char * arg)
             dup2(pipefd[1], fileno(stderr)); // fdSerial);
             close(pipefd[1]);
             dup2(fdSerial, fileno(stdin));   // change stdin to fdSerial
-            if (execl(command, command, arg, (char *) NULL) < 0)
+            if (execl(path, command, arg1, arg2, arg3, arg4, arg5, NULL))
                 misc_print(0, "ERROR: misc_do_pipe() exec failed --> %s\n", strerror(errno));
             abort();
         }
@@ -459,11 +464,17 @@ int misc_file_to_serial(int fdSerial,  char * fileName)
 //
 int misc_count_str_chr(char * str, char chr)
 {
-   int result = 0;
-   while(*str != (char) 0x00)
-       if(*str++ == chr) result++;
-   return result;
+    int result = 0;
+    char * temp = str;
+    while (*temp != '\0')
+    {
+        if(*temp == chr)
+            result++;
+        temp++;
+    }
+    return result;
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void misc_d_type_to_str(unsigned char type, char * buf)
@@ -519,11 +530,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     char c;
     char prompt[10]   = "";
     char strRows[10]  = "";
-    int  result       = FALSE;
     char clrScr[]     = "\e[2J\e[H";
     char promptEnd[]  = "END  #? --> ";
     char promptMore[] = "MORE #? --> ";
     char strType[4]   = "";
+    int  result       = FALSE;
 
     fileName[0] = (char) 0x00;
     sprintf(strRows, "%d", rows);
