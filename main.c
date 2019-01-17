@@ -75,8 +75,8 @@ void set_pcm_volume(int value)
 {
     if(value != -1)
     {
-        if(misc_check_module_loaded("snd_dummy"))
-            strcpy(mixerControl, "Master");
+        //if(misc_check_module_loaded("snd_dummy"))
+        //    strcpy(mixerControl, "Master");
         char buf[30];
         sprintf(buf, "amixer set %s %d%c",     mixerControl, value, '%');
         misc_print(0, "Setting '%s' to %d%\n", mixerControl, value);
