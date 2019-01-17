@@ -19,7 +19,7 @@ static char          * midi1Device      = "/dev/midi1";
 static char          * midiDevice       = "/dev/midi";
 static char 	     * PCMDevice        = "/dev/snd/pcmC0D0p";
 static char          * MrAudioDevice    = "/dev/MrAudio";
-static int             CPUNO            = 1;
+static int             CPUMASK          = 1;
 
 static char all_notes_off[] = 
 {

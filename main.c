@@ -112,7 +112,7 @@ int start_munt()
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
         misc_print(0, "Starting --> mt32d\n");
-    sprintf(buf, "taskset %d mt32d %s &", CPUNO, MUNTOptions);
+    sprintf(buf, "taskset %d mt32d %s &", CPUMASK, MUNTOptions);
     system(buf);
     int loop = 0;
     do
@@ -135,7 +135,7 @@ int start_fsynth()
     int midiPort = -1;
     set_pcm_volume(fsynthVolume);
     misc_print(0, "Starting --> fluidsynth\n");
-    sprintf(buf, "taskset %d fluidsynth -is -a alsa -m alsa_seq %s &", CPUNO, fsynthSoundFont);
+    sprintf(buf, "taskset %d fluidsynth -is -a alsa -m alsa_seq %s &", CPUMASK, fsynthSoundFont);
     system(buf);
     int loop = 0;
     do
@@ -626,7 +626,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     else if(do_file_picker(MP3Path, fileName))
                     {
                         chdir("/root");
-                        sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUNO, MP3Path, fileName);
+                        sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUMASK, MP3Path, fileName);
                         if(!MP3)
                         {
                             killall_aplaymidi(0);
@@ -693,7 +693,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         killall_aplaymidi(0);
                         int midiPort = get_softsynth_port(TCPSoftSynth);
                         chdir("/root");
-                        sprintf(tmp, "taskset %d aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", CPUNO, midiPort, MIDIPath, fileName);;
+                        sprintf(tmp, "taskset %d aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", CPUMASK, midiPort, MIDIPath, fileName);;
                         misc_print(1, "Play MIDI --> %s\n", tmp);
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
