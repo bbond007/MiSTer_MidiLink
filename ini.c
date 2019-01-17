@@ -265,11 +265,10 @@ int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, in
             if (eq && iVal)
                 value[iVal++] = str[i];
             break;
-        case 0x0a:
-            break;
-        case 0x0d:
-            break;
-        case 0x00:
+        case 0x0a: // [NEW LINE]
+        case 0x0d: // [RETURN]
+        case 0x00: // [NULL]
+        case '\t': // [TAB]
             break;
         default :
             if(eq)

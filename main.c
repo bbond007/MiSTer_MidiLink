@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 #include <linux/soundcard.h>
 #include <ctype.h>
 #include <sys/time.h>
@@ -86,15 +87,16 @@ void set_pcm_volume(int value)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void killall_softsynth()
+// void killall_softsynth(int delay)
 //
-void killall_softsynth()
+void killall_softsynth(int delay)
 {
     misc_print(0, "Killing --> fluidsynth\n");
     system("killall -q fluidsynth");
     misc_print(0, "Killing --> mt32d\n");
     system("killall -q mt32d");
-    sleep(3);
+    if(delay) 
+      sleep(delay);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -103,14 +105,14 @@ void killall_softsynth()
 //
 int start_munt()
 {
-    char buf[50];
+    char buf[60];
     int midiPort = -1;
     set_pcm_volume(muntVolume);
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
         misc_print(0, "Starting --> mt32d\n");
-    sprintf(buf, "mt32d %s &", MUNTOptions);
+    sprintf(buf, "taskset %d mt32d %s &", CPUNO, MUNTOptions);
     system(buf);
     int loop = 0;
     do
@@ -133,7 +135,7 @@ int start_fsynth()
     int midiPort = -1;
     set_pcm_volume(fsynthVolume);
     misc_print(0, "Starting --> fluidsynth\n");
-    sprintf(buf, "fluidsynth -is -a alsa -m alsa_seq %s &", fsynthSoundFont);
+    sprintf(buf, "taskset %d fluidsynth -is -a alsa -m alsa_seq %s &", CPUNO, fsynthSoundFont);
     system(buf);
     int loop = 0;
     do
@@ -150,20 +152,24 @@ int start_fsynth()
 //
 // void killall_mpg123()
 //
-void killall_mpg123()
+void killall_mpg123(int delay)
 {
     misc_print(0, "Killing --> mpg123\n");
-    system("killall mpg123");
+    system("killall -q mpg123");
+    if(delay) 
+      sleep(delay);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void killall_aplaymidi()
 //
-void killall_aplaymidi()
+void killall_aplaymidi(int delay)
 {
     misc_print(0, "Killing --> aplaymidi\n");
-    system("killall aplaymidi");
+    system("killall -q aplaymidi");
+    if(delay) 
+      sleep(delay);
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -485,7 +491,7 @@ int get_softsynth_port(int softSynth)
 //
 //
 
-#define KILL_MP3_SLEEP if(MP3){killall_mpg123();sleep(1);MP3 = FALSE;}
+#define KILL_MP3_SLEEP if(MP3){killall_mpg123(1);MP3 = FALSE;}
                     
 void do_modem_emulation(char * buf, int bufLen)
 {
@@ -615,18 +621,18 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nMP3 --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
-                        killall_mpg123();
+                        killall_mpg123(0);
                     }
                     else if(do_file_picker(MP3Path, fileName))
                     {
                         chdir("/root");
-                        sprintf(tmp, "mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", MP3Path, fileName);
+                        sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUNO, MP3Path, fileName);
                         if(!MP3)
                         {
-                            killall_aplaymidi();
-                            killall_softsynth();
+                            killall_aplaymidi(0);
+                            killall_softsynth(3);
                         }    
-                        killall_mpg123();
+                        killall_mpg123(0);
                         misc_print(1, "Play MP3 --> %s\n", tmp);
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
@@ -648,7 +654,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 {
                     if(lineBuf[5] == '!')
                     {    
-                        killall_aplaymidi();
+                        killall_aplaymidi(0);
                         sprintf(tmp, "\r\nMIDI --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
                         system(tmp);
@@ -664,30 +670,30 @@ void do_modem_emulation(char * buf, int bufLen)
                     else if(lineBuf[5] == '1')
                     {  
                         KILL_MP3_SLEEP;
-                        killall_aplaymidi();
+                        killall_aplaymidi(0);
                         sprintf(tmp, "\r\nLoading --> MUNT");
                         write(fdSerial, tmp, strlen(tmp));
-                        killall_softsynth();
+                        killall_softsynth(3);
                         TCPSoftSynth = MUNT;
                         get_softsynth_port(TCPSoftSynth);
                     }
                     else if(lineBuf[5] == '2')
                     {
                         KILL_MP3_SLEEP;
-                        killall_aplaymidi();
+                        killall_aplaymidi(0);
                         sprintf(tmp, "\r\nLoading --> FluidSynth");
                         write(fdSerial, tmp, strlen(tmp));
-                        killall_softsynth();
+                        killall_softsynth(3);
                         TCPSoftSynth = FluidSynth;
                         get_softsynth_port(TCPSoftSynth);
                     }
                     else if(do_file_picker(MIDIPath, fileName))
                     {
                         KILL_MP3_SLEEP;
-                        killall_aplaymidi();
+                        killall_aplaymidi(0);
                         int midiPort = get_softsynth_port(TCPSoftSynth);
                         chdir("/root");
-                        sprintf(tmp, "aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", midiPort, MIDIPath, fileName);;
+                        sprintf(tmp, "taskset %d aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", CPUNO, midiPort, MIDIPath, fileName);;
                         misc_print(1, "Play MIDI --> %s\n", tmp);
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
@@ -959,6 +965,32 @@ void close_fd()
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// sig_term_handler(int signum, siginfo_t *info, void *ptr)
+//
+void signal_handler(int signum, siginfo_t *info, void *ptr)
+{
+    //write(STDERR_FILENO, SIGTERM_MSG, sizeof(SIGTERM_MSG));
+    killall_mpg123(0);
+    killall_aplaymidi(0);
+    killall_softsynth(0);
+    close_fd();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void catch_signal(int signum)
+//
+void catch_signal(int signum)
+{
+    static struct sigaction _sigact;
+    memset(&_sigact, 0, sizeof(_sigact));
+    _sigact.sa_sigaction = signal_handler;
+    _sigact.sa_flags = SA_SIGINFO;
+    sigaction(signum, &_sigact, NULL);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // int main(int argc, char *argv[])
 //
 int main(int argc, char *argv[])
@@ -966,7 +998,7 @@ int main(int argc, char *argv[])
     int status;
     int midiPort;
     unsigned char buf[256];
-
+    //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
     misc_print(0, "\r");
@@ -1005,9 +1037,9 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
     }
     
-    killall_mpg123();
-    killall_aplaymidi();
-    killall_softsynth();
+    killall_mpg123(0);
+    killall_aplaymidi(0);
+    killall_softsynth(3);
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {

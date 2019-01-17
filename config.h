@@ -19,6 +19,8 @@ static char          * midi1Device      = "/dev/midi1";
 static char          * midiDevice       = "/dev/midi";
 static char 	     * PCMDevice        = "/dev/snd/pcmC0D0p";
 static char          * MrAudioDevice    = "/dev/MrAudio";
+static int             CPUNO            = 1;
+
 static char all_notes_off[] = 
 {
     0xb0, 0x7b, 0x00, 0xb0, 0x40, 0x00, 0xb1, 0x7b, 0x00, 0xb1, 0x40, 0x00, 0xb2, 0x7b, 0x00, 0xb2, 0x40, 0x00, 
