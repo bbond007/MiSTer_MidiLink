@@ -1005,6 +1005,7 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
     }
     
+    killall_mpg123();
     killall_aplaymidi();
     killall_softsynth();
 
