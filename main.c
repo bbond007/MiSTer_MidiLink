@@ -975,8 +975,8 @@ int main(int argc, char *argv[])
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
         {
-            misc_print(0, "MENU --> MUNT\n");
-            mode = ModeMUNT;
+            misc_print(0, "MENU --> FSYNTH\n");
+            mode = ModeFSYNTH;
         }
     }
     else
