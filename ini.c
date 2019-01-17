@@ -198,7 +198,7 @@ void ini_print_settings()
     misc_print(0, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
     misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");    
-    misc_print(0, "  - MUNT_OPTIONS	  --> '%s'\n", MUNTOptions);
+    misc_print(0, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
     if(muntVolume != -1)
     misc_print(0, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
