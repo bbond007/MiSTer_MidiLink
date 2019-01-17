@@ -23,6 +23,7 @@ extern char         MP3Path[500];
 extern char 	    MIDIPath[500];
 extern char         downloadPath[500];
 extern char         uploadPath[100];
+extern char         MUNTOptions[30];
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -165,6 +166,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(value, MIDIPath);
     }
+    else if (strcmp("MUNT_OPTIONS", key) == 0)
+    {
+        ini_str(value, MUNTOptions);
+    }
     else if (strcmp("TCP_TERM_SYNTH", key) == 0)
     {
         if(strlen(key) > 0)
@@ -193,6 +198,7 @@ void ini_print_settings()
     misc_print(0, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
     misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");    
+    misc_print(0, "  - MUNT_OPTIONS	  --> '%s'\n", MUNTOptions);
     if(muntVolume != -1)
     misc_print(0, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else

@@ -49,7 +49,8 @@ char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char         		UDPServer [100]        = "";
-char 			mixerControl [20]      = "PCM";
+char 			mixerControl[20]       = "PCM";
+char 			MUNTOptions[30]        = "";
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
@@ -102,10 +103,15 @@ void killall_softsynth()
 //
 int start_munt()
 {
+    char buf[50];
     int midiPort = -1;
     set_pcm_volume(muntVolume);
-    misc_print(0, "Starting --> mt32d\n");
-    system("mt32d &");
+    if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
+        misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
+    else
+        misc_print(0, "Starting --> mt32d\n");
+    sprintf(buf, "mt32d %s &", MUNTOptions);
+    system(buf);
     int loop = 0;
     do
     {
@@ -969,8 +975,8 @@ int main(int argc, char *argv[])
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
         {
-            misc_print(0, "MENU --> TCP\n");
-            mode = ModeTCP;
+            misc_print(0, "MENU --> MUNT\n");
+            mode = ModeMUNT;
         }
     }
     else
@@ -986,16 +992,18 @@ int main(int argc, char *argv[])
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
-        if(!misc_check_device("/dev/MrAudioBuffer") && misc_check_file("/etc/asound.conf"))
-        {
-            misc_print(0, "Loading --> MrBuffer\n");
-            system("modprobe MrBuffer");
+        if(!misc_check_device(MrAudioDevice)) // && misc_check_file("/etc/asound.conf"))
+        {	
+             misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
+             return -1;   
         }
 
         if (!misc_check_device(PCMDevice))
         {
-            misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
-            system ("modprobe snd-dummy");
+            //misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
+            //system ("modprobe snd-dummy");
+            misc_print(0, "ERROR: You have no PCM device --> %s\n", PCMDevice);
+            return -2;     
         }
     }
 
@@ -1008,7 +1016,7 @@ int main(int argc, char *argv[])
     {
         misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
         close_fd();
-        return -1;
+        return -3;
     }
 
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
@@ -1016,7 +1024,7 @@ int main(int argc, char *argv[])
     {
         misc_print(0, "ERROR: opening %s: %s\n", serialDevice, strerror(errno));
         close_fd();
-        return -2;
+        return -4;
     }
     //printf("TST --> serial_set_interface_attribs - start\n");
     serial_set_interface_attribs(fdSerial);
@@ -1062,7 +1070,7 @@ int main(int argc, char *argv[])
         else
         {
             close_fd();
-            return -3;
+            return -4;
         }
         close_fd();
         return 0;
@@ -1087,7 +1095,7 @@ int main(int argc, char *argv[])
                     {
                         misc_print(0, "ERROR: unable to create socket input thread.\n");
                         close_fd();
-                        return -4;
+                        return -6;
                     }
                     misc_print(0, "Socket input thread created.\n");
                 }
@@ -1095,21 +1103,21 @@ int main(int argc, char *argv[])
                 {
                     misc_print(0, "ERROR: unable to create UDP listener --> '%s'\n", strerror(errno));
                     close_fd();
-                    return -5;
+                    return -7;
                 }
             }
             else
             {
                 misc_print(0, "ERROR: unable to open UDP port --> '%s'\n", strerror(errno));
                 close_fd();
-                return -6;
+                return -8;
             }
         }
         else
         {
             misc_print(0, "ERROR: in INI File (UDP_SERVER) --> %s\n", midiLinkINI);
             close_fd();
-            return -7;
+            return -9;
         }
     }
     else if (mode == ModeTCP)
@@ -1122,7 +1130,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create socket listener thread.\n");
                 close_fd();
-                return -8;
+                return -10;
             }
             misc_print(0, "Socket listener thread created.\n");
         }
@@ -1130,7 +1138,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create socket listener --> '%s'\n", strerror(errno));
             close_fd();
-            return -9;
+            return -11;
         }
     }
     else
@@ -1140,7 +1148,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
-            return -10;
+            return -12;
         }
         
         if (misc_check_device(midi1Device))
@@ -1150,7 +1158,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
                 close_fd();
-                return -11;
+                return -13;
             }
         }
 
@@ -1170,7 +1178,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
-                return -12;
+                return -14;
             }
             misc_print(0, "MIDI1 input thread created.\n");
             misc_print(0, "CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
@@ -1181,7 +1189,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create MIDI input thread.\n");
             close_fd();
-            return -13;
+            return -14;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
