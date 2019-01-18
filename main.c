@@ -1014,13 +1014,15 @@ int main(int argc, char *argv[])
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
 
-    if (misc_check_args_option(argc, argv, "MENU") && !misc_check_device(midiDevice))
+    int MIDI = misc_check_device(midiDevice);
+    
+    if (misc_check_args_option(argc, argv, "MENU") && !MIDI)
     {
-        if (misc_check_file("/tmp/ML_MUNT"))   mode   = ModeMUNT;
-        if (misc_check_file("/tmp/ML_MUNTGM")) mode   = ModeMUNTGM;
-        if (misc_check_file("/tmp/ML_FSYNTH")) mode   = ModeFSYNTH;
-        if (misc_check_file("/tmp/ML_UDP"))    mode   = ModeUDP;
-        if (misc_check_file("/tmp/ML_TCP"))    mode   = ModeTCP;
+        if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
+        if (misc_check_file("/tmp/ML_MUNTGM") && !MIDI)   mode   = ModeMUNTGM;
+        if (misc_check_file("/tmp/ML_FSYNTH") && !MIDI)   mode   = ModeFSYNTH;
+        if (misc_check_file("/tmp/ML_UDP"))               mode   = ModeUDP;
+        if (misc_check_file("/tmp/ML_TCP"))               mode   = ModeTCP;
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
         {
