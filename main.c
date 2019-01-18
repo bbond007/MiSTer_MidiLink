@@ -1219,7 +1219,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "Testing --> %s\n", midiDevice);
             test_midi_device();
-            sleep(1);
+            sleep(2);
         }
 
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
