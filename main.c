@@ -39,7 +39,7 @@ int                     MIDI_DEBUG	       = TRUE;
 static enum MODE        mode                   = ModeNULL;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
-static int		fdMidi1		       = -1;
+static int		fdMidiIN	       = -1;
 static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
@@ -64,7 +64,7 @@ unsigned int 		UDPServerPort          = 1999;
 unsigned int 		TCPServerPort          = 23;
 unsigned int            UDPServerFilterIP      = FALSE;
 static pthread_t	midiInThread;
-static pthread_t	midi1InThread;
+static pthread_t	midiINInThread;
 static pthread_t	socketInThread;
 static pthread_t        socketLstThread;
 
@@ -881,21 +881,21 @@ void test_midi_device()
 // midi1in_thread_function
 // Thread function for /dev/midi1 input
 //
-void * midi1in_thread_function (void * x)
+void * midiINin_thread_function (void * x)
 {
     unsigned char buf[100];             // bytes from sequencer driver
     int rdLen;
     do
     {
-        rdLen = read(fdMidi1, &buf, sizeof(buf));
+        rdLen = read(fdMidiIN, &buf, sizeof(buf));
         if (rdLen < 0)
         {
-            misc_print(1, "ERROR: midi1in_thread_function() reading %s --> %d : %s \n", midi1Device, rdLen, strerror(errno));
+            misc_print(1, "ERROR: midiINin_thread_function() reading %s --> %d : %s \n", midiINDevice, rdLen, strerror(errno));
             sleep(10);
-            if (misc_check_device(midi1Device))
+            if (misc_check_device(midiINDevice))
             {
-                misc_print(1, "Reopening  %s --> %d : %s \n", midi1Device);
-                fdMidi1 = open(midi1Device, O_RDONLY);
+                misc_print(1, "Reopening  %s --> %d : %s \n", midiINDevice);
+                fdMidiIN = open(midiINDevice, O_RDONLY);
             }
         }
         else
@@ -956,7 +956,7 @@ void close_fd()
 {
     if (fdSerial   > 0) close (fdSerial);
     if (fdMidi     > 0) close (fdMidi);
-    if (fdMidi1    > 0) close (fdMidi1);
+    if (fdMidiIN   > 0) close (fdMidiIN);
     if (socket_in  > 0) tcpsock_close(socket_in);
     if (socket_out > 0) tcpsock_close(socket_out);
     if (socket_lst > 0) tcpsock_close(socket_lst);
@@ -1204,12 +1204,12 @@ int main(int argc, char *argv[])
             return -12;
         }
         
-        if (misc_check_device(midi1Device))
+        if (misc_check_device(midiINDevice))
         {
-            fdMidi1 = open(midi1Device, O_RDONLY);
-            if (fdMidi1 < 0)
+            fdMidiIN = open(midiINDevice, O_RDONLY);
+            if (fdMidiIN < 0)
             {
-                misc_print(0, "ERROR: cannot open %s: %s\n", midi1Device, strerror(errno));
+                misc_print(0, "ERROR: cannot open %s: %s\n", midiINDevice, strerror(errno));
                 close_fd();
                 return -13;
             }
@@ -1224,9 +1224,9 @@ int main(int argc, char *argv[])
 
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         
-        if (fdMidi1 != -1)
+        if (fdMidiIN != -1)
         {
-            status = pthread_create(&midi1InThread, NULL, midi1in_thread_function, NULL);
+            status = pthread_create(&midiINInThread, NULL, midiINin_thread_function, NULL);
             if (status == -1)
             {
                 misc_print(0, "ERROR: unable to create *MIDI input thread.\n");
@@ -1234,7 +1234,7 @@ int main(int argc, char *argv[])
                 return -14;
             }
             misc_print(0, "MIDI1 input thread created.\n");
-            misc_print(0, "CONNECT : %s --> %s & %s\n", midi1Device, serialDevice, midiDevice);
+            misc_print(0, "CONNECT : %s --> %s & %s\n", midiINDevice, serialDevice, midiDevice);
         }
 
         status = pthread_create(&midiInThread, NULL, midi_thread_function, NULL);
