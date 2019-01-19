@@ -153,7 +153,7 @@ int misc_is_number(char *testStr)
 {
     char validChr[] = "0987654321";
     int bNum = FALSE;
-    while (*testStr != '\0')    
+    while (*testStr != '\0')
         if (strchr(validChr, *testStr++) == NULL)
             return FALSE;
         else
@@ -355,10 +355,10 @@ int misc_get_midi_port(char * descr)
 //
 // int misc_do_pipe(int fdSerial, char * command, char * arg)
 //
-int misc_do_pipe(int fdSerial,  char * path, char * command, 
-                 char * arg1, 
+int misc_do_pipe(int fdSerial,  char * path, char * command,
+                 char * arg1,
                  char * arg2,
-                 char * arg3, 
+                 char * arg3,
                  char * arg4,
                  char * arg5)
 {
@@ -565,7 +565,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                     write (fdSerial, "> ", 2);
                 }
                 else
-                    write (fdSerial, "  -->  ", 7); 
+                    write (fdSerial, "  -->  ", 7);
                 write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
                 write(fdSerial, "\r\n", 2);
                 count++;
@@ -651,3 +651,40 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     free(path2);
     return result;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_MT32_LCD(char * MT32Message, char * bufOut)
+//
+// format sysex message to change LCD screen
+int misc_MT32_LCD(char * MT32Message, char * buf)
+{
+    unsigned char tmp[] = {0xF0, 0x41, 0x10, 0x16, 0x12, 0x20, 0x00, 0x00,
+                           0,0,0,0,0,   //sysex character data
+                           0,0,0,0,0,   // "
+                           0,0,0,0,0,   // "
+                           0,0,0,0,0,   // "
+                           0,           // "
+                           0x00, /* checksum placedholder */
+                           0xF7  /* end of sysex */
+                          };
+    unsigned char checksum = 0;
+    int MT32messageIndex = 0;
+    for (int tmpIndex = 5; tmpIndex < sizeof(tmp) - 2; tmpIndex++)
+    {
+        if (tmpIndex > 7)
+        {
+            if (MT32messageIndex < strlen(MT32Message))
+                tmp[tmpIndex] = MT32Message[MT32messageIndex++];
+            else
+                tmp[tmpIndex] = 0x20;
+        }
+        checksum += tmp[tmpIndex];
+    }
+    checksum = 128 - checksum % 128;
+    tmp[sizeof(tmp) - 2] = checksum;
+    memcpy(buf, tmp, sizeof(tmp));
+    return sizeof(tmp);
+}
+
+

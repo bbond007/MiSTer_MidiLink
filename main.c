@@ -1109,6 +1109,7 @@ int main(int argc, char *argv[])
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
+            write_alsa_packet(buf, misc_MT32_LCD(MT32Message, buf));
             do
             {
                 int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1222,6 +1223,7 @@ int main(int argc, char *argv[])
             sleep(2);
         }
 
+        misc_print(0, "Sending MIDI --> all-notes-off\n");
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         
         if (fdMidiIN != -1)
@@ -1249,6 +1251,7 @@ int main(int argc, char *argv[])
     }
     show_line();
     //  Main thread handles MIDI output
+    write_midi_packet(buf, misc_MT32_LCD(MT32Message, buf));
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));
