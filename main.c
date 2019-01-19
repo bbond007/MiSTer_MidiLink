@@ -671,20 +671,20 @@ void do_modem_emulation(char * buf, int bufLen)
                     {  
                         KILL_MP3_SLEEP;
                         killall_aplaymidi(0);
-                        sprintf(tmp, "\r\nLoading --> MUNT");
+                        sprintf(tmp, "\r\nLoading --> FluidSynth");
                         write(fdSerial, tmp, strlen(tmp));
                         killall_softsynth(3);
-                        TCPSoftSynth = MUNT;
+                        TCPSoftSynth = FluidSynth;
                         get_softsynth_port(TCPSoftSynth);
                     }
                     else if(lineBuf[5] == '2')
                     {
                         KILL_MP3_SLEEP;
                         killall_aplaymidi(0);
-                        sprintf(tmp, "\r\nLoading --> FluidSynth");
+                        sprintf(tmp, "\r\nLoading --> MUNT");
                         write(fdSerial, tmp, strlen(tmp));
                         killall_softsynth(3);
-                        TCPSoftSynth = FluidSynth;
+                        TCPSoftSynth = MUNT;
                         get_softsynth_port(TCPSoftSynth);
                     }
                     else if(do_file_picker(MIDIPath, fileName))
@@ -1219,7 +1219,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "Testing --> %s\n", midiDevice);
             test_midi_device();
-            sleep(1);
+            sleep(2);
         }
 
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
