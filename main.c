@@ -687,6 +687,28 @@ void do_modem_emulation(char * buf, int bufLen)
                         TCPSoftSynth = MUNT;
                         get_softsynth_port(TCPSoftSynth);
                     }
+                    else if(lineBuf[5] == 'S' && lineBuf[6] == 'F')
+                    {
+                        strcpy(tmp, fsynthSoundFont);
+                        char * dir = strrchr(tmp, '/');
+                        if(dir != NULL)
+                            *dir = (char) 0x00;
+                        else
+                            tmp[0] = (char) 0x00;
+                        if (do_file_picker(tmp, fileName))
+                        {
+                            strcpy(fsynthSoundFont, tmp);
+                            strcat(fsynthSoundFont, "/");
+                            strcat(fsynthSoundFont, fileName);
+                            write(fdSerial, "\r\n SoundFont -->", 16);
+                            write(fdSerial, fsynthSoundFont, strlen(fsynthSoundFont));
+                            sprintf(tmp,"sed -i '{s|^FSYNTH_SOUNDFONT[[:space:]]*=.*|FSYNTH_SOUNDFONT    = %s|}' %s",
+                            fsynthSoundFont, midiLinkINI);
+                            //write(fdSerial, "\r\n", 2);
+                            //write(fdSerial, tmp, strlen(tmp));
+                            system(tmp);
+                        }
+                    }
                     else if(do_file_picker(MIDIPath, fileName))
                     {
                         KILL_MP3_SLEEP;
@@ -1251,7 +1273,8 @@ int main(int argc, char *argv[])
     }
     show_line();
     //  Main thread handles MIDI output
-    write_midi_packet(buf, misc_MT32_LCD(MT32Message, buf));
+    if(fdMidi != -1)
+        write_midi_packet(buf, misc_MT32_LCD(MT32Message, buf));
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));
