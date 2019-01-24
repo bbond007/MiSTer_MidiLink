@@ -44,6 +44,7 @@ static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
+char                    MT32LCDMsg[21]         = "MiSTer MidiLink! BB7";
 char 		        MP3Path[500]           = "/media/fat/MP3";
 char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
@@ -1134,7 +1135,7 @@ int main(int argc, char *argv[])
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
-            write_alsa_packet(buf, misc_MT32_LCD(MT32Message, buf));
+            write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
             do
             {
                 int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1252,9 +1253,6 @@ int main(int argc, char *argv[])
             sleep(2);
         }
 
-        misc_print(0, "Sending MIDI --> all-notes-off\n");
-        write_midi_packet(all_notes_off, sizeof(all_notes_off));
-        
         if (fdMidiIN != -1)
         {
             status = pthread_create(&midiINInThread, NULL, midiINin_thread_function, NULL);
@@ -1277,11 +1275,23 @@ int main(int argc, char *argv[])
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
+        misc_print(0, "Sending MIDI --> all-notes-off\n");
     }
+    
     show_line();
     //  Main thread handles MIDI output
     if(fdMidi != -1)
-        write_midi_packet(buf, misc_MT32_LCD(MT32Message, buf));
+    {
+        write_midi_packet(all_notes_off, sizeof(all_notes_off));
+        write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+    }
+    /*
+    if (mode == ModeUDP && socket_out != -1)
+    {
+        write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
+        write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
+    }
+    */
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));

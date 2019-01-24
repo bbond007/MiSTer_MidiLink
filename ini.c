@@ -30,7 +30,7 @@ extern char 	    MIDIPath[500];
 extern char         downloadPath[500];
 extern char         uploadPath[100];
 extern char         MUNTOptions[30];
-
+extern char         MT32LCDMsg[21];
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // char ini_replace_char(char * str, int strLen, char old, char new)
@@ -105,7 +105,7 @@ char ini_process_key_value_pair(char * key, char * value)
         ini_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &MP3Volume);
     }
-    if(strcmp("MUNT_VOLUME", key) == 0)
+    else if(strcmp("MUNT_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &muntVolume);
@@ -187,6 +187,13 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(value, MUNTOptions);
     }
+    else if (strcmp("MT32_LCD_MSG", key) == 0)
+    {
+        if (strlen(value) < sizeof(MT32LCDMsg))
+            ini_str(value, MT32LCDMsg);
+        else
+            misc_print(0, "ERROR: ini_process_key_value() --> MT32_LCD_MSG > 20 char!\n");
+    }
     else if (strcmp("TCP_TERM_SYNTH", key) == 0)
     {
         if(strlen(key) > 0)
@@ -258,6 +265,7 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
+    misc_print(0, "  - MT32_LCD_MSG       --> %s\n",   MT32LCDMsg);
     misc_print(0, "\n");
 }
 

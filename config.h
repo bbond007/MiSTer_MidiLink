@@ -20,7 +20,7 @@ static char          * midiDevice       = "/dev/midi1";
 static char 	     * PCMDevice        = "/dev/snd/pcmC0D0p";
 static char          * MrAudioDevice    = "/dev/MrAudio";
 static int             CPUMASK          = 1;
-static char          * MT32Message      = "MiSTer MidiLink! BB7";
+       
 static char all_notes_off[] = 
 {
     0xb0, 0x7b, 0x00, 0xb0, 0x40, 0x00, 0xb1, 0x7b, 0x00, 0xb1, 0x40, 0x00, 0xb2, 0x7b, 0x00, 0xb2, 0x40, 0x00, 
