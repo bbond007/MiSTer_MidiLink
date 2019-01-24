@@ -11,6 +11,7 @@
 extern char         fsynthSoundFont[150];
 extern char         UDPServer[100];
 extern char         mixerControl[20]; 
+extern int          MP3Volume;
 extern int          muntVolume;
 extern int          fsynthVolume;
 extern int          midilinkPriority;
@@ -102,11 +103,15 @@ void ini_uint(char * value, unsigned int * dest )
 //
 char ini_process_key_value_pair(char * key, char * value)
 {
-
+    if(strcmp("MP3_VOLUME", key) == 0)
+    {
+        ini_replace_char(value, strlen(value), '%', 0x00);
+        ini_int(value, &MP3Volume);
+    }
     if(strcmp("MUNT_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
-        ini_int(value, &muntVolume);
+        ini_int(value, &MP3Volume);
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
@@ -176,7 +181,6 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("TCP_FLOW", key) == 0)
     {
         ini_int(value, &TCPFlow);   
-        printf("TEST!!!-----------------------\n");     
     }
     else if (strcmp("UDP_FLOW", key) == 0)
     {
@@ -214,15 +218,19 @@ void ini_print_settings()
     misc_print(0, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
     misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");    
-    misc_print(0, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
+    misc_print(0, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);    
+    if(muntVolume != -1)
+    misc_print(0, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
+    else
+    misc_print(0, "  - MP3_VOLUME         --> Default (don't set)\n");
     if(muntVolume != -1)
     misc_print(0, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
-    misc_print(0, "  - MUNT_VOLUME        --> Default (don't set)\n", muntVolume, '%');
+    misc_print(0, "  - MUNT_VOLUME        --> Default (don't set)\n");
     if(fsynthVolume != -1)
     misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
-    misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n", fsynthVolume, '%');
+    misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
     misc_print(0, "  - MIXER_CONTROL      --> %s\n",   mixerControl);
     misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,

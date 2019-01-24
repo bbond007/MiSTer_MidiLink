@@ -52,6 +52,7 @@ char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char         		UDPServer [100]        = "";
 char 			mixerControl[20]       = "PCM";
 char 			MUNTOptions[30]        = "";
+int                     MP3Volume              = -1;
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
@@ -72,8 +73,7 @@ static pthread_t        socketLstThread;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void set_pcm_valume
-//
+// void set_pcm_valume//
 void set_pcm_volume(int value)
 {
     if(value != -1)
@@ -628,6 +628,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     else if(do_file_picker(MP3Path, fileName))
                     {
                         chdir("/root");
+                        set_pcm_volume(MP3Volume);
                         sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUMASK, MP3Path, fileName);
                         if(!MP3)
                         {
