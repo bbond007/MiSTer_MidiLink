@@ -241,6 +241,10 @@ void ini_print_settings()
     misc_print(0, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
     else
     misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
+    if(TCPFlow != -1)
+    misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
+    else
+    misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
     misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",   TCPServerPort);
     misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",   TCPTermRows);
     misc_print(0, "  - TCP_TERM_UPLOAD    --> %s\n",   uploadPath);
@@ -248,10 +252,6 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MP3       --> %s\n",   MP3Path);
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
-    if(TCPFlow != -1)
-    misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
-    else
-    misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "\n");
 }
