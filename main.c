@@ -1276,22 +1276,24 @@ int main(int argc, char *argv[])
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
-        misc_print(0, "Sending MIDI --> all-notes-off\n");
     }
     
     show_line();
     //send all-notes-off to real MIDI device
     if(fdMidi != -1)
-    {
+    {	
+        misc_print(1, "Sending MIDI --> all-notes-off\n");
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
     }
     //only send all-notes-off if UDP is being used with MIDI and not game
     if (mode == ModeUDP && socket_out != -1 && baudRate == 31250)
     {
+        misc_print(1, "Sending UDP --> all-notes-off\n");
         write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
         write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
     }
+    
     //This loop handles USB MIDI, UDP & TCP
     do
     {
