@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <error.h>
+#include <errno.h>
 #include "ini.h"
 #include "misc.h"
+#include "serial.h"
 
 extern char         fsynthSoundFont[150];
 extern char         UDPServer[100];
@@ -17,6 +20,8 @@ extern unsigned int TCPTermRows;
 extern int          UDPBaudRate;
 extern int          TCPBaudRate;
 extern int          TCPSoftSynth;
+extern int          TCPFlow;
+extern int          UDPFlow;
 extern unsigned int UDPServerFilterIP;
 extern unsigned int DELAYSYSEX;
 extern char         MP3Path[500];
@@ -71,9 +76,10 @@ void ini_str(char * value, char * dest)
 void ini_int(char * value, int * dest)
 {
   char * endPtr;
+  errno = ~EINVAL;
   int iTmp = strtol(value, &endPtr, 10);
-  if(iTmp != 0)
-       *dest = iTmp;
+  if(errno != EINVAL)
+      *dest = iTmp;
 }
 
 
@@ -84,8 +90,9 @@ void ini_int(char * value, int * dest)
 void ini_uint(char * value, unsigned int * dest )
 {
   char * endPtr;
+  errno = ~EINVAL;
   unsigned int iTmp = strtol(value, &endPtr, 10);
-  if(iTmp != 0)
+  if(errno != EINVAL)
        *dest = iTmp;
 }
 
@@ -166,6 +173,15 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(value, MIDIPath);
     }
+    else if (strcmp("TCP_FLOW", key) == 0)
+    {
+        ini_int(value, &TCPFlow);   
+        printf("TEST!!!-----------------------\n");     
+    }
+    else if (strcmp("UDP_FLOW", key) == 0)
+    {
+        ini_int(value, &UDPFlow);
+    }
     else if (strcmp("MUNT_OPTIONS", key) == 0)
     {
         ini_str(value, MUNTOptions);
@@ -217,6 +233,10 @@ void ini_print_settings()
     else
     misc_print(0, "  - UDP_BAUD           --> Default (don't change)\n");
     misc_print(0, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
+    if(UDPFlow != -1)
+    misc_print(0, "  - UDP_FLOW           --> (%d) %s\n", UDPFlow, serial_hayes_flow_to_str(UDPFlow));
+    else
+    misc_print(0, "  - UDP_FLOW           --> Default (don't change)\n");
     if(TCPBaudRate > 0)
     misc_print(0, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
     else
@@ -228,6 +248,10 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MP3       --> %s\n",   MP3Path);
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
+    if(TCPFlow != -1)
+    misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
+    else
+    misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "\n");
 }

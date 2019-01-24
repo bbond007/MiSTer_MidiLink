@@ -57,6 +57,8 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+int                     TCPFlow                = -1;
+int                     UDPFlow                = -1;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -1154,6 +1156,8 @@ int main(int argc, char *argv[])
 
     if (mode == ModeUDP)
     {
+        if(UDPFlow > 0)
+            serial_set_flow_control(fdSerial, UDPFlow);
         if (strlen(UDPServer) > 7)
         {
             if(!misc_is_ip_addr(UDPServer))
@@ -1198,6 +1202,8 @@ int main(int argc, char *argv[])
     }
     else if (mode == ModeTCP)
     {
+        if(TCPFlow > 0)
+            serial_set_flow_control(fdSerial, TCPFlow);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
         {

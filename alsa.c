@@ -25,7 +25,6 @@ void alsa_reset_seq_event(snd_seq_event_t * ev)
 //
 void alsa_send_midi_raw(char * buf, int bufLen)
 {
-
 #ifdef ALSA_ENCODE_BYTE
     for (int i = 0; i < bufLen; i++)
     {
