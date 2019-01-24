@@ -1136,6 +1136,7 @@ int main(int argc, char *argv[])
         {
             show_line();
             write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+            //This loop handles softSynth MUNT/FluidSynth
             do
             {
                 int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1279,19 +1280,19 @@ int main(int argc, char *argv[])
     }
     
     show_line();
-    //  Main thread handles MIDI output
+    //send all-notes-off to real MIDI device
     if(fdMidi != -1)
     {
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
     }
-    /*
-    if (mode == ModeUDP && socket_out != -1)
+    //only send all-notes-off if UDP is being used with MIDI and not game
+    if (mode == ModeUDP && socket_out != -1 && baudRate == 31250)
     {
         write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
         write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
     }
-    */
+    //This loop handles USB MIDI, UDP & TCP
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));
