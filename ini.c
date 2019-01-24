@@ -77,13 +77,11 @@ void ini_str(char * value, char * dest)
 void ini_int(char * value, int * dest)
 {
   char * endPtr;
-  errno = ~EINVAL;
   int iTmp = strtol(value, &endPtr, 10);
-  if(errno != EINVAL)
+  if(*endPtr == (char) 0x00)
       *dest = iTmp;
 }
-
-
+ 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void ini_uint(char * value, unsigned int * iValue )
@@ -91,9 +89,8 @@ void ini_int(char * value, int * dest)
 void ini_uint(char * value, unsigned int * dest )
 {
   char * endPtr;
-  errno = ~EINVAL;
   unsigned int iTmp = strtol(value, &endPtr, 10);
-  if(errno != EINVAL)
+  if(*endPtr == (char) 0x00)
        *dest = iTmp;
 }
 
@@ -111,7 +108,7 @@ char ini_process_key_value_pair(char * key, char * value)
     if(strcmp("MUNT_VOLUME", key) == 0)
     {
         ini_replace_char(value, strlen(value), '%', 0x00);
-        ini_int(value, &MP3Volume);
+        ini_int(value, &muntVolume);
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
@@ -219,7 +216,7 @@ void ini_print_settings()
     else
     misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");    
     misc_print(0, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);    
-    if(muntVolume != -1)
+    if(MP3Volume != -1)
     misc_print(0, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
     else
     misc_print(0, "  - MP3_VOLUME         --> Default (don't set)\n");
