@@ -8,7 +8,7 @@ Uartmode [MIDI/MIDI-38K] : Local  / MUNT
 
 Use MUNT softSynth.
 Speed:
-  
+
       MIDI     : 31250 BPS
       MIDI-38K : 38400 BPS
 
@@ -16,6 +16,7 @@ Uartmode [MIDI/MIDI-38K] : Local  / FSYNTH
 
 Use FluidSynth softSynth.
 Speed:
+      
       MIDI     : 31250 BPS
       MIDI-38K : 38400 BPS
 
@@ -28,6 +29,7 @@ Uartmode [MIDI/MIDI-38K] : Remote / UDP
 
 Direct Connect to another MisTer or other computer.
 Default speed:
+
       MIDI     : 31250 BPS
       MIDI-38K : 38400 BPS
 
