@@ -64,10 +64,15 @@ void ini_bool(char * value, int * dest)
 //
 // void int_str(char * dest)
 //
-void ini_str(char * value, char * dest)
+void ini_str(char * key, char * value, char * dest, int max)
 {
-   if(strlen(value) > 1)     
-       strcpy(dest, value);
+   if(strlen(value) < max)
+   {
+       //if(strlen(value) > 0)     
+           strcpy(dest, value);
+   }
+   else
+       misc_print(0, "ERROR: ini_process_key_value() --> '%s' > %d chars!\n", key, max);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +122,7 @@ char ini_process_key_value_pair(char * key, char * value)
     }
     else if (strcmp("MIXER_CONTROL", key) == 0)
     {
-        ini_str(value, mixerControl);
+        ini_str(key, value, mixerControl, sizeof(mixerControl));
     }
     else if(strcmp("UDP_SERVER_PORT", key) == 0)
     {
@@ -129,7 +134,7 @@ char ini_process_key_value_pair(char * key, char * value)
     }
     else if (strcmp("UDP_SERVER", key) == 0)
     {
-        ini_str(value, UDPServer);
+        ini_str(key, value, UDPServer, sizeof(UDPServer));
     }
     else if (strcmp("UDP_SERVER_FILTER", key) == 0)
     {
@@ -141,7 +146,7 @@ char ini_process_key_value_pair(char * key, char * value)
     }
     else if (strcmp("FSYNTH_SOUNDFONT", key) == 0)
     {
-        ini_str(value, fsynthSoundFont);
+        ini_str(key, value, fsynthSoundFont, sizeof(fsynthSoundFont));
     }
     else if (strcmp("MIDILINK_PRIORITY", key) == 0)
     {
@@ -161,19 +166,19 @@ char ini_process_key_value_pair(char * key, char * value)
     }
     else if (strcmp("TCP_TERM_UPLOAD", key) == 0)
     {
-        ini_str(value, uploadPath);
+        ini_str(key, value, uploadPath, sizeof(uploadPath));
     }
     else if (strcmp("TCP_TERM_DOWNLOAD", key) == 0)
     {
-        ini_str(value, downloadPath);
+        ini_str(key, value, downloadPath, sizeof(downloadPath));
     }
     else if (strcmp("TCP_TERM_MP3", key) == 0)
     {
-        ini_str(value, MP3Path);
+        ini_str(key, value, MP3Path, sizeof(MP3Path));
     }
     else if (strcmp("TCP_TERM_MIDI", key) == 0)
     {
-        ini_str(value, MIDIPath);
+        ini_str(key, value, MIDIPath, sizeof(MIDIPath));
     }
     else if (strcmp("TCP_FLOW", key) == 0)
     {
@@ -185,14 +190,11 @@ char ini_process_key_value_pair(char * key, char * value)
     }
     else if (strcmp("MUNT_OPTIONS", key) == 0)
     {
-        ini_str(value, MUNTOptions);
+        ini_str(key, value, MUNTOptions, sizeof(MUNTOptions));
     }
     else if (strcmp("MT32_LCD_MSG", key) == 0)
     {
-        if (strlen(value) < sizeof(MT32LCDMsg))
-            ini_str(value, MT32LCDMsg);
-        else
-            misc_print(0, "ERROR: ini_process_key_value() --> MT32_LCD_MSG > 20 char!\n");
+        ini_str(key, value, MT32LCDMsg, sizeof(MT32LCDMsg));
     }
     else if (strcmp("TCP_TERM_SYNTH", key) == 0)
     {
@@ -265,7 +267,7 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
-    misc_print(0, "  - MT32_LCD_MSG       --> %s\n",   MT32LCDMsg);
+    misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n",   MT32LCDMsg);
     misc_print(0, "\n");
 }
 

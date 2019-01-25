@@ -51,7 +51,7 @@ char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char         		UDPServer [100]        = "";
-char 			mixerControl[20]       = "PCM";
+char 			mixerControl[20]       = "Master";
 char 			MUNTOptions[30]        = "";
 int                     MP3Volume              = -1;
 int 			muntVolume             = -1;
@@ -1135,7 +1135,8 @@ int main(int argc, char *argv[])
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
-            write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+            if(strlen(MT32LCDMsg) > 0)
+                write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
             //This loop handles softSynth MUNT/FluidSynth
             do
             {
@@ -1284,17 +1285,25 @@ int main(int argc, char *argv[])
     {	
         misc_print(1, "Sending MIDI --> all-notes-off\n");
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
-        write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        if(strlen(MT32LCDMsg) > 0)
+        {
+            misc_print(1, "Sending MT-32 LCD  --> '%s'\n", MT32LCDMsg);
+            write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        }
     }
     //only send all-notes-off if UDP is being used with MIDI and not game
     if (mode == ModeUDP && socket_out != -1 && baudRate == 31250)
     {
         misc_print(1, "Sending UDP --> all-notes-off\n");
         write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
-        write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        if(strlen(MT32LCDMsg) > 0)
+        {
+            misc_print(1, "Sending UDP MT-32 LCD  --> '%s'\n", MT32LCDMsg);
+            write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        }
     }
     
-    //This loop handles USB MIDI, UDP & TCP
+    //This main loop handles USB MIDI, UDP & TCP
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));

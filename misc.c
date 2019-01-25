@@ -664,7 +664,6 @@ int misc_MT32_LCD(char * MT32Message, char * buf)
                            0,0,0,0,0,   // "
                            0,0,0,0,0,   // "
                            0,0,0,0,0,   // "
-                           0,           // "
                            0x00, /* checksum placedholder */
                            0xF7  /* end of sysex */
                           };
