@@ -24,8 +24,8 @@ Speed:
 
 UartMODE [MIDI/MIDI-38K] : Remote / TCP    
 
-Modem mode with supporting common hayes 'AT' Commands.
-Default speed 115200 BPS
+Modem mode supporting a small subset of common Hayes 'AT' Commands.
+Default speed for this mode is 115200 BPS
 
 Uartmode [MIDI/MIDI-38K] : Remote / UDP    
 
@@ -178,7 +178,7 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATBAUD   - show baud rate menu.
       ATBAUD#  - set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
       AT&K0    - disable local flow control
-      AT&K3    - RTS/CTS bi-directional hardware flow control
+      AT&K3    - RTS/CTS bidirectional hardware flow control
       AT&K4    - XON/XOFF bidirectional software flow control
       ATTEL0   - disable basic telnet negotiation 
       ATTEL1   - enable basic telnet negotiation (default)
