@@ -29,7 +29,7 @@ Default speed for this mode is 115200 BPS
 
 Uartmode [MIDI/MIDI-38K] : Remote / UDP    
 
-Direct Connect to another MisTer or other computer.
+Direct Connect to another MiSTer or other computer.
 
 Default speed:
 
