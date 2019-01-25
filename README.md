@@ -31,7 +31,7 @@ Starting SoftMPU with MPU-401 interrupts:
 
 The Rev.0 Roland MT-32 used in testing required the ‘DELAYSYSEX’ switch to prevent buffer overflow for certain games but made Sierra games upload sysex commands excessively slowly.
       
-      SOFTMPU.EXE /MPU:330 /DELAYSYSEX /OUTPUT:COM1
+      SOFTMPU.EXE /MPU:330 /DELAYSYSEX /OUTPUT:COM1 
 
 The 'midilink' daemon currently supports following switches / options:
 
@@ -55,7 +55,7 @@ The 'midilink' daemon currently supports following switches / options:
       TCP      - Works like a modem with AT commands: 
                  (ATDT, ATBAUD, ATIPADDR, +++ATH)
 
-      AUTO     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
+      MENU     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
                  /tmp/ML_FSYNTH, /tmp/ML_TCP used with MiSTer
                  Menu to set mode of operation. 
 
@@ -65,13 +65,19 @@ The Midilink INI file:
 
       MIDILINK_PRIORITY  = -20          --> Sets the task priority of MidiLink
       
-      MUNT_VOLUME        = 71           --> Volume for MUNT (0 - 100)  
+      MUNT_OPTIONS       =              --> Optional parameters for MUNT
+
+      MP3_VOLUME         = 100          --> Volume for MP3 Player (mpg123)
+
+      MUNT_VOLUME        = 90           --> Volume for MUNT (0 - 100)  
       
-      FSYNTH_VOLUME      = 83           --> Volume for FluidSynth (0 - 100)
+      FSYNTH_VOLUME      = 100          --> Volume for FluidSynth (0 - 100)
       
       FSYNTH_SOUNDFONT   = /media/fat/SOUNDFONT/default.sf2
                                         --> This is the soundfont For 
                                             FluidSynth.
+      MIXER_CONTROL      = Master       --> Name of Mixer control (leave
+                                            Master!)
 
       UDP_SERVER         = 192.168.1.52 --> MIDI server for UDP 
       
@@ -83,18 +89,47 @@ The Midilink INI file:
                                             this for serial connection
                                             for gaming (Populous)). This 
                                             overrides arg '38400' (UDP only) 
-      
+
+      UDP_FLOW           = 0            --> This sets the default Flow
+                                            Control for UDP option
+                                            0 = none 3 = CTS/RTS 
+                                            4 = XON/XOFF
+
       UDP_SERVER_FILTER  = FALSE        --> Only accept Socket data from 
                                             MIDI_SERVER IP (UDP only)
 
       TCP_SERVER_PORT    = 23           --> Port for TCP Listener
-                                 
+
+      TCP_TERM_ROWS      = 23           --> Number of default rows for 
+                                            file picker.
+
+      
+                                        --> Directories for:
+
+      TCP_TERM_UPLOAD    = /media/fat/UPLOAD  --> TCP 'ATRZ' Zmodem Uploads 
+                  
+      TCP_TERM_DOWNLOAD  = /media/fat/        --> TCP 'ATSZ' Zmodem Downloads 
+      
+      TCP_TERM_MP3       = /mdia/fat/MP3      --> TCP 'ATMP3' MP3 player
+      
+      TCP_TERM_MIDI      = /media/fat/MIDI    --> TCP 'ATMID' MIDI player
+                           
+      TCP_TERM_SYNTH     = FluidSynth   --> Default synth for TCP 'ATMID'
+
       TCP_BAUD           = 9600         --> Set a different BPS for socket
                                             connection (this is useful 
                                             this for serial connection
                                             for gaming (Populous)). This 
                                             overrides arg '38400' but only 
                                             when used with arg 'TCP'
-      
+
+      TCP_FLOW           = 0            --> This sets the default Flow
+                                            Control for TCP option
+                                            0 = none 3 = CTS/RTS 
+                                            4 = XON/XOFF
+
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
-                                            error on Roland MT-32 Rev0. 
+                                            error on Roland MT-32 Rev0.
+      
+      MT32_LCD_MSG       = MiSTer MIDI! --> This shows a custom message on
+                                            the MT-32 LCD Screen. Max 20!
