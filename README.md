@@ -1,17 +1,42 @@
 # MiSTer_MidiLink
 This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI adapters to be used with the Minimig and ao486 cores.
 
-MidiLink is now included in MiSTer general!
+MidiLink 2.0 is now included in MiSTer general!
 
-When running the Minimig and ao486 cores, once a compatible USB MIDI device is attached, two additional ‘UART Connection’ menu options (‘USBMIDI’ and ‘USBMIDI-38K’) will be available in addition to ‘None’, ‘PPP’ and ‘Console’.
+Uartmode [MIDI/MIDI-38K] : Local  / MUNT   
 
-‘USBMIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the standard MIDI speed.
+Use MUNT softSynth.
+Speed:
+  MIDI     : 31250 BPS
+  MIDI-38K : 38400 BPS
+
+Uartmode [MIDI/MIDI-38K] : Local  / FSYNTH 
+
+Use FluidSynth softSynth.
+Speed:
+  MIDI     : 31250 BPS
+  MIDI-38K : 38400 BPS
+
+UartMODE [MIDI/MIDI-38K] : Remote / TCP    
+
+Modem mode with supporting common hayes 'AT' Commands.
+Default speed 115200 BPS
+
+Uartmode [MIDI/MIDI-38K] : Remote / UDP    
+
+Direct Connect to another MisTer or other computer.
+Default speed:
+  MIDI     : 31250 BPS
+  MIDI-38K : 38400 BPS
+
+
+‘MIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the standard MIDI speed.
 
 Many Amiga applications and most games don’t require any additional drivers for MIDI. Some “newer” applications may require the CAMD driver.
       
       http://aminet.net/package/mus/edit/camd
       
-‘USBMIDI-38K’ -This option is used with the ao486 core. This option sets the UART Connection speed to 38400 baud. (The MIDI speed of 31250 baud is not a standard speed DOS PC UARTs were capable of doing)
+‘MIDI-38K’ -This option is used with the ao486 core. This option sets the UART Connection speed to 38400 baud. (The MIDI speed of 31250 baud is not a standard speed DOS PC UARTs were capable of doing)
 
 While some sequencer applications may support MIDI on the serial port, DOS games typically require a MPU-401 interface which ao486 unfortunately lacks. In lieu of hardware MPU-401 capability the SoftMPU TSR can be used with a good degree of success.
 
