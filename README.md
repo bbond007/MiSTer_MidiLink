@@ -2,7 +2,7 @@
 This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI adapters to be used with the Minimig and ao486 cores.
 
 MidiLink 2.0 is now included in MiSTer general and incudes MUNT and
-FluidSynth Support running on the HPS ARM core!
+FluidSynth support running on the HPS ARM core!
 
 Uartmode [MIDI/MIDI-38K] : Local  / MUNT   
 
