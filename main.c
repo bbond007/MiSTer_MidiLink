@@ -98,8 +98,8 @@ void killall_softsynth(int delay)
     system("killall -q fluidsynth");
     misc_print(0, "Killing --> mt32d\n");
     system("killall -q mt32d");
-    if(delay) 
-      sleep(delay);
+    if(delay)
+        sleep(delay);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -159,8 +159,8 @@ void killall_mpg123(int delay)
 {
     misc_print(0, "Killing --> mpg123\n");
     system("killall -q mpg123");
-    if(delay) 
-      sleep(delay);
+    if(delay)
+        sleep(delay);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -171,8 +171,8 @@ void killall_aplaymidi(int delay)
 {
     misc_print(0, "Killing --> aplaymidi\n");
     system("killall -q aplaymidi");
-    if(delay) 
-      sleep(delay);
+    if(delay)
+        sleep(delay);
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -310,7 +310,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static struct timeval start;
     static struct timeval stop;
     char tmp[100] = "";
-    
+
     for (char * p = buf; bufLen-- > 0; p++)
     {
         switch(*p)
@@ -481,7 +481,7 @@ int get_softsynth_port(int softSynth)
         case FluidSynth:
             midiPort = start_fsynth();
             break;
-        case -1: //do nothing. 
+        case -1: //do nothing.
             break;
         }
     }
@@ -495,7 +495,7 @@ int get_softsynth_port(int softSynth)
 //
 
 #define KILL_MP3_SLEEP if(MP3){killall_mpg123(1);MP3 = FALSE;}
-                    
+
 void do_modem_emulation(char * buf, int bufLen)
 {
     static char lineBuf[150]    = "";
@@ -537,7 +537,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, '.') < 1)
                         {
                             strcat(ipAddr, ".");
-                            strcat(ipAddr, domainName);   
+                            strcat(ipAddr, domainName);
                             misc_print(1, "Doing domain name fix --> %s\n", ipAddr);
                         }
                         if(!misc_hostname_to_ip(ipAddr, ipAddr))
@@ -635,7 +635,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         {
                             killall_aplaymidi(0);
                             killall_softsynth(3);
-                        }    
+                        }
                         killall_mpg123(0);
                         misc_print(1, "Play MP3 --> %s\n", tmp);
                         system(tmp);
@@ -657,7 +657,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 if (misc_check_device(PCMDevice))
                 {
                     if(lineBuf[5] == '!')
-                    {    
+                    {
                         killall_aplaymidi(0);
                         sprintf(tmp, "\r\nMIDI --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
@@ -672,7 +672,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         }
                     }
                     else if(lineBuf[5] == '1')
-                    {  
+                    {
                         KILL_MP3_SLEEP;
                         killall_aplaymidi(0);
                         sprintf(tmp, "\r\nLoading --> FluidSynth");
@@ -707,7 +707,7 @@ void do_modem_emulation(char * buf, int bufLen)
                             write(fdSerial, "\r\n SoundFont -->", 16);
                             write(fdSerial, fsynthSoundFont, strlen(fsynthSoundFont));
                             sprintf(tmp,"sed -i '{s|^FSYNTH_SOUNDFONT[[:space:]]*=.*|FSYNTH_SOUNDFONT    = %s|}' %s",
-                            fsynthSoundFont, midiLinkINI);
+                                    fsynthSoundFont, midiLinkINI);
                             system(tmp);
                         }
                     }
@@ -1039,7 +1039,7 @@ int main(int argc, char *argv[])
         misc_set_priority(midilinkPriority);
 
     int MIDI = misc_check_device(midiDevice);
-    
+
     if (misc_check_args_option(argc, argv, "MENU") && !MIDI)
     {
         if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
@@ -1062,7 +1062,7 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "UDP"))    mode = ModeUDP;
         if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
     }
-    
+
     killall_mpg123(0);
     killall_aplaymidi(0);
     killall_softsynth(3);
@@ -1070,9 +1070,9 @@ int main(int argc, char *argv[])
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
         if(!misc_check_device(MrAudioDevice)) // && misc_check_file("/etc/asound.conf"))
-        {	
-             misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
-             return -1;   
+        {
+            misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
+            return -1;
         }
 
         if (!misc_check_device(PCMDevice))
@@ -1080,22 +1080,21 @@ int main(int argc, char *argv[])
             //misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
             //system ("modprobe snd-dummy");
             misc_print(0, "ERROR: You have no PCM device --> %s\n", PCMDevice);
-            return -2;     
+            return -2;
+        }
+
+        if (mode == ModeMUNT || mode == ModeMUNTGM)
+            midiPort = start_munt();
+        else if (mode == ModeFSYNTH)
+            midiPort = start_fsynth();
+
+        if (midiPort < 0)
+        {
+            misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
+            close_fd();
+            return -3;
         }
     }
-
-    if (mode == ModeMUNT || mode == ModeMUNTGM)
-        midiPort = start_munt();
-    else if (mode == ModeFSYNTH)
-        midiPort = start_fsynth();
-
-    if (midiPort < 0)
-    {
-        misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
-        close_fd();
-        return -3;
-    }
-
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
@@ -1234,7 +1233,7 @@ int main(int argc, char *argv[])
             close_fd();
             return -12;
         }
-        
+
         if (misc_check_device(midiINDevice))
         {
             fdMidiIN = open(midiINDevice, O_RDONLY);
@@ -1276,11 +1275,11 @@ int main(int argc, char *argv[])
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
     }
-    
+
     show_line();
     //send all-notes-off to real MIDI device
     if(fdMidi != -1)
-    {	
+    {
         misc_print(1, "Sending MIDI --> all-notes-off\n");
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         if(strlen(MT32LCDMsg) > 0)
@@ -1300,7 +1299,7 @@ int main(int argc, char *argv[])
             write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
         }
     }
-    
+
     //This main loop handles USB MIDI, UDP & TCP
     do
     {
