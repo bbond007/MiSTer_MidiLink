@@ -30,6 +30,9 @@ Starting SoftMPU with MPU-401 interrupts:
       SOFTMPU.EXE /SB:220 /IRQ:5 /MPU:330 /OUTPUT:COM1  
 
 The Rev.0 Roland MT-32 used in testing required the ‘DELAYSYSEX’ switch to prevent buffer overflow for certain games but made Sierra games upload sysex commands excessively slowly.
+
+** I now recommend using the "DELAYSYSEX" in the MidiLink.INI instead of the
+SoftMPU option ***
       
       SOFTMPU.EXE /MPU:330 /DELAYSYSEX /OUTPUT:COM1 
 
@@ -59,7 +62,7 @@ The 'midilink' daemon currently supports following switches / options:
                  /tmp/ML_FSYNTH, /tmp/ML_TCP used with MiSTer
                  Menu to set mode of operation. 
 
-The Midilink INI file:
+The MidiLink.INI file:
 
       #This is a sample MidiLink.INI FILE  _[DESCRIPTION]_ 
 
@@ -67,7 +70,7 @@ The Midilink INI file:
       
       MUNT_OPTIONS       =              --> Optional parameters for MUNT
 
-      MP3_VOLUME         = 100          --> Volume for MP3 Player (mpg123)
+      MP3_VOLUME         = 100          --> Volume for MP3 Player (0 - 100)
 
       MUNT_VOLUME        = 90           --> Volume for MUNT (0 - 100)  
       
@@ -135,7 +138,7 @@ The Midilink INI file:
                                             the MT-32 LCD Screen. Max 20!
 
 
-MidiLink : Remote  / Type : TCP
+MidiLink : TCP
 The TCP option works like a WiFi232 adapter supporting a small subset of the Hayes "AT" command set and some additionl stuff
       
       ATDT     - dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
@@ -158,9 +161,9 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATMP3!   - Stop currently playing MP3 File
       ATROWS   - do terminal row test
       ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between pages)
-      ATINI - show /media/fat/config/MidiLink.INI
-      ATVER - show MidiLink version
-      +++ATH - hang-up. 
+      ATINI    - show /media/fat/config/MidiLink.INI
+      ATVER    - show MidiLink version
+      +++ATH   - hang-up. 
 
 navigation within the file picker - ATSZ, ATMIDI and ATMP3
 
@@ -172,5 +175,5 @@ navigation within the file picker - ATSZ, ATMIDI and ATMP3
 File picker prompts:
      
       MORE ##? --> Indicates at least one additional page of results 
-      END ##? -->  Indicateds end of the list
+      END ##?  --> Indicateds end of the list
 
