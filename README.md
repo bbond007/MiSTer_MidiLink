@@ -7,6 +7,7 @@ FluidSynth Support running on the HPS ARM core!
 Uartmode [MIDI/MIDI-38K] : Local  / MUNT   
 
 Use MUNT softSynth.
+
 Speed:
 
       MIDI     : 31250 BPS
@@ -15,6 +16,7 @@ Speed:
 Uartmode [MIDI/MIDI-38K] : Local  / FSYNTH 
 
 Use FluidSynth softSynth.
+
 Speed:
       
       MIDI     : 31250 BPS
@@ -28,6 +30,7 @@ Default speed 115200 BPS
 Uartmode [MIDI/MIDI-38K] : Remote / UDP    
 
 Direct Connect to another MisTer or other computer.
+
 Default speed:
 
       MIDI     : 31250 BPS
@@ -194,7 +197,7 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATVER    - show MidiLink version
       +++ATH   - hang-up. 
 
-navigation within the file picker - ATSZ, ATMIDI and ATMP3
+Navigation within the file picker - ATSZ, ATMIDI and ATMP3
 
       [RETURN] / [SPACE] - Next page of results
       "P" - Return to pervious page of results
