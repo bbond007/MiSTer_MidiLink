@@ -63,7 +63,7 @@ Starting SoftMPU with MPU-401 interrupts:
 
 The Rev.0 Roland MT-32 used in testing required the ‘DELAYSYSEX’ switch to prevent buffer overflow for certain games but made Sierra games upload sysex commands excessively slowly.
 
-** I now recommend using the "DELAYSYSEX" in the MidiLink.INI instead of the
+*** I now recommend using the "DELAYSYSEX" in the MidiLink.INI instead of the
 SoftMPU option ***
       
       SOFTMPU.EXE /MPU:330 /DELAYSYSEX /OUTPUT:COM1 

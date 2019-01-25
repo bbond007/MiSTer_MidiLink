@@ -74,7 +74,7 @@ static pthread_t        socketLstThread;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void set_pcm_valume//
+// void set_pcm_valume(int volume)
 void set_pcm_volume(int value)
 {
     if(value != -1)
@@ -708,8 +708,6 @@ void do_modem_emulation(char * buf, int bufLen)
                             write(fdSerial, fsynthSoundFont, strlen(fsynthSoundFont));
                             sprintf(tmp,"sed -i '{s|^FSYNTH_SOUNDFONT[[:space:]]*=.*|FSYNTH_SOUNDFONT    = %s|}' %s",
                             fsynthSoundFont, midiLinkINI);
-                            //write(fdSerial, "\r\n", 2);
-                            //write(fdSerial, tmp, strlen(tmp));
                             system(tmp);
                         }
                     }
@@ -1287,7 +1285,7 @@ int main(int argc, char *argv[])
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         if(strlen(MT32LCDMsg) > 0)
         {
-            misc_print(1, "Sending MT-32 LCD  --> '%s'\n", MT32LCDMsg);
+            misc_print(1, "Sending MT-32 LCD --> '%s'\n", MT32LCDMsg);
             write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
         }
     }
@@ -1298,7 +1296,7 @@ int main(int argc, char *argv[])
         write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
         if(strlen(MT32LCDMsg) > 0)
         {
-            misc_print(1, "Sending UDP MT-32 LCD  --> '%s'\n", MT32LCDMsg);
+            misc_print(1, "Sending UDP MT-32 LCD --> '%s'\n", MT32LCDMsg);
             write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
         }
     }
