@@ -1,21 +1,23 @@
 # MiSTer_MidiLink
 This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI adapters to be used with the Minimig and ao486 cores.
 
-MidiLink 2.0 is now included in MiSTer general!
+MidiLink 2.0 is now included in MiSTer general and incudes MUNT and
+FluidSynth Support running on the HPS ARM core!
 
 Uartmode [MIDI/MIDI-38K] : Local  / MUNT   
 
 Use MUNT softSynth.
 Speed:
-  MIDI     : 31250 BPS
-  MIDI-38K : 38400 BPS
+  
+      MIDI     : 31250 BPS
+      MIDI-38K : 38400 BPS
 
 Uartmode [MIDI/MIDI-38K] : Local  / FSYNTH 
 
 Use FluidSynth softSynth.
 Speed:
-  MIDI     : 31250 BPS
-  MIDI-38K : 38400 BPS
+      MIDI     : 31250 BPS
+      MIDI-38K : 38400 BPS
 
 UartMODE [MIDI/MIDI-38K] : Remote / TCP    
 
@@ -26,8 +28,8 @@ Uartmode [MIDI/MIDI-38K] : Remote / UDP
 
 Direct Connect to another MisTer or other computer.
 Default speed:
-  MIDI     : 31250 BPS
-  MIDI-38K : 38400 BPS
+      MIDI     : 31250 BPS
+      MIDI-38K : 38400 BPS
 
 
 ‘MIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the standard MIDI speed.
