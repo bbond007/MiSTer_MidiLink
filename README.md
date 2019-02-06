@@ -173,15 +173,15 @@ The MidiLink.INI file:
 MidiLink : TCP
 The TCP option works like a WiFi232 adapter supporting a small subset of the Hayes "AT" command set and some additionl stuff
       
-      ATDT     - dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
-      ATIP     - show IP address --> ATIP
-      ATBAUD   - show baud rate menu.
-      ATBAUD#  - set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
-      AT&K0    - disable local flow control
+      ATDT     - Dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
+      ATIP     - Show IP address --> ATIP
+      ATBAUD   - Show baud rate menu.
+      ATBAUD#  - Set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
+      AT&K0    - Sisable local flow control
       AT&K3    - RTS/CTS bidirectional hardware flow control
       AT&K4    - XON/XOFF bidirectional software flow control
-      ATTEL0   - disable basic telnet negotiation 
-      ATTEL1   - enable basic telnet negotiation (default)
+      ATTEL0   - Disable basic telnet negotiation 
+      ATTEL1   - Enable basic telnet negotiation (default)
       ATSZ     - Send a file via Zmodem (see file Picker)
       ATRZ     - Receive a file using Zmodem
       ATMID    - Play MIDI file (see file picker)
@@ -191,11 +191,11 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATMIDSF  - Select FluidSynth SoundFont (Change MidiLink.INI)
       ATMP3    - Play MP3 file (see file picker)
       ATMP3!   - Stop currently playing MP3 File
-      ATROWS   - do terminal row test
+      ATROWS   - Do terminal row test
       ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between pages)
-      ATINI    - show /media/fat/config/MidiLink.INI
-      ATVER    - show MidiLink version
-      +++ATH   - hang-up. 
+      ATINI    - Show /media/fat/config/MidiLink.INI
+      ATVER    - Show MidiLink version
+      +++ATH   - Hang-up. 
 
 Navigation within the file picker - ATSZ, ATMIDI and ATMP3
 

@@ -196,8 +196,8 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void * midi_thread_function(void * x)
-// Thread function for /dev/midi input
+// void * tcplst_thread_function(void * x)
+// Thread function for TCP Listener input
 //
 void * tcplst_thread_function (void * x)
 {
