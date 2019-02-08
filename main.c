@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tcpsock.h"
 #include "alsa.h"
 #include "ini.h"
+#include "directory.h"
 
 enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
@@ -519,6 +520,7 @@ void do_modem_emulation(char * buf, int bufLen)
         case 0x0D: // [RETURN]
             if(memcmp(lineBuf, "ATDT", 4) == 0)
             {
+                directory_search(midiLinkDIR, &lineBuf[4], &lineBuf[4]);
                 char * prtSep  = strchr(lineBuf, ':');
                 if(prtSep == NULL)
                     prtSep = strchr(lineBuf, '*'); // with NCOMM?
@@ -792,12 +794,21 @@ void do_modem_emulation(char * buf, int bufLen)
                 misc_file_to_serial(fdSerial, midiLinkINI);
                 misc_write_ok6(fdSerial);
             }
+            else if (memcmp(lineBuf, "ATDIR", 5) == 0)
+            {
+                misc_file_to_serial(fdSerial, midiLinkDIR);
+                misc_write_ok6(fdSerial);
+            }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
                 write(fdSerial, "\r\n",2);
                 write(fdSerial, helloStr, strlen(helloStr));
                 misc_write_ok6(fdSerial);
             }
+            else if (memcmp(lineBuf, "AT", 2) == 0)
+            {
+                misc_write_ok6(fdSerial);
+            }    
             else
             {
                 write(fdSerial, "\r\n", 2);

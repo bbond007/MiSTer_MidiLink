@@ -12,6 +12,7 @@
 // "/dev/sequencer" does not seem to work for input
 
 static char          * midiLinkINI      = "/media/fat/linux/MidiLink.INI";
+static char          * midiLinkDIR      = "/media/fat/linux/MidiLink.DIR";
 static char          * serialDevice     = "/dev/ttyS1";
 static char          * helloStr         = "MiSTer MidiLink 2.1 BB7";
 static unsigned char   test_note[3]     = {0x90, 60, 127};
