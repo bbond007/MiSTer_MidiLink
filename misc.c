@@ -22,10 +22,48 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//  misc_print( const char* format, ... )
+//  
 //
+static char pauseStr[] = "[PAUSE]";
+static char pauseDel[sizeof(pauseStr)];  
 static pthread_mutex_t print_lock;
 extern int MIDI_DEBUG;
+
+static char * athelp[] =
+{
+    "AT       - Attention",
+    "ATBAUD#  - Set baud rate",  
+    "ATBAUD   - Show baud rate menu", 
+    "ATDIR    - Show dialing MidiLink.DIR", 
+    "ATDT     - Dial 'ATDT192.168.1.131:23'",  
+    "ATHELP   - Show valid AT Comamnds",
+    "+++ATH   - Hang-up.",  
+    "ATINI    - Show MidiLink.INI", 
+    "ATIP     - Show IP address",  
+    "AT&K0    - Disable  flow control",
+    "AT&K3    - RTS/CTS  flow control",
+    "AT&K4    - XON/XOFF flow control",
+    "ATMID1   - Switch synth to FluidSynth", 
+    "ATMID2   - Switch synth to MUNT",
+    "ATMID    - Play MIDI file", 
+    "ATMIDSF  - Select FluidSynth SoundFont", 
+    "ATMID!   - Stop currently playing MIDI", 
+    "ATMP3    - Play MP3 file", 
+    "ATMP3!   - Stop playing MP3 File", 
+    "ATROWS   - Do terminal row test", 
+    "ATROWS## - Set number of terminal rows",  
+    "ATRZ     - Receive a file using Zmodem", 
+    "ATSZ     - Send a file via Zmodem",  
+    "ATTEL0   - Disable telnet negotiation",  
+    "ATTEL1   - Enable telnet negotiation ",
+    "ATVER    - Show MidiLink version", 
+    NULL
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  void misc_print(int priority, const char* format, ... )
+//
 void misc_print(int priority, const char* format, ... )
 {
     if(MIDI_DEBUG || priority == 0)
@@ -430,32 +468,6 @@ int misc_do_pipe2(int fdSerial,  char * command)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// int misc_do_pipe2(int fdSerial, char * command)
-//
-int misc_file_to_serial(int fdSerial,  char * fileName)
-{
-    char str[1014];
-    FILE * file;
-    file = fopen(fileName, "r");
-    if (file)
-    {
-        write(fdSerial, "\r\n", 2);
-        while (fgets(str, sizeof(str), file)!= NULL)
-        {
-            write(fdSerial, str, strlen(str));
-            write(fdSerial, "\r", 1);
-        }
-        fclose(file);
-        return TRUE;
-    }
-    else
-    {
-        misc_print(0, "ERROR: misc_file_to_serial('%s') --> '%s'\n", fileName, strerror(errno));
-        return FALSE;
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -686,4 +698,74 @@ int misc_MT32_LCD(char * MT32Message, char * buf)
     return sizeof(tmp);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+//
+void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+{
+    (*rowcount)++;
+    if (*rowcount == rows)
+    {	
+       if (CR)
+           write(fdSerial, "\r\n", 2);
+       write(fdSerial, pauseStr, strlen(pauseStr)); 
+       read(fdSerial, c, 1);
+       if(pauseDel[0] != 0x08)
+            memset(pauseDel, 0x08, sizeof(pauseDel));
+       write(fdSerial, pauseDel, strlen(pauseStr));
+       *rowcount = 0;
+       *c = toupper(*c);
+    }
+}
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_show_at_commands(int fdSerial, int rows)
+//
+void misc_show_at_commands(int fdSerial, int rows)
+{
+    int index = 0;
+    int rowcount = 0;
+    char c = (char) 0x00;
+    
+    while(athelp[index] != NULL && c != 'Q')
+    {
+        write(fdSerial, "\r", 1);
+        if (rowcount != 0 || index == 0) //rowcount not reset
+            write(fdSerial, "\n", 1);
+        write(fdSerial, athelp[index], strlen(athelp[index]));
+        index++;
+        misc_do_rowcheck(fdSerial, rows, &rowcount, &c, TRUE);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// BOOL misc_do_pipe2(int fdSerial, char * command)
+//
+int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
+{
+    char str[1014];
+    FILE * file;
+    int rowcount = 0;
+    char c = (char) 0x00;
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        write(fdSerial, "\r\n", 2);
+        while (fgets(str, sizeof(str), file)!= NULL)
+        {
+            write(fdSerial, str, strlen(str));
+            write(fdSerial, "\r", 1);
+            misc_do_rowcheck(fdSerial, rows, &rowcount, &c, FALSE);
+        }           
+        fclose(file);
+        return TRUE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_file_to_serial('%s') --> '%s'\n", fileName, strerror(errno));
+        return FALSE;
+    }
+}

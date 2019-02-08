@@ -173,29 +173,31 @@ The MidiLink.INI file:
 MidiLink : TCP
 The TCP option works like a WiFi232 adapter supporting a small subset of the Hayes "AT" command set and some additionl stuff
       
-      ATDT     - Dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
-      ATIP     - Show IP address --> ATIP
-      ATBAUD   - Show baud rate menu.
+      AT       - Attention
       ATBAUD#  - Set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
+      ATBAUD   - Show baud rate menu.
+      ATDIR    - Show dialing Directory (/media/fat/linux/MidiLink.DIR)
+      ATDT     - Dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
+      +++ATH   - Hang-up 
+      ATINI    - Show MidiLink.INI (/media/fat/linux/MidiLink.INI)
+      ATIP     - Show IP address --> ATIP
       AT&K0    - Disable local flow control
       AT&K3    - RTS/CTS bidirectional hardware flow control
       AT&K4    - XON/XOFF bidirectional software flow control
-      ATTEL0   - Disable basic telnet negotiation 
-      ATTEL1   - Enable basic telnet negotiation (default)
-      ATSZ     - Send a file via Zmodem (see file Picker)
-      ATRZ     - Receive a file using Zmodem
-      ATMID    - Play MIDI file (see file picker)
       ATMID1   - Switch soft-synth to FluidSynth
       ATMID2   - Switch soft-synth to MUNT
-      ATMID!   - Stop currently playing MIDI
+      ATMID    - Play MIDI file (see file picker)
       ATMIDSF  - Select FluidSynth SoundFont (Change MidiLink.INI)
+      ATMID!   - Stop currently playing MIDI
       ATMP3    - Play MP3 file (see file picker)
       ATMP3!   - Stop currently playing MP3 File
       ATROWS   - Do terminal row test
-      ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between pages)
-      ATINI    - Show /media/fat/linux/MidiLink.INI
+      ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between p
+      ATRZ     - Receive a file using Zmodem
+      ATSZ     - Send a file via Zmodem (see file Picker)
+      ATTEL0   - Disable basic telnet negotiation 
+      ATTEL1   - Enable basic telnet negotiation (default)
       ATVER    - Show MidiLink version
-      +++ATH   - Hang-up. 
 
 Navigation within the file picker - ATSZ, ATMIDI and ATMP3
 

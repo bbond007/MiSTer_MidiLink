@@ -520,12 +520,12 @@ void do_modem_emulation(char * buf, int bufLen)
         case 0x0D: // [RETURN]
             if(memcmp(lineBuf, "ATDT", 4) == 0)
             {
-                directory_search(midiLinkDIR, &lineBuf[4], &lineBuf[4]);
-                char * prtSep  = strchr(lineBuf, ':');
-                if(prtSep == NULL)
-                    prtSep = strchr(lineBuf, '*'); // with NCOMM?
-                char * port   = (prtSep == NULL)?NULL:(prtSep + 1);
                 char * ipAddr = &lineBuf[4];
+                directory_search(midiLinkDIR, ipAddr, ipAddr);
+                char * prtSep  = strchr(ipAddr, ':');
+                if(prtSep == NULL)
+                    prtSep = strchr(ipAddr, '*'); // with NCOMM?
+                char * port   = (prtSep == NULL)?NULL:(prtSep + 1);
                 if (prtSep != NULL) *prtSep = 0x00;
                 if (strlen(ipAddr) < 3)
                     misc_show_atdt(fdSerial);
@@ -644,7 +644,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
                         sleep(1);
-                        misc_file_to_serial(fdSerial, "/tmp/mpg123");
+                        misc_file_to_serial(fdSerial, "/tmp/mpg123", TCPTermRows);
                         MP3 = TRUE;
                     }
                 }
@@ -725,7 +725,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
                         sleep(1);
-                        misc_file_to_serial(fdSerial, "/tmp/aplaymidi");
+                        misc_file_to_serial(fdSerial, "/tmp/aplaymidi", 0);
                         MP3 = FALSE;
                     }
                 }
@@ -791,18 +791,23 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATINI", 5) == 0)
             {
-                misc_file_to_serial(fdSerial, midiLinkINI);
+                misc_file_to_serial(fdSerial, midiLinkINI, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATDIR", 5) == 0)
             {
-                misc_file_to_serial(fdSerial, midiLinkDIR);
+                misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
                 write(fdSerial, "\r\n",2);
                 write(fdSerial, helloStr, strlen(helloStr));
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATHELP", 6) == 0)
+            {
+                misc_show_at_commands(fdSerial, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "AT", 2) == 0)
