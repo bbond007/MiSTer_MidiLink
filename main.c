@@ -189,7 +189,7 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
         gettimeofday(&time, NULL);
         misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (&start, &time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
-            misc_print(2, " %02x", *byte);
+            misc_print(2, " %02x ", *byte);
         misc_print(2, "\n");
     }
 }
@@ -275,6 +275,7 @@ void * tcpsock_thread_function (void * x)
     } while (socket_out != -1);
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
+    pthread_exit(NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

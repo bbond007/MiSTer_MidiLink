@@ -177,7 +177,7 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATIP     - Show IP address --> ATIP
       ATBAUD   - Show baud rate menu.
       ATBAUD#  - Set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
-      AT&K0    - Sisable local flow control
+      AT&K0    - Disable local flow control
       AT&K3    - RTS/CTS bidirectional hardware flow control
       AT&K4    - XON/XOFF bidirectional software flow control
       ATTEL0   - Disable basic telnet negotiation 
@@ -193,7 +193,7 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATMP3!   - Stop currently playing MP3 File
       ATROWS   - Do terminal row test
       ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between pages)
-      ATINI    - Show /media/fat/config/MidiLink.INI
+      ATINI    - Show /media/fat/linux/MidiLink.INI
       ATVER    - Show MidiLink version
       +++ATH   - Hang-up. 
 
