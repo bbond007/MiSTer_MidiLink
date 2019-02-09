@@ -812,7 +812,7 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "AT", 2) == 0)
             {
-                if (lineBuf[3] != (char) 0x00)
+                if (lineBuf[2] != (char) 0x00)
                 {
                     sprintf(buf, "\r\nUNKNOWN command '%s'", lineBuf[2]);
                     write(fdSerial, buf, strlen(buf));
