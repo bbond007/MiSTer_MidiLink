@@ -814,7 +814,7 @@ void do_modem_emulation(char * buf, int bufLen)
             {
                 if (lineBuf[2] != (char) 0x00)
                 {
-                    sprintf(buf, "\r\nUNKNOWN command '%s'", &lineBuf[2]);
+                    sprintf(buf, "\r\nUnknown Command '%s'", &lineBuf[2]);
                     write(fdSerial, buf, strlen(buf));
                 }
                 misc_write_ok6(fdSerial);
