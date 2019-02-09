@@ -10,7 +10,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax)
+// BOOL directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax)
 //
 int directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax)
 {
@@ -24,11 +24,11 @@ int directory_read_loop (char * fileName, char * searchKey, char * key, int keyM
         {
             if(ini_first_char(str, strlen(str)) != '#')
                 if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax))
-                   if(strcmp(key, searchKey) == 0)
-                   {
+                    if(strcmp(key, searchKey) == 0)
+                    {
                         fclose(file);
-                        return TRUE;    
-                   }
+                        return TRUE;
+                    }
         }
         fclose(file);
         return FALSE;
@@ -42,7 +42,7 @@ int directory_read_loop (char * fileName, char * searchKey, char * key, int keyM
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int directory_search(char * fileName, char * searchKey, char * ipAddr)
+// BOOL directory_search(char * fileName, char * searchKey, char * ipAddr)
 //
 int directory_search(char * fileName, char * searchKey, char * ipAddr)
 {
@@ -51,7 +51,7 @@ int directory_search(char * fileName, char * searchKey, char * ipAddr)
     if (directory_read_loop(fileName, searchKey, key, sizeof(key), value, sizeof(value)))
     {
         misc_print(1, "Directory search '%s' --> '%s'\n", searchKey, value);
-        strcpy(ipAddr, value); 
+        strcpy(ipAddr, value);
         return TRUE;
     }
     misc_print(1, "Directory search '%s' --> NOT FOUND\n", searchKey);

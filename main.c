@@ -257,7 +257,7 @@ void * tcplst_thread_function (void * x)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * socket_thread_function(void * x)
-// Thread function for /dev/midi input
+// Thread function for TCP input
 //
 void * tcpsock_thread_function (void * x)
 {
@@ -282,7 +282,7 @@ void * tcpsock_thread_function (void * x)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * udpsock_thread_function(void * x)
-// Thread function for /dev/midi input
+// Thread function for UDP input
 //
 void * udpsock_thread_function (void * x)
 {
@@ -426,7 +426,7 @@ end:
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int do_file_picker(char * pathBuf, char * resultBuf)
+// BOOL do_file_picker(char * pathBuf, char * resultBuf)
 //
 //
 int do_file_picker(char * pathBuf, char * fileNameBuf)
@@ -812,6 +812,11 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "AT", 2) == 0)
             {
+                if (lineBuf[3] != (char) 0x00)
+                {
+                    sprintf(buf, "\r\nUNKNOWN command '%s'", lineBuf[2]);
+                    write(fdSerial, buf, strlen(buf));
+                }
                 misc_write_ok6(fdSerial);
             }    
             else
