@@ -576,8 +576,6 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     if(socket_out > 0)
                     {
-                        sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
-                        write(fdSerial, tmp, strlen(tmp));
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
                         if (misc_check_file(modemConnectSndWAV))
@@ -587,6 +585,8 @@ void do_modem_emulation(char * buf, int bufLen)
                             sprintf(tmp, "aplay %s", modemConnectSndWAV);
                             system(tmp);
                         }
+                        sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
+                        write(fdSerial, tmp, strlen(tmp));
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
                     else
