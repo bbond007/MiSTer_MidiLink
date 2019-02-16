@@ -51,7 +51,8 @@ char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
-char                    modemSoundWAV[50]      = "/media/fat/connect.wav";
+char                    modemConnectSndWAV[50] = "/media/fat/SOUNDS/connect.wav";
+char                    modemDialSndWAV[50]    = "/media/fat/SOUNDS/dial.wav";
 char         		UDPServer [100]        = "";
 char 			mixerControl[20]       = "Master";
 char 			MUNTOptions[30]        = "";
@@ -223,10 +224,11 @@ void * tcplst_thread_function (void * x)
                 write(fdSerial, ringStr, strlen(ringStr));
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
                 write(fdSerial, buf, strlen(buf));
-                if (misc_check_file(modemSoundWAV))
+                if (misc_check_file(modemConnectSndWAV))
                 {
-                    misc_print(1, "Playing WAV --> '%s'\n", modemSoundWAV);
-                    sprintf(buf, "aplay %s &", modemSoundWAV);
+                    system("killall aplay");
+                    misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
+                    sprintf(buf, "aplay %s", modemConnectSndWAV);
                     system(buf);
                 }
                 do
@@ -563,20 +565,28 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
+                        if (misc_check_file(modemDialSndWAV))
+                        {
+                            system("killall aplay");
+                            misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
+                            sprintf(tmp, "aplay %s", modemDialSndWAV);
+                            system(tmp);
+                        }
                         socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
                     }
                     if(socket_out > 0)
                     {
                         sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
-                        if (misc_check_file(modemSoundWAV))
-                        {
-                            misc_print(1, "Playing WAV --> '%s'\n", modemSoundWAV);
-                            sprintf(tmp, "aplay %s &", modemSoundWAV);
-                            system(tmp);
-                        }
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
+                        if (misc_check_file(modemConnectSndWAV))
+                        {
+                            system("killall aplay");
+                            misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
+                            sprintf(tmp, "aplay %s", modemConnectSndWAV);
+                            system(tmp);
+                        }
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
                     else
