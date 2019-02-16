@@ -51,6 +51,7 @@ char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
+char                    modemSoundWAV[50]      = "/media/fat/connect.wav";
 char         		UDPServer [100]        = "";
 char 			mixerControl[20]       = "Master";
 char 			MUNTOptions[30]        = "";
@@ -222,6 +223,12 @@ void * tcplst_thread_function (void * x)
                 write(fdSerial, ringStr, strlen(ringStr));
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
                 write(fdSerial, buf, strlen(buf));
+                if (misc_check_file(modemSoundWAV))
+                {
+                    misc_print(1, "Playing WAV --> '%s'\n", modemSoundWAV);
+                    sprintf(buf, "aplay %s &", modemSoundWAV);
+                    system(buf);
+                }
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -562,6 +569,12 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
+                        if (misc_check_file(modemSoundWAV))
+                        {
+                            misc_print(1, "Playing WAV --> '%s'\n", modemSoundWAV);
+                            sprintf(tmp, "aplay %s &", modemSoundWAV);
+                            system(tmp);
+                        }
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
