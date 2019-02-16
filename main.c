@@ -223,8 +223,6 @@ void * tcplst_thread_function (void * x)
             {
                 char ringStr[] = "\r\nRING";
                 write(fdSerial, ringStr, strlen(ringStr));
-                sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
-                write(fdSerial, buf, strlen(buf));
                 if (MODEMSOUND && misc_check_file(modemConnectSndWAV))
                 {
                     system("killall aplay");
@@ -232,6 +230,8 @@ void * tcplst_thread_function (void * x)
                     sprintf(buf, "aplay %s", modemConnectSndWAV);
                     system(buf);
                 }
+                sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
+                write(fdSerial, buf, strlen(buf));
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -564,7 +564,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     if(!ipError)
                     {
-                        sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
+                        sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
                         serial_do_tcdrain(fdSerial);
                         if (MODEMSOUND && misc_check_file(modemDialSndWAV))
@@ -574,6 +574,7 @@ void do_modem_emulation(char * buf, int bufLen)
                             sprintf(tmp, "aplay %s", modemDialSndWAV);
                             system(tmp);
                         }
+                        serial_do_tcdrain(fdSerial);
                         socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
                     }
                     if(socket_out > 0)
@@ -589,6 +590,8 @@ void do_modem_emulation(char * buf, int bufLen)
                         }
                         sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
+                        serial_do_tcdrain(fdSerial);
+                        sleep(1);
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
                     else
