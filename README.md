@@ -171,6 +171,10 @@ The MidiLink.INI file:
       
       MT32_LCD_MSG       = MiSTer MIDI! --> This shows a custom message on
                                             the MT-32 LCD Screen. Max 20!
+      
+      MODEM_SOUND        = TRUE         --> TCP option:
+                                            Play /media/fat/SOUNDS/dial.wav
+                                            Play /media/fat/SOUNDS/connect.wav
 
 
 MidiLink : TCP

@@ -65,6 +65,7 @@ int                     TCPBaudRate            = -1;
 int 			MIDIBaudRate           = -1;
 int                     TCPFlow                = -1;
 int                     UDPFlow                = -1;
+int                     MODEMSOUND             = FALSE;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -224,7 +225,7 @@ void * tcplst_thread_function (void * x)
                 write(fdSerial, ringStr, strlen(ringStr));
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
                 write(fdSerial, buf, strlen(buf));
-                if (misc_check_file(modemConnectSndWAV))
+                if (MODEMSOUND && misc_check_file(modemConnectSndWAV))
                 {
                     system("killall aplay");
                     misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
@@ -565,7 +566,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
-                        if (misc_check_file(modemDialSndWAV))
+                        if (MODEMSOUND && misc_check_file(modemDialSndWAV))
                         {
                             system("killall aplay");
                             misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
@@ -578,7 +579,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
-                        if (misc_check_file(modemConnectSndWAV))
+                        if (MODEMSOUND && misc_check_file(modemConnectSndWAV))
                         {
                             system("killall aplay");
                             misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);

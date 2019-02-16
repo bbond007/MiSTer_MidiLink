@@ -32,6 +32,7 @@ extern char         downloadPath[500];
 extern char         uploadPath[100];
 extern char         MUNTOptions[30];
 extern char         MT32LCDMsg[21];
+extern int          MODEMSOUND;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -191,6 +192,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, MT32LCDMsg, sizeof(MT32LCDMsg));
     }
+    else if(strcmp("MODEM_SOUND", key) == 0)
+    {
+        ini_bool(value, &MODEMSOUND);
+    }
     else if (strcmp("TCP_TERM_SYNTH", key) == 0)
     {
         if(strlen(key) > 0)
@@ -270,7 +275,8 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
-    misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n",   MT32LCDMsg);
+    misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n", MT32LCDMsg);
+    misc_print(0, "  - MODEM_SOUND        --> %s\n",   MODEMSOUND?"TRUE":"FALSE");
     misc_print(0, "\n");
 }
 
