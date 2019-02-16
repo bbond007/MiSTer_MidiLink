@@ -60,6 +60,7 @@ int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+int 			MIDIBaudRate           = -1;
 int                     TCPFlow                = -1;
 int                     UDPFlow                = -1;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
@@ -1141,8 +1142,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if (misc_check_args_option(argc, argv, "38400"))
-            baudRate = 38400;
+         if(MIDIBaudRate != -1)
+            baudRate = MIDIBaudRate;
         else
             baudRate = 31250;
     }

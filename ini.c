@@ -20,6 +20,7 @@ extern unsigned int TCPServerPort;
 extern unsigned int TCPTermRows;
 extern int          UDPBaudRate;
 extern int          TCPBaudRate;
+extern int          MIDIBaudRate;
 extern int          TCPSoftSynth;
 extern int          TCPFlow;
 extern int          UDPFlow;
@@ -150,6 +151,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &TCPBaudRate);
     }
+    else if (strcmp("MIDI_BAUD", key) == 0)
+    {
+        ini_int(value, &MIDIBaudRate);
+    }
     else if (strcmp("TCP_TERM_ROWS", key) == 0)
     {
         ini_uint(value, &TCPTermRows);
@@ -239,6 +244,11 @@ void ini_print_settings()
         misc_print(0, "  - UDP_BAUD           --> %d\n",   UDPBaudRate);
     else
         misc_print(0, "  - UDP_BAUD           --> Default (don't change)\n");
+    if(UDPBaudRate > 0)
+        misc_print(0, "  - MIDI_BAUD          --> %d\n",   MIDIBaudRate);
+    else
+        misc_print(0, "  - MIDI_BAUD          --> Default (don't change)\n");
+    
     misc_print(0, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
     if(UDPFlow != -1)
         misc_print(0, "  - UDP_FLOW           --> (%d) %s\n", UDPFlow, serial_hayes_flow_to_str(UDPFlow));

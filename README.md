@@ -158,6 +158,9 @@ The MidiLink.INI file:
                                             overrides arg '38400' but only 
                                             when used with arg 'TCP'
 
+      MIDI_BAUD          = 38400        --> Set MIDI baud to 38400 
+                                            this is for [A0486] 
+
       TCP_FLOW           = 0            --> This sets the default Flow
                                             Control for TCP option
                                             0 = none 3 = CTS/RTS 
