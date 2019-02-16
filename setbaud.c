@@ -114,3 +114,16 @@ int setbaud_show_menu(int fdSerial)
     write(fdSerial, example1, strlen(example1));
     write(fdSerial, example2, strlen(example2));   
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// setbaud_show_menu(int fdSerial)
+// 
+int setbaud_getDSR(int fd)
+{
+    int s;
+    /* Read terminal status line: Data Set Ready */
+    ioctl(fd, TIOCMGET, &s);
+    return (s & TIOCM_DSR) != 0;
+}

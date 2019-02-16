@@ -769,3 +769,40 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
         return FALSE;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// char misc_replace_char(char * str, int strLen, char old, char new)
+//
+char misc_replace_char(char * str, int strLen, char old, char new)
+{
+    for(int i = 0; i < strLen; i++)
+        if(str[i] == old)
+            str[i] = new;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// misc_get_core_name(char * buf, int maxBuf)
+//
+
+int misc_get_core_name(char * buf, int maxBuf)
+{
+    FILE * file;
+    char * fileName = "/tmp/ML_CORE";
+    buf[0] = 0x00;
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        fgets(buf, maxBuf, file);
+        fclose(file);
+        misc_replace_char(buf, strlen(buf), 0x0a, 0x00);
+        misc_replace_char(buf, strlen(buf), 0x0d, 0x00);
+        return TRUE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_get_core_name() : Unable to open --> '%s'\n", fileName);
+        return FALSE;
+    }
+}

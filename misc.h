@@ -23,6 +23,8 @@ int  misc_count_str_chr(char * str, char chr);
 int  misc_MT32_LCD(char * MT32Message, char * buf);
 void misc_show_at_commands(int fdSerial, int rows);
 void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR);
+int  misc_get_core_name(char * buf, int maxBuf);
+char misc_replace_char(char * str, int strLen, char old, char new);
 int  misc_do_pipe(int fdSerial,  char * path, char * command, 
                   char * arg1, 
                   char * arg2,

@@ -190,7 +190,8 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
         gettimeofday(&time, NULL);
         misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (&start, &time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
-            misc_print(2, " %02x ", *byte);
+        //  misc_print(2, " %02x '%c'", *byte, *byte);
+            misc_print(2, " %02x", *byte);
         misc_print(2, "\n");
     }
 }
@@ -525,7 +526,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 char * prtSep  = strchr(ipAddr, ':');
                 if(prtSep == NULL)
                     prtSep = strchr(ipAddr, '*'); // with NCOMM?
-                char * port   = (prtSep == NULL)?NULL:(prtSep + 1);
+                char * port = (prtSep == NULL)?NULL:(prtSep + 1);
                 if (prtSep != NULL) *prtSep = 0x00;
                 if (strlen(ipAddr) < 3)
                     misc_show_atdt(fdSerial);

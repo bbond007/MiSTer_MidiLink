@@ -10,9 +10,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// BOOL directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax)
+// BOOL directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax, char * sec, int secMax)
 //
-int directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax)
+int directory_read_loop (char * fileName, char * searchKey, char * key, int keyMax, char * value, int valMax, char * sec, int secMax)
 {
     int count;
     char str[1024];
@@ -23,7 +23,7 @@ int directory_read_loop (char * fileName, char * searchKey, char * key, int keyM
         while (fgets(str, sizeof(str), file)!= NULL)
         {
             if(ini_first_char(str, strlen(str)) != '#')
-                if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax))
+                if(ini_parse_line(str, strlen(str), key, keyMax, value, valMax, sec, secMax))
                     if(strcmp(key, searchKey) == 0)
                     {
                         fclose(file);
@@ -47,11 +47,13 @@ int directory_read_loop (char * fileName, char * searchKey, char * key, int keyM
 int directory_search(char * fileName, char * searchKey, char * ipAddr)
 {
     char key[30];
-    char value[150];
-    if (directory_read_loop(fileName, searchKey, key, sizeof(key), value, sizeof(value)))
+    char val[150];
+    char sec[30];
+    
+    if (directory_read_loop(fileName, searchKey, key, sizeof(key), val, sizeof(val), sec, sizeof(sec)))
     {
-        misc_print(1, "Directory search '%s' --> '%s'\n", searchKey, value);
-        strcpy(ipAddr, value);
+        misc_print(1, "Directory search '%s' --> '%s'\n", searchKey, val);
+        strcpy(ipAddr, val);
         return TRUE;
     }
     misc_print(1, "Directory search '%s' --> NOT FOUND\n", searchKey);
