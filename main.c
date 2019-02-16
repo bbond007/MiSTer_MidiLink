@@ -566,6 +566,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
+                        serial_do_tcdrain(fdSerial);
                         if (MODEMSOUND && misc_check_file(modemDialSndWAV))
                         {
                             system("killall aplay");
