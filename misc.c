@@ -53,6 +53,8 @@ static char * athelp[] =
     "ATROWS   - Do terminal row test", 
     "ATROWS## - Set number of terminal rows",  
     "ATRZ     - Receive a file using Zmodem", 
+    "ATSND0   - Disable modem sounds",
+    "ATSND1   - Enable modem sounds", 
     "ATSZ     - Send a file via Zmodem",  
     "ATTEL0   - Disable telnet negotiation",  
     "ATTEL1   - Enable telnet negotiation ",

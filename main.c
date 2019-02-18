@@ -829,6 +829,28 @@ void do_modem_emulation(char * buf, int bufLen)
                 misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
+            else if (memcmp(lineBuf, "ATSND", 5) == 0)
+            {
+                if(misc_is_number(&lineBuf[5]))
+                {
+                    switch(lineBuf[5])
+                    {
+                        case '0':
+                            MODEMSOUND = 0;
+                            break;
+                        case '1':
+                            MODEMSOUND = 1;
+                            break;
+                        default:
+                            sprintf(tmp, "\r\nUnsupported Option '%c'");
+                            write(fdSerial, tmp, strlen(tmp));
+                            break;
+                    }     
+                }
+                sprintf(tmp, "\r\nModem Sounds = %s", MODEMSOUND?"ON":"OFF");
+                write(fdSerial, tmp, strlen(tmp)); 
+                misc_write_ok6(fdSerial);
+            }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
                 write(fdSerial, "\r\n",2);
