@@ -194,12 +194,51 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
         gettimeofday(&time, NULL);
         misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (&start, &time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
-        //  misc_print(2, " %02x '%c'", *byte, *byte);
+            //  misc_print(2, " %02x '%c'", *byte, *byte);
             misc_print(2, " %02x", *byte);
         misc_print(2, "\n");
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void play_conenct_sound(char * tmp)
+//
+//
+void play_connect_sound(char * tmp)
+{
+    if (MODEMSOUND)
+        if(misc_check_file(modemConnectSndWAV))
+        {
+            system("killall aplay");
+            misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
+            sprintf(tmp, "aplay %s", modemConnectSndWAV);
+            system(tmp);
+        }
+        else
+            modem_snd(NULL);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void play_dial_sound(char * tmp, char * ipAddr)
+//
+//
+
+void play_dial_sound(char * tmp, char * ipAddr)
+{
+
+    if (MODEMSOUND)
+        if (misc_check_file(modemDialSndWAV))
+        {
+            system("killall aplay");
+            misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
+            sprintf(tmp, "aplay %s", modemDialSndWAV);
+            system(tmp);
+        }
+        else
+            modem_snd(ipAddr);
+}
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * tcplst_thread_function(void * x)
@@ -223,13 +262,7 @@ void * tcplst_thread_function (void * x)
             {
                 char ringStr[] = "\r\nRING";
                 write(fdSerial, ringStr, strlen(ringStr));
-                if (MODEMSOUND && misc_check_file(modemConnectSndWAV))
-                {
-                    system("killall aplay");
-                    misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
-                    sprintf(buf, "aplay %s", modemConnectSndWAV);
-                    system(buf);
-                }
+                play_connect_sound(buf);
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
                 write(fdSerial, buf, strlen(buf));
                 do
@@ -567,13 +600,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
                         serial_do_tcdrain(fdSerial);
-                        if (MODEMSOUND && misc_check_file(modemDialSndWAV))
-                        {
-                            system("killall aplay");
-                            misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
-                            sprintf(tmp, "aplay %s", modemDialSndWAV);
-                            system(tmp);
-                        }
+                        play_dial_sound(tmp, ipAddr);
                         serial_do_tcdrain(fdSerial);
                         socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
                     }
@@ -581,13 +608,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
-                        if (MODEMSOUND && misc_check_file(modemConnectSndWAV))
-                        {
-                            system("killall aplay");
-                            misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
-                            sprintf(tmp, "aplay %s", modemConnectSndWAV);
-                            system(tmp);
-                        }
+                        play_connect_sound(tmp);
                         sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
                         serial_do_tcdrain(fdSerial);
@@ -835,20 +856,20 @@ void do_modem_emulation(char * buf, int bufLen)
                 {
                     switch(lineBuf[5])
                     {
-                        case '0':
-                            MODEMSOUND = 0;
-                            break;
-                        case '1':
-                            MODEMSOUND = 1;
-                            break;
-                        default:
-                            sprintf(tmp, "\r\nUnsupported Option '%c'");
-                            write(fdSerial, tmp, strlen(tmp));
-                            break;
-                    }     
+                    case '0':
+                        MODEMSOUND = 0;
+                        break;
+                    case '1':
+                        MODEMSOUND = 1;
+                        break;
+                    default:
+                        sprintf(tmp, "\r\nUnsupported Option '%c'");
+                        write(fdSerial, tmp, strlen(tmp));
+                        break;
+                    }
                 }
                 sprintf(tmp, "\r\nModem Sounds = %s", MODEMSOUND?"ON":"OFF");
-                write(fdSerial, tmp, strlen(tmp)); 
+                write(fdSerial, tmp, strlen(tmp));
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
@@ -870,7 +891,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     write(fdSerial, buf, strlen(buf));
                 }
                 misc_write_ok6(fdSerial);
-            }    
+            }
             else
             {
                 write(fdSerial, "\r\n", 2);
@@ -1192,7 +1213,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-         if(MIDIBaudRate != -1)
+        if(MIDIBaudRate != -1)
             baudRate = MIDIBaudRate;
         else
             baudRate = 31250;

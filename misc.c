@@ -540,7 +540,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     int  skip         = 0;
     char * endPtr;
     char strIdx[8];
-    char c;
+    unsigned char c;
     char prompt[10]   = "";
     char strRows[10]  = "";
     char clrScr[]     = "\e[2J\e[H";
