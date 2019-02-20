@@ -15,19 +15,17 @@
 //                         int tone1,
 //                         int tone2)
 
-
 int modem_snd_play_digit(snd_pcm_t *handle,
                          char * buf,
                          int bufLen,
                          int tone1,
                          int tone2)
+
 {
     int err;
     snd_pcm_sframes_t frames;
-    memset(buf, 0x00, bufLen);
     double cost1 = 2.0 * M_PI * tone1 / (double) RATE;
     double cost2 = 2.0 * M_PI * tone2 / (double) RATE;
-
     for (int i = 0; i < bufLen ; i++)
     {
         double p1 = sin (i * cost1);
@@ -49,6 +47,35 @@ int modem_snd_play_digit(snd_pcm_t *handle,
         misc_print(0, "ERROR: modem_snd_play_digit() --> Short write (expected %li, wrote %li)\n", (long) bufLen, frames);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//int modem_snd_play_random(snd_pcm_t *handle,
+//                          char * buf,
+//                          int bufLen)
+int modem_snd_play_random(snd_pcm_t *handle,
+                          char * buf,
+                          int bufLen,
+                          int max)
+{
+    int err;
+    snd_pcm_sframes_t frames;
+    for (int i = 0; i < bufLen; i++)
+    {
+        buf[i] = rand() % max;
+    }
+    frames = snd_pcm_writei(handle, buf, bufLen);
+    if (frames < 0)
+        frames = snd_pcm_recover(handle, frames, 0);
+    if (frames < 0)
+    {
+        misc_print(0, "ERROR: modem_snd_play_random() --> snd_pcm_writei failed: %s\n", snd_strerror(frames));
+
+        return -1;
+    }
+    if (frames > 0 && frames < (long) bufLen)
+        misc_print(0,"ERROR: modem_snd_play_random() --> Short write (expected %li, wrote %li)\n", (long) bufLen, frames);
+}
+                           
 ///////////////////////////////////////////////////////////////////////////////////////
 //int modem_snd_play_number(snd_pcm_t *handle,
 //                          char * buf,
@@ -133,37 +160,14 @@ int modem_snd_play_number(snd_pcm_t *handle,
             break;
         }
         if(tone1)
-            modem_snd_play_digit(handle, buf, bufLen, tone1, tone2 );
+        {
+            modem_snd_play_digit(handle, buf, bufLen, tone1, tone2);
+            modem_snd_play_random(handle, buf, bufLen / 3, 5);
+        }   
         number++;
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-//int modem_snd_play_random(snd_pcm_t *handle,
-//                          char * buf,
-//                          int bufLen)
-int modem_snd_play_random(snd_pcm_t *handle,
-                          char * buf,
-                          int bufLen)
-{
-    int err;
-    snd_pcm_sframes_t frames;
-    for (int i = 0; i < bufLen; i++)
-    {
-        buf[i] = rand() % CONNECT_VOLUME;
-    }
-    frames = snd_pcm_writei(handle, buf, bufLen);
-    if (frames < 0)
-        frames = snd_pcm_recover(handle, frames, 0);
-    if (frames < 0)
-    {
-        misc_print(0, "ERROR: modem_snd_play_random() --> snd_pcm_writei failed: %s\n", snd_strerror(frames));
-        return -1;
-    }
-    if (frames > 0 && frames < (long) bufLen)
-        misc_print(0,"ERROR: modem_snd_play_random() --> Short write (expected %li, wrote %li)\n", (long) bufLen, frames);
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -195,15 +199,16 @@ int modem_snd(char * number)
         if(number[0] == 'C' && number[1] == (char) 0x00)
         {
             char buf[RATE / 8 * 30];
-            modem_snd_play_random(handle, buf, sizeof(buf));
+            modem_snd_play_random(handle, buf, sizeof(buf), CONNECT_VOLUME);
         }
         else if(number[0] == 'R')
         {
             char buf[RATE / 8 * 5];
-            modem_snd_play_digit(handle, buf, sizeof(buf), 1100, 1150);
-            modem_snd_play_digit(handle, buf, sizeof(buf), 0, 0);
-            modem_snd_play_digit(handle, buf, sizeof(buf), 1100, 1150);
-            modem_snd_play_digit(handle, buf, sizeof(buf), 0, 0);
+            modem_snd_play_random(handle, buf, sizeof(buf), 5);
+            modem_snd_play_digit(handle, buf, sizeof(buf), 600, 650);
+            modem_snd_play_random(handle, buf, sizeof(buf), 5);
+            modem_snd_play_digit(handle, buf, sizeof(buf), 600, 650);
+            modem_snd_play_random(handle, buf, sizeof(buf), 5);
         }
         else
         {
