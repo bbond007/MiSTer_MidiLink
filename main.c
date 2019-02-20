@@ -53,6 +53,7 @@ char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
 char                    modemConnectSndWAV[50] = "/media/fat/SOUNDS/connect.wav";
 char                    modemDialSndWAV[50]    = "/media/fat/SOUNDS/dial.wav";
+char                    modemRingSndWAV[50]    = "/media/fat/SOUNDS/ring.wav";
 char         		UDPServer [100]        = "";
 char 			mixerControl[20]       = "Master";
 char 			MUNTOptions[30]        = "";
@@ -221,6 +222,23 @@ void play_connect_sound(char * tmp)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// void play_conenct_sound(char * tmp)
+//
+//
+void play_ring_sound(char * tmp)
+{
+    if (MODEMSOUND)
+        if(misc_check_file(modemRingSndWAV))
+        {
+            system("killall aplay");
+            misc_print(1, "Playing WAV --> '%s'\n", modemRingSndWAV);
+            sprintf(tmp, "aplay %s", modemRingSndWAV);
+            system(tmp);
+        }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // void play_dial_sound(char * tmp, char * ipAddr)
 //
 //
@@ -262,6 +280,7 @@ void * tcplst_thread_function (void * x)
             {
                 char ringStr[] = "\r\nRING";
                 write(fdSerial, ringStr, strlen(ringStr));
+                play_ring_sound(buf);
                 play_connect_sound(buf);
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
                 write(fdSerial, buf, strlen(buf));
@@ -610,6 +629,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     {
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
+                        play_ring_sound(tmp);
                         play_connect_sound(tmp);
                         sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
                         write(fdSerial, tmp, strlen(tmp));
