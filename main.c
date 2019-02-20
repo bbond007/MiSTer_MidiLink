@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "alsa.h"
 #include "ini.h"
 #include "directory.h"
+#include "modem_snd.h"
 
 enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
@@ -874,11 +875,11 @@ void do_modem_emulation(char * buf, int bufLen)
                 misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
-            else if (memcmp(lineBuf, "ATSND", 5) == 0)
+            else if (memcmp(lineBuf, "ATM", 3) == 0)
             {
-                if(misc_is_number(&lineBuf[5]))
+                if(misc_is_number(&lineBuf[3]))
                 {
-                    switch(lineBuf[5])
+                    switch(lineBuf[3])
                     {
                     case '0':
                         MODEMSOUND = 0;

@@ -196,13 +196,13 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATMID    - Play MIDI file (see file picker)
       ATMIDSF  - Select FluidSynth SoundFont (Change MidiLink.INI)
       ATMID!   - Stop currently playing MIDI
+      ATM0     - Enable modem sounds
+      ATM1     - Disable modem sounds 
       ATMP3    - Play MP3 file (see file picker)
       ATMP3!   - Stop currently playing MP3 File
       ATROWS   - Do terminal row test
       ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between p
       ATRZ     - Receive a file using Zmodem
-      ATSND0   - Enable modem sounds
-      ATSND1   - Disable modem sounds 
       ATSZ     - Send a file via Zmodem (see file Picker)
       ATTEL0   - Disable basic telnet negotiation 
       ATTEL1   - Enable basic telnet negotiation (default)
