@@ -1,7 +1,6 @@
 #include <alsa/asoundlib.h>
 #include <math.h>
 #include <ctype.h>
-
 #include "misc.h"
 
 #define RATE 8000
@@ -20,7 +19,6 @@ int modem_snd_play_digit(snd_pcm_t *handle,
                          int bufLen,
                          int tone1,
                          int tone2)
-
 {
     int err;
     snd_pcm_sframes_t frames;
@@ -51,7 +49,8 @@ int modem_snd_play_digit(snd_pcm_t *handle,
 //
 //int modem_snd_play_random(snd_pcm_t *handle,
 //                          char * buf,
-//                          int bufLen)
+//                          int bufLen,
+//                          int max)
 int modem_snd_play_random(snd_pcm_t *handle,
                           char * buf,
                           int bufLen,
@@ -81,7 +80,6 @@ int modem_snd_play_random(snd_pcm_t *handle,
 //                          char * buf,
 //                          int bufLen,
 //                          char * number)
-
 int modem_snd_play_number(snd_pcm_t *handle,
                           char * buf,
                           int bufLen,
@@ -95,68 +93,68 @@ int modem_snd_play_number(snd_pcm_t *handle,
         switch(toupper(*number))
         {
         case '0':
-            tone2 = 941;
             tone1 = 1366;
+            tone2 = 941;
             break;
         case '1':
-            tone2 = 697;
             tone1 = 1209;
+            tone2 = 697;
             break;
         case '2':
-            tone2 = 697;
             tone1 = 1366;
+            tone2 = 697;
             break;
         case '3':
-            tone2 = 697;
             tone1 = 1477;
+            tone2 = 697;
             break;
         case '4':
-            tone2 = 770;
             tone1 = 1209;
+            tone2 = 770;
             break;
         case '5':
-            tone2 = 770;
             tone1 = 1366;
+            tone2 = 770;
             break;
         case '6':
-            tone2 = 770;
             tone1 = 1477;
+            tone2 = 770;
             break;
         case '7':
-            tone2 = 852;
             tone1 = 1209;
+            tone2 = 852;
             break;
         case '8':
-            tone2 = 852;
             tone1 = 1366;
+            tone2 = 852;
             break;
         case '9':
-            tone2 = 852;
             tone1 = 1477;
+            tone2 = 852;
             break;
         case '*':
-            tone2 = 941;
             tone1 = 1209;
+            tone2 = 941;
             break;
         case '#':
-            tone2 = 941;
             tone1 = 1477;
+            tone2 = 941;
             break;
         case 'A':
-            tone2 = 697;
             tone1 = 1633;
+            tone2 = 697;
             break;
         case 'B':
-            tone2 = 770;
             tone1 = 1633;
+            tone2 = 770;
             break;
         case 'C':
-            tone2 = 852;
             tone1 = 1633;
+            tone2 = 852;
             break;
         case 'D':
-            tone2 = 941;
             tone1 = 1633;
+            tone2 = 941;
             break;
         }
         if(tone1)
@@ -167,7 +165,6 @@ int modem_snd_play_number(snd_pcm_t *handle,
         number++;
     }
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -205,15 +202,15 @@ int modem_snd(char * number)
         {
             char buf[RATE / 8 * 5];
             modem_snd_play_random(handle, buf, sizeof(buf), 7);
-            modem_snd_play_digit(handle, buf, sizeof(buf), 600, 650);
+            modem_snd_play_digit(handle,  buf, sizeof(buf), 600, 650);
             modem_snd_play_random(handle, buf, sizeof(buf), 7);
-            modem_snd_play_digit(handle, buf, sizeof(buf), 600, 650);
+            modem_snd_play_digit(handle,  buf, sizeof(buf), 600, 650);
             modem_snd_play_random(handle, buf, sizeof(buf), 7);
         }
         else
         {
             char buf[RATE / 8 * 10];
-            modem_snd_play_digit(handle, buf, sizeof(buf), 350, 440);
+            modem_snd_play_digit(handle,  buf, sizeof(buf), 350, 440);
             modem_snd_play_number(handle, buf, RATE / 8, number);
         }
     }
