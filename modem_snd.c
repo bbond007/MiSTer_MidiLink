@@ -162,7 +162,7 @@ int modem_snd_play_number(snd_pcm_t *handle,
         if(tone1)
         {
             modem_snd_play_digit(handle, buf, bufLen, tone1, tone2);
-            modem_snd_play_random(handle, buf, bufLen / 3, 5);
+            modem_snd_play_random(handle, buf, bufLen / 3, 3);
         }   
         number++;
     }
@@ -204,11 +204,11 @@ int modem_snd(char * number)
         else if(number[0] == 'R')
         {
             char buf[RATE / 8 * 5];
-            modem_snd_play_random(handle, buf, sizeof(buf), 5);
+            modem_snd_play_random(handle, buf, sizeof(buf), 7);
             modem_snd_play_digit(handle, buf, sizeof(buf), 600, 650);
-            modem_snd_play_random(handle, buf, sizeof(buf), 5);
+            modem_snd_play_random(handle, buf, sizeof(buf), 7);
             modem_snd_play_digit(handle, buf, sizeof(buf), 600, 650);
-            modem_snd_play_random(handle, buf, sizeof(buf), 5);
+            modem_snd_play_random(handle, buf, sizeof(buf), 7);
         }
         else
         {
