@@ -9,17 +9,17 @@
 #define CONNECT_VOLUME 100
 
 ///////////////////////////////////////////////////////////////////////////////////////
-//int modem_snd_play_digit(snd_pcm_t *handle, 
-//                         char * buf, 
-//                         int bufLen, 
-//                         int tone1, 
+//int modem_snd_play_digit(snd_pcm_t *handle,
+//                         char * buf,
+//                         int bufLen,
+//                         int tone1,
 //                         int tone2)
 
 
-int modem_snd_play_digit(snd_pcm_t *handle, 
-                         char * buf, 
-                         int bufLen, 
-                         int tone1, 
+int modem_snd_play_digit(snd_pcm_t *handle,
+                         char * buf,
+                         int bufLen,
+                         int tone1,
                          int tone2)
 {
     int err;
@@ -50,14 +50,14 @@ int modem_snd_play_digit(snd_pcm_t *handle,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-//int modem_snd_play_number(snd_pcm_t *handle, 
-//                          char * buf, 
-//                          int bufLen, 
+//int modem_snd_play_number(snd_pcm_t *handle,
+//                          char * buf,
+//                          int bufLen,
 //                          char * number)
 
-int modem_snd_play_number(snd_pcm_t *handle, 
-                          char * buf, 
-                          int bufLen, 
+int modem_snd_play_number(snd_pcm_t *handle,
+                          char * buf,
+                          int bufLen,
                           char * number)
 {
     int tone1;
@@ -140,11 +140,11 @@ int modem_snd_play_number(snd_pcm_t *handle,
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//int modem_snd_play_random(snd_pcm_t *handle, 
-//                          char * buf, 
+//int modem_snd_play_random(snd_pcm_t *handle,
+//                          char * buf,
 //                          int bufLen)
-int modem_snd_play_random(snd_pcm_t *handle, 
-                          char * buf, 
+int modem_snd_play_random(snd_pcm_t *handle,
+                          char * buf,
                           int bufLen)
 {
     int err;
@@ -166,7 +166,7 @@ int modem_snd_play_random(snd_pcm_t *handle,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// 
+//
 // int modem_snd(char * number)
 //
 int modem_snd(char * number)
@@ -190,16 +190,27 @@ int modem_snd(char * number)
         return -2;
     }
     snd_pcm_nonblock(handle, 0);
-    if(number != NULL && number[0] != (char) 0x00)
+    if(number != NULL)
     {
-        char buf[RATE / 8 * 10];
-        modem_snd_play_digit(handle, buf, sizeof(buf), 350, 440);
-        modem_snd_play_number(handle, buf, RATE / 8, number);
-    }
-    else
-    {
-        char buf[RATE / 8 * 30];
-        modem_snd_play_random(handle, buf, sizeof(buf));
+        if(number[0] == 'C' && number[1] == (char) 0x00)
+        {
+            char buf[RATE / 8 * 30];
+            modem_snd_play_random(handle, buf, sizeof(buf));
+        }
+        else if(number[0] == 'R')
+        {
+            char buf[RATE / 8 * 5];
+            modem_snd_play_digit(handle, buf, sizeof(buf), 1100, 1150);
+            modem_snd_play_digit(handle, buf, sizeof(buf), 0, 0);
+            modem_snd_play_digit(handle, buf, sizeof(buf), 1100, 1150);
+            modem_snd_play_digit(handle, buf, sizeof(buf), 0, 0);
+        }
+        else
+        {
+            char buf[RATE / 8 * 10];
+            modem_snd_play_digit(handle, buf, sizeof(buf), 350, 440);
+            modem_snd_play_number(handle, buf, RATE / 8, number);
+        }
     }
     snd_pcm_drain(handle);
     //sleep(1);

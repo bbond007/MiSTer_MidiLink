@@ -217,7 +217,7 @@ void play_connect_sound(char * tmp)
             system(tmp);
         }
         else
-            modem_snd(NULL);
+            modem_snd("C");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -235,6 +235,8 @@ void play_ring_sound(char * tmp)
             sprintf(tmp, "aplay %s", modemRingSndWAV);
             system(tmp);
         }
+        else
+           modem_snd("R");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
