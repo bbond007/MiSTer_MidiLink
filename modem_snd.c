@@ -202,7 +202,7 @@ int modem_snd(char * number)
         modem_snd_play_random(handle, buf, sizeof(buf));
     }
     snd_pcm_drain(handle);
-    sleep(1);
+    //sleep(1);
     snd_pcm_close(handle);
     return TRUE;
 }

@@ -602,6 +602,8 @@ void do_modem_emulation(char * buf, int bufLen)
                         serial_do_tcdrain(fdSerial);
                         play_dial_sound(tmp, ipAddr);
                         serial_do_tcdrain(fdSerial);
+                        if(MODEMSOUND)
+                            sleep(1);
                         socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
                     }
                     if(socket_out > 0)
