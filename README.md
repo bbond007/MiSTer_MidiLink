@@ -166,16 +166,17 @@ The MidiLink.INI file:
                                             0 = none 3 = CTS/RTS 
                                             4 = XON/XOFF
 
+      TCP_SOUND          = TRUE         --> TCP option:
+                                            Play /media/fat/SOUNDS/dial.wav
+                                            Play /media/fat/SOUNDS/connect.wav
+
+
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
                                             error on Roland MT-32 Rev0.
       
       MT32_LCD_MSG       = MiSTer MIDI! --> This shows a custom message on
                                             the MT-32 LCD Screen. Max 20!
       
-      MODEM_SOUND        = TRUE         --> TCP option:
-                                            Play /media/fat/SOUNDS/dial.wav
-                                            Play /media/fat/SOUNDS/connect.wav
-
 
 MidiLink : TCP
 The TCP option works like a WiFi232 adapter supporting a small subset of the Hayes "AT" command set and some additionl stuff

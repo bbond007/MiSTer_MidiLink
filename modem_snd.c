@@ -4,21 +4,27 @@
 #include "misc.h"
 
 #define RATE 8000
-#define DIAL_VOLUME 70
-#define CONNECT_VOLUME 100
+#define VOLUME_DIALTONE  40
+#define VOLUME_DIAL      70
+#define VOLUME_CONNECT   100
+#define VOLUME_RING      80
+#define VOLUME_HISS1     3
+#define VOLUME_HISS2     7  
 
 ///////////////////////////////////////////////////////////////////////////////////////
-//int modem_snd_play_digit(snd_pcm_t *handle,
+//int modem_snd_play_tones(snd_pcm_t *handle,
 //                         char * buf,
 //                         int bufLen,
 //                         int tone1,
-//                         int tone2)
+//                         int tone2,
+//                         unsigned char max)
 
-int modem_snd_play_digit(snd_pcm_t *handle,
+int modem_snd_play_tones(snd_pcm_t *handle,
                          char * buf,
                          int bufLen,
                          int tone1,
-                         int tone2)
+                         int tone2,
+                         unsigned char max)
 {
     int err;
     snd_pcm_sframes_t frames;
@@ -28,8 +34,8 @@ int modem_snd_play_digit(snd_pcm_t *handle,
     {
         double p1 = sin (i * cost1);
         double p2 = sin (i * cost2);
-        unsigned char t1 = (p1 * DIAL_VOLUME);
-        unsigned char t2 = (p2 * DIAL_VOLUME);
+        unsigned char t1 = (p1 * max);
+        unsigned char t2 = (p2 * max);
         buf[i] = t1 & t2;
     }
 //  snd_pcm_drain(handle);
@@ -50,11 +56,11 @@ int modem_snd_play_digit(snd_pcm_t *handle,
 //int modem_snd_play_random(snd_pcm_t *handle,
 //                          char * buf,
 //                          int bufLen,
-//                          int max)
+//                          unsigned char)
 int modem_snd_play_random(snd_pcm_t *handle,
                           char * buf,
                           int bufLen,
-                          int max)
+                          unsigned char max)
 {
     int err;
     snd_pcm_sframes_t frames;
@@ -156,11 +162,15 @@ int modem_snd_play_number(snd_pcm_t *handle,
             tone1 = 1633;
             tone2 = 941;
             break;
+        case '.':
+            tone1 = 1477;
+            tone2 = 941;
+            break;
         }
         if(tone1)
         {
-            modem_snd_play_digit(handle, buf, bufLen, tone1, tone2);
-            modem_snd_play_random(handle, buf, bufLen / 3, 3);
+            modem_snd_play_tones(handle, buf, bufLen, tone1, tone2, VOLUME_DIAL);
+            modem_snd_play_random(handle, buf, bufLen / 3, VOLUME_HISS1);
         }   
         number++;
     }
@@ -196,21 +206,21 @@ int modem_snd(char * number)
         if(number[0] == 'C' && number[1] == (char) 0x00)
         {
             char buf[RATE / 8 * 30];
-            modem_snd_play_random(handle, buf, sizeof(buf), CONNECT_VOLUME);
+            modem_snd_play_random(handle, buf, sizeof(buf), VOLUME_CONNECT);
         }
         else if(number[0] == 'R')
         {
             char buf[RATE / 8 * 5];
-            modem_snd_play_random(handle, buf, sizeof(buf), 7);
-            modem_snd_play_digit(handle,  buf, sizeof(buf), 600, 650);
-            modem_snd_play_random(handle, buf, sizeof(buf), 7);
-            modem_snd_play_digit(handle,  buf, sizeof(buf), 600, 650);
-            modem_snd_play_random(handle, buf, sizeof(buf), 7);
+            modem_snd_play_random(handle, buf, sizeof(buf), VOLUME_HISS2);
+            modem_snd_play_tones(handle,  buf, sizeof(buf), 600, 650, VOLUME_RING);
+            modem_snd_play_random(handle, buf, sizeof(buf), VOLUME_HISS2);
+            modem_snd_play_tones(handle,  buf, sizeof(buf), 600, 650, VOLUME_RING);
+            modem_snd_play_random(handle, buf, sizeof(buf), VOLUME_HISS2);
         }
         else
         {
             char buf[RATE / 8 * 10];
-            modem_snd_play_digit(handle,  buf, sizeof(buf), 350, 440);
+            modem_snd_play_tones(handle,  buf, sizeof(buf), 350, 440, VOLUME_DIALTONE);
             modem_snd_play_number(handle, buf, RATE / 8, number);
         }
     }
