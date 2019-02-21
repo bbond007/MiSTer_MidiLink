@@ -36,7 +36,7 @@ int modem_snd_play_tones(snd_pcm_t *handle,
         double p2 = sin (i * cost2);
         unsigned char t1 = (p1 * max);
         unsigned char t2 = (p2 * max);
-        buf[i] = t1 & t2;
+        buf[i] = t1 | t2;
     }
 //  snd_pcm_drain(handle);
     frames = snd_pcm_writei(handle, buf, bufLen);

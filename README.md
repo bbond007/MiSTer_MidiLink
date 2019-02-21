@@ -170,6 +170,14 @@ The MidiLink.INI file:
                                             Play /media/fat/SOUNDS/dial.wav
                                             Play /media/fat/SOUNDS/connect.wav
 
+      #TCP_SOUND_RING    =              --> optional WAV file for TCP modem 
+                                            ring
+
+      #TCP_SOUND_DIAL    =              --> optional WAV file for TCP modem 
+                                            dial
+
+      #TCP_SOUND_CONNET  =              --> optional WAV file for TCP modem 
+                                            connect
 
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
                                             error on Roland MT-32 Rev0.

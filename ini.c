@@ -33,6 +33,9 @@ extern char         uploadPath[100];
 extern char         MUNTOptions[30];
 extern char         MT32LCDMsg[21];
 extern int          MODEMSOUND;
+extern char         modemConnectSndWAV[50];
+extern char         modemDialSndWAV[50];
+extern char         modemRingSndWAV[50];
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -184,6 +187,18 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_bool(value, &MODEMSOUND);
     }
+    else if(strcmp("TCP_SOUND_DIAL", key) == 0)
+    {
+        ini_str(key, value, modemDialSndWAV, sizeof(modemDialSndWAV));    
+    }
+    else if(strcmp("TCP_SOUND_RING", key) == 0)
+    {
+        ini_str(key, value, modemRingSndWAV, sizeof(modemRingSndWAV));
+    }
+    else if(strcmp("TCP_SOUND_CONNECT", key) == 0)
+    {
+        ini_str(key, value, modemConnectSndWAV, sizeof(modemConnectSndWAV));
+    }
     else if (strcmp("UDP_FLOW", key) == 0)
     {
         ini_int(value, &UDPFlow);
@@ -275,8 +290,11 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - TCP_SOUND          --> %s\n",   MODEMSOUND?"TRUE":"FALSE");
+    misc_print(0, "  - TCP_SOUND_DIAL     --> %s\n",   modemDialSndWAV);
+    misc_print(0, "  - TCP_SOUND_RING     --> %s\n",   modemRingSndWAV);
+    misc_print(0, "  - TCP_SOUND_CONNECT  --> %s\n",   modemConnectSndWAV);
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
-    misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n", MT32LCDMsg);
+    misc_print(0, "  - MT32_LCD_MSG       --> %s\n",   MT32LCDMsg);
     misc_print(0, "\n");
 }
 
