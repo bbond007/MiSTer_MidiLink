@@ -290,9 +290,9 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - TCP_SOUND          --> %s\n",   MODEMSOUND?"TRUE":"FALSE");
-    misc_print(0, "  - TCP_SOUND_DIAL     --> %s\n",   modemDialSndWAV);
-    misc_print(0, "  - TCP_SOUND_RING     --> %s\n",   modemRingSndWAV);
-    misc_print(0, "  - TCP_SOUND_CONNECT  --> %s\n",   modemConnectSndWAV);
+    misc_print(0, "  - TCP_SOUND_DIAL     --> %s\n",  (strlen(modemDialSndWAV) > 0)?modemDialSndWAV:"Synth");
+    misc_print(0, "  - TCP_SOUND_RING     --> %s\n",  (strlen(modemRingSndWAV) > 0)?modemRingSndWAV:"Synth");
+    misc_print(0, "  - TCP_SOUND_CONNECT  --> %s\n",  (strlen(modemConnectSndWAV) > 0)?modemConnectSndWAV:"Synth");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "  - MT32_LCD_MSG       --> %s\n",   MT32LCDMsg);
     misc_print(0, "\n");

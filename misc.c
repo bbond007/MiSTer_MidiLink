@@ -791,7 +791,7 @@ char misc_replace_char(char * str, int strLen, char old, char new)
 int misc_get_core_name(char * buf, int maxBuf)
 {
     FILE * file;
-    char * fileName = "/tmp/ML_CORE";
+    char * fileName = "/tmp/MiSTer_CORE";
     buf[0] = 0x00;
     file = fopen(fileName, "r");
     if (file)
