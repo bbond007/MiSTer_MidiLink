@@ -287,12 +287,21 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
     misc_print(0, "  - TCP_TERM_DOWNLOAD  --> '%s'\n",  downloadPath);
     misc_print(0, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
-    misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",    MIDIPath);
+    misc_print(0, "  - TCP_TERM_MIDI      --> '%s'\n",    MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",   (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(0, "  - TCP_SOUND          --> %s\n",    MODEMSOUND?"TRUE":"FALSE");
-    misc_print(0, "  - TCP_SOUND_DIAL     --> '%s'\n", (strlen(modemDialSndWAV) > 0)?modemDialSndWAV:"Synth");
-    misc_print(0, "  - TCP_SOUND_RING     --> '%s'\n", (strlen(modemRingSndWAV) > 0)?modemRingSndWAV:"Synth");
-    misc_print(0, "  - TCP_SOUND_CONNECT  --> '%s'\n", (strlen(modemConnectSndWAV) > 0)?modemConnectSndWAV:"Synth");
+    if (strlen(modemDialSndWAV) > 0)
+        misc_print(0, "  - TCP_SOUND_DIAL     --> '%s'\n",  modemDialSndWAV);
+    else
+        misc_print(0, "  - TCP_SOUND_DIAL     --> Software\n");
+    if (strlen(modemRingSndWAV) > 0)
+        misc_print(0, "  - TCP_SOUND_RING     --> '%s'\n",  modemRingSndWAV);
+    else
+        misc_print(0, "  - TCP_SOUND_RING     --> Software\n");
+    if (strlen(modemConnectSndWAV) > 0)
+        misc_print(0, "  - TCP_SOUND_CONNECT  --> '%s'\n",  modemConnectSndWAV);
+    else
+        misc_print(0, "  - TCP_SOUND_CONNECT  --> Software\n");
     misc_print(0, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
     misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
     misc_print(0, "\n");
