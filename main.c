@@ -210,7 +210,7 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
 void play_connect_sound(char * tmp)
 {
     if (MODEMSOUND)
-        if(misc_check_file(modemConnectSndWAV))
+        if(strlen(modemConnectSndWAV) > 0 && misc_check_file(modemConnectSndWAV))
         {
             system("killall aplay");
             misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
@@ -229,7 +229,7 @@ void play_connect_sound(char * tmp)
 void play_ring_sound(char * tmp)
 {
     if (MODEMSOUND)
-        if(misc_check_file(modemRingSndWAV))
+        if(strlen(modemRingSndWAV) > 0 && misc_check_file(modemRingSndWAV))
         {
             system("killall aplay");
             misc_print(1, "Playing WAV --> '%s'\n", modemRingSndWAV);
@@ -250,7 +250,7 @@ void play_dial_sound(char * tmp, char * ipAddr)
 {
 
     if (MODEMSOUND)
-        if (misc_check_file(modemDialSndWAV))
+        if (strlen(modemDialSndWAV) > 0 && misc_check_file(modemDialSndWAV))
         {
             system("killall aplay");
             misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
