@@ -1141,15 +1141,20 @@ int main(int argc, char *argv[])
 {
     int status;
     int midiPort;
+    char coreName[30] = "";
+    
     unsigned char buf[256];
     //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
-    misc_print(0, "\r");
+    misc_print(0, "\n");
+
+    misc_get_core_name(coreName, sizeof(coreName));
+    misc_print(0, "CORE --> '%s'\n", coreName);
 
     if(misc_check_file(midiLinkINI))
-        ini_read_ini(midiLinkINI);
-
+        ini_read_ini(midiLinkINI, coreName);
+    
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
     else
@@ -1241,7 +1246,12 @@ int main(int argc, char *argv[])
         if(MIDIBaudRate != -1)
             baudRate = MIDIBaudRate;
         else
-            baudRate = 31250;
+        {
+            if (strcmp(coreName, "AO486") == 0)
+                baudRate = 38400;
+            else
+                baudRate = 31250;
+        }
     }
 
     setbaud_set_baud(serialDevice, fdSerial, baudRate);

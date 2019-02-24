@@ -1,5 +1,5 @@
 enum SOFTSYNTH { MUNT, FluidSynth};
-int  ini_read_ini(char * fileName);
+int  ini_read_ini(char * fileName, char * section);
 void ini_print_settings();
 void ini_bool (char * value, int          * dest);
 void ini_int  (char * value, int          * dest);

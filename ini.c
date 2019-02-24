@@ -422,15 +422,12 @@ int ini_read_loop (char * fileName, char * section, char * key, int keyMax, char
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_read_ini(char * fileName)
+// int ini_read_ini(char * fileName, char * section)
 //
-int ini_read_ini(char * fileName)
+int ini_read_ini(char * fileName, char * section)
 {
     char key[30];
     char val[150];
     char sec[30];
-    char corename[30];
-    misc_get_core_name(corename, sizeof(corename));
-    misc_print(0, "CORE --> '%s'\n", corename);
-    ini_read_loop(fileName, corename, key, sizeof(key), val, sizeof(val), sec, sizeof(sec));
+    ini_read_loop(fileName, section, key, sizeof(key), val, sizeof(val), sec, sizeof(sec));
 }
