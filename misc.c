@@ -800,8 +800,7 @@ int misc_get_core_name(char * buf, int maxBuf)
         fclose(file);
         misc_replace_char(buf, strlen(buf), 0x0a, 0x00);
         misc_replace_char(buf, strlen(buf), 0x0d, 0x00);
-        for (int i = 0; i < strlen(buf); i++)
-            buf[i] = toupper(buf[i]);
+        misc_str_to_upper(buf);
         return TRUE;
     }
     else
