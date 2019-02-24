@@ -588,7 +588,8 @@ void do_modem_emulation(char * buf, int bufLen)
             if(memcmp(lineBuf, "ATDT", 4) == 0)
             {
                 char * ipAddr = &lineBuf[4];
-                directory_search(midiLinkDIR, ipAddr, ipAddr);
+                if(ipAddr[0] != (char) 0x00)
+                    directory_search(midiLinkDIR, ipAddr, ipAddr);
                 char * prtSep  = strchr(ipAddr, ':');
                 if(prtSep == NULL)
                     prtSep = strchr(ipAddr, '*'); // with NCOMM?
