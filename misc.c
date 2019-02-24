@@ -122,7 +122,7 @@ int misc_check_args_option (int argc, char *argv[], char * option)
 int misc_check_device (char * deviceName)
 {
     struct stat filestat;
-    misc_print(0, "Checking for --> %s : ", deviceName);
+    misc_print(0, "Checking for --> '%s' : ", deviceName);
     if (stat(deviceName, &filestat) != 0)
     {
         misc_print(0, "FALSE\n");

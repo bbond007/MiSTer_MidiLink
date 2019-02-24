@@ -255,17 +255,17 @@ void ini_print_settings()
         misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
         misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
-    misc_print(0, "  - MIXER_CONTROL      --> %s\n",   mixerControl);
+    misc_print(0, "  - MIXER_CONTROL      --> %s\n", mixerControl);
     misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
                misc_ipaddr_is_multicast(UDPServer)?" MULTICAST":"");
-    misc_print(0, "  - UDP_SERVER_PORT    --> %d\n",   UDPServerPort);
+    misc_print(0, "  - UDP_SERVER_PORT    --> %d\n",     UDPServerPort);
     if(UDPBaudRate > 0)
-        misc_print(0, "  - UDP_BAUD           --> %d\n",   UDPBaudRate);
+        misc_print(0, "  - UDP_BAUD           --> %d\n", UDPBaudRate);
     else
         misc_print(0, "  - UDP_BAUD           --> Default (don't change)\n");
     if(UDPBaudRate > 0)
-        misc_print(0, "  - MIDI_BAUD          --> %d\n",   MIDIBaudRate);
+        misc_print(0, "  - MIDI_BAUD          --> %d\n", MIDIBaudRate);
     else
         misc_print(0, "  - MIDI_BAUD          --> Default (don't change)\n");
     
@@ -282,19 +282,19 @@ void ini_print_settings()
         misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
     else
         misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
-    misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",   TCPServerPort);
-    misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",   TCPTermRows);
-    misc_print(0, "  - TCP_TERM_UPLOAD    --> %s\n",   uploadPath);
-    misc_print(0, "  - TCP_TERM_DOWNLOAD  --> %s\n",   downloadPath);
-    misc_print(0, "  - TCP_TERM_MP3       --> %s\n",   MP3Path);
-    misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",   MIDIPath);
-    misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",  (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
-    misc_print(0, "  - TCP_SOUND          --> %s\n",   MODEMSOUND?"TRUE":"FALSE");
-    misc_print(0, "  - TCP_SOUND_DIAL     --> %s\n",  (strlen(modemDialSndWAV) > 0)?modemDialSndWAV:"Synth");
-    misc_print(0, "  - TCP_SOUND_RING     --> %s\n",  (strlen(modemRingSndWAV) > 0)?modemRingSndWAV:"Synth");
-    misc_print(0, "  - TCP_SOUND_CONNECT  --> %s\n",  (strlen(modemConnectSndWAV) > 0)?modemConnectSndWAV:"Synth");
-    misc_print(0, "  - DELAYSYSEX         --> %s\n",   DELAYSYSEX?"TRUE":"FALSE");
-    misc_print(0, "  - MT32_LCD_MSG       --> %s\n",   MT32LCDMsg);
+    misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",    TCPServerPort);
+    misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",    TCPTermRows);
+    misc_print(0, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
+    misc_print(0, "  - TCP_TERM_DOWNLOAD  --> '%s'\n",  downloadPath);
+    misc_print(0, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
+    misc_print(0, "  - TCP_TERM_MIDI      --> %s\n",    MIDIPath);
+    misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",   (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
+    misc_print(0, "  - TCP_SOUND          --> %s\n",    MODEMSOUND?"TRUE":"FALSE");
+    misc_print(0, "  - TCP_SOUND_DIAL     --> '%s'\n", (strlen(modemDialSndWAV) > 0)?modemDialSndWAV:"Synth");
+    misc_print(0, "  - TCP_SOUND_RING     --> '%s'\n", (strlen(modemRingSndWAV) > 0)?modemRingSndWAV:"Synth");
+    misc_print(0, "  - TCP_SOUND_CONNECT  --> '%s'\n", (strlen(modemConnectSndWAV) > 0)?modemConnectSndWAV:"Synth");
+    misc_print(0, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
+    misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
     misc_print(0, "\n");
 }
 
