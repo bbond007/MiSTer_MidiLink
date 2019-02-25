@@ -338,9 +338,11 @@ void * tcpsock_thread_function (void * x)
             write(fdSerial, buf, rdLen);
             show_debug_buf("TSOCK IN ", buf, rdLen);
         }
-        else if(rdLen < 0)
-            misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 0\n");
-    } while (socket_out != -1);
+        else if(rdLen < 1)
+            misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 1\n");
+    } while (rdLen > 0 && socket_out != -1);
+    tcpsock_close(socket_out);
+    socket_out = -1;
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
     pthread_exit(NULL);
