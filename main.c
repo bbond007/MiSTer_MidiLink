@@ -341,7 +341,7 @@ void * tcpsock_thread_function (void * x)
         else if(rdLen < 1)
             misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 1\n");
     } while (rdLen > 0 && socket_out != -1);
-    tcpsock_close(socket_out);
+    //tcpsock_close(socket_out);
     socket_out = -1;
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
@@ -1062,7 +1062,10 @@ void * midiINin_thread_function (void * x)
 void write_socket_packet(int sock, char * buf, int bufLen)
 {
     if (mode == ModeTCP)
-        tcpsock_write(sock, buf, bufLen);
+    {
+        if(tcpsock_write(sock, buf, bufLen) < 1)
+            socket_out = -1;
+    }
     else
         udpsock_write(sock, buf, bufLen);
 

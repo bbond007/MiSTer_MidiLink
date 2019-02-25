@@ -56,7 +56,7 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
 int tcpsock_write(int sock, char * buf, int bufLen)
 {
     int result = write(sock, buf, bufLen);
-    if (result < 0)
+    if (result < 1)
         misc_print(1, "ERROR: tcpsock_write() --> %d : %s\n", result, strerror(errno));
     return result;
 }
