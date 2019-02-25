@@ -25,6 +25,7 @@ void alsa_reset_seq_event(snd_seq_event_t * ev)
 //
 void alsa_send_midi_raw(char * buf, int bufLen)
 {
+#ifdef ALSA_ENCODE_BYTE
     for (int i = 0; i < bufLen; i++)
     {
         int result  = snd_midi_event_encode_byte(parser, buf[i], &ev);
@@ -36,6 +37,20 @@ void alsa_send_midi_raw(char * buf, int bufLen)
             snd_midi_event_reset_encode(parser);
         }
     }
+#else
+    int sent = 0;
+    while(sent < bufLen)
+    {
+        sent += snd_midi_event_encode(parser, &buf[sent], bufLen - sent, &ev);
+        if(ev.type !=  SND_SEQ_EVENT_NONE)
+        {
+            snd_seq_event_output(seq, &ev);
+            snd_seq_drain_output(seq);
+            alsa_reset_seq_event(&ev);
+            snd_midi_event_reset_encode(parser);
+        }
+    }
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

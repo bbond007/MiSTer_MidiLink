@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tcpsock.h"
 #include "alsa.h"
 #include "ini.h"
+#include "directory.h"
+#include "modem_snd.h"
 
 enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
@@ -44,19 +46,28 @@ static int 		socket_in	       = -1;
 static int 		socket_out	       = -1;
 static int 		socket_lst             = -1;
 static int 		baudRate	       = -1;
+char                    MT32LCDMsg[21]         = "MiSTer MidiLink! BB7";
 char 		        MP3Path[500]           = "/media/fat/MP3";
 char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
+char                    modemConnectSndWAV[50] = "";
+char                    modemDialSndWAV[50]    = "";
+char                    modemRingSndWAV[50]    = "";
 char         		UDPServer [100]        = "";
-char 			mixerControl[20]       = "PCM";
+char 			mixerControl[20]       = "Master";
 char 			MUNTOptions[30]        = "";
+int                     MP3Volume              = -1;
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+int 			MIDIBaudRate           = -1;
+int                     TCPFlow                = -1;
+int                     UDPFlow                = -1;
+int                     MODEMSOUND             = TRUE;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -70,8 +81,7 @@ static pthread_t        socketLstThread;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void set_pcm_valume
-//
+// void set_pcm_valume(int volume)
 void set_pcm_volume(int value)
 {
     if(value != -1)
@@ -95,8 +105,8 @@ void killall_softsynth(int delay)
     system("killall -q fluidsynth");
     misc_print(0, "Killing --> mt32d\n");
     system("killall -q mt32d");
-    if(delay) 
-      sleep(delay);
+    if(delay)
+        sleep(delay);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -156,8 +166,8 @@ void killall_mpg123(int delay)
 {
     misc_print(0, "Killing --> mpg123\n");
     system("killall -q mpg123");
-    if(delay) 
-      sleep(delay);
+    if(delay)
+        sleep(delay);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -168,8 +178,8 @@ void killall_aplaymidi(int delay)
 {
     misc_print(0, "Killing --> aplaymidi\n");
     system("killall -q aplaymidi");
-    if(delay) 
-      sleep(delay);
+    if(delay)
+        sleep(delay);
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -186,6 +196,7 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
         gettimeofday(&time, NULL);
         misc_print(2, "[%08ld] %s[%02d] -->", misc_get_timeval_diff (&start, &time), descr, bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
+            //  misc_print(2, " %02x '%c'", *byte, *byte);
             misc_print(2, " %02x", *byte);
         misc_print(2, "\n");
     }
@@ -193,8 +204,66 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void * midi_thread_function(void * x)
-// Thread function for /dev/midi input
+// void play_conenct_sound(char * tmp)
+//
+//
+void play_connect_sound(char * tmp)
+{
+    if (MODEMSOUND)
+        if(strlen(modemConnectSndWAV) > 0 && misc_check_file(modemConnectSndWAV))
+        {
+            system("killall aplay");
+            misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
+            sprintf(tmp, "aplay %s", modemConnectSndWAV);
+            system(tmp);
+        }
+        else
+            modem_snd("C");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void play_conenct_sound(char * tmp)
+//
+//
+void play_ring_sound(char * tmp)
+{
+    if (MODEMSOUND)
+        if(strlen(modemRingSndWAV) > 0 && misc_check_file(modemRingSndWAV))
+        {
+            system("killall aplay");
+            misc_print(1, "Playing WAV --> '%s'\n", modemRingSndWAV);
+            sprintf(tmp, "aplay %s", modemRingSndWAV);
+            system(tmp);
+        }
+        else
+           modem_snd("R");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void play_dial_sound(char * tmp, char * ipAddr)
+//
+//
+
+void play_dial_sound(char * tmp, char * ipAddr)
+{
+
+    if (MODEMSOUND)
+        if (strlen(modemDialSndWAV) > 0 && misc_check_file(modemDialSndWAV))
+        {
+            system("killall aplay");
+            misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
+            sprintf(tmp, "aplay %s", modemDialSndWAV);
+            system(tmp);
+        }
+        else
+            modem_snd(ipAddr);
+}
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void * tcplst_thread_function(void * x)
+// Thread function for TCP Listener input
 //
 void * tcplst_thread_function (void * x)
 {
@@ -214,6 +283,8 @@ void * tcplst_thread_function (void * x)
             {
                 char ringStr[] = "\r\nRING";
                 write(fdSerial, ringStr, strlen(ringStr));
+                play_ring_sound(buf);
+                play_connect_sound(buf);
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
                 write(fdSerial, buf, strlen(buf));
                 do
@@ -253,7 +324,7 @@ void * tcplst_thread_function (void * x)
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * socket_thread_function(void * x)
-// Thread function for /dev/midi input
+// Thread function for TCP input
 //
 void * tcpsock_thread_function (void * x)
 {
@@ -272,12 +343,13 @@ void * tcpsock_thread_function (void * x)
     } while (socket_out != -1);
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
+    pthread_exit(NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * udpsock_thread_function(void * x)
-// Thread function for /dev/midi input
+// Thread function for UDP input
 //
 void * udpsock_thread_function (void * x)
 {
@@ -307,7 +379,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static struct timeval start;
     static struct timeval stop;
     char tmp[100] = "";
-    
+
     for (char * p = buf; bufLen-- > 0; p++)
     {
         switch(*p)
@@ -421,7 +493,7 @@ end:
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int do_file_picker(char * pathBuf, char * resultBuf)
+// BOOL do_file_picker(char * pathBuf, char * resultBuf)
 //
 //
 int do_file_picker(char * pathBuf, char * fileNameBuf)
@@ -478,7 +550,7 @@ int get_softsynth_port(int softSynth)
         case FluidSynth:
             midiPort = start_fsynth();
             break;
-        case -1: //do nothing. 
+        case -1: //do nothing.
             break;
         }
     }
@@ -492,7 +564,7 @@ int get_softsynth_port(int softSynth)
 //
 
 #define KILL_MP3_SLEEP if(MP3){killall_mpg123(1);MP3 = FALSE;}
-                    
+
 void do_modem_emulation(char * buf, int bufLen)
 {
     static char lineBuf[150]    = "";
@@ -515,11 +587,13 @@ void do_modem_emulation(char * buf, int bufLen)
         case 0x0D: // [RETURN]
             if(memcmp(lineBuf, "ATDT", 4) == 0)
             {
-                char * prtSep  = strchr(lineBuf, ':');
-                if(prtSep == NULL)
-                    prtSep = strchr(lineBuf, '*'); // with NCOMM?
-                char * port   = (prtSep == NULL)?NULL:(prtSep + 1);
                 char * ipAddr = &lineBuf[4];
+                if(ipAddr[0] != (char) 0x00)
+                    directory_search(midiLinkDIR, ipAddr, ipAddr);
+                char * prtSep  = strchr(ipAddr, ':');
+                if(prtSep == NULL)
+                    prtSep = strchr(ipAddr, '*'); // with NCOMM?
+                char * port = (prtSep == NULL)?NULL:(prtSep + 1);
                 if (prtSep != NULL) *prtSep = 0x00;
                 if (strlen(ipAddr) < 3)
                     misc_show_atdt(fdSerial);
@@ -534,7 +608,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, '.') < 1)
                         {
                             strcat(ipAddr, ".");
-                            strcat(ipAddr, domainName);   
+                            strcat(ipAddr, domainName);
                             misc_print(1, "Doing domain name fix --> %s\n", ipAddr);
                         }
                         if(!misc_hostname_to_ip(ipAddr, ipAddr))
@@ -546,16 +620,25 @@ void do_modem_emulation(char * buf, int bufLen)
                     }
                     if(!ipError)
                     {
-                        sprintf(tmp, "\r\nDIALING %s:%d", ipAddr, iPort);
+                        sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
+                        serial_do_tcdrain(fdSerial);
+                        play_dial_sound(tmp, ipAddr);
+                        serial_do_tcdrain(fdSerial);
+                        if(MODEMSOUND)
+                            sleep(1);
                         socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
                     }
                     if(socket_out > 0)
                     {
-                        sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
-                        write(fdSerial, tmp, strlen(tmp));
                         if (TELNET_NEGOTIATE)
                             do_telnet_negotiate();
+                        play_ring_sound(tmp);
+                        play_connect_sound(tmp);
+                        sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
+                        write(fdSerial, tmp, strlen(tmp));
+                        serial_do_tcdrain(fdSerial);
+                        sleep(1);
                         int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
                     }
                     else
@@ -626,18 +709,19 @@ void do_modem_emulation(char * buf, int bufLen)
                     else if(do_file_picker(MP3Path, fileName))
                     {
                         chdir("/root");
+                        set_pcm_volume(MP3Volume);
                         sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUMASK, MP3Path, fileName);
                         if(!MP3)
                         {
                             killall_aplaymidi(0);
                             killall_softsynth(3);
-                        }    
+                        }
                         killall_mpg123(0);
                         misc_print(1, "Play MP3 --> %s\n", tmp);
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
                         sleep(1);
-                        misc_file_to_serial(fdSerial, "/tmp/mpg123");
+                        misc_file_to_serial(fdSerial, "/tmp/mpg123", TCPTermRows);
                         MP3 = TRUE;
                     }
                 }
@@ -653,7 +737,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 if (misc_check_device(PCMDevice))
                 {
                     if(lineBuf[5] == '!')
-                    {    
+                    {
                         killall_aplaymidi(0);
                         sprintf(tmp, "\r\nMIDI --> OFF");
                         write(fdSerial, tmp, strlen(tmp));
@@ -668,7 +752,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         }
                     }
                     else if(lineBuf[5] == '1')
-                    {  
+                    {
                         KILL_MP3_SLEEP;
                         killall_aplaymidi(0);
                         sprintf(tmp, "\r\nLoading --> FluidSynth");
@@ -687,6 +771,26 @@ void do_modem_emulation(char * buf, int bufLen)
                         TCPSoftSynth = MUNT;
                         get_softsynth_port(TCPSoftSynth);
                     }
+                    else if(lineBuf[5] == 'S' && lineBuf[6] == 'F')
+                    {
+                        strcpy(tmp, fsynthSoundFont);
+                        char * dir = strrchr(tmp, '/');
+                        if(dir != NULL)
+                            *dir = (char) 0x00;
+                        else
+                            tmp[0] = (char) 0x00;
+                        if (do_file_picker(tmp, fileName))
+                        {
+                            strcpy(fsynthSoundFont, tmp);
+                            strcat(fsynthSoundFont, "/");
+                            strcat(fsynthSoundFont, fileName);
+                            write(fdSerial, "\r\n SoundFont -->", 16);
+                            write(fdSerial, fsynthSoundFont, strlen(fsynthSoundFont));
+                            sprintf(tmp,"sed -i '{s|^FSYNTH_SOUNDFONT[[:space:]]*=.*|FSYNTH_SOUNDFONT    = %s|}' %s",
+                                    fsynthSoundFont, midiLinkINI);
+                            system(tmp);
+                        }
+                    }
                     else if(do_file_picker(MIDIPath, fileName))
                     {
                         KILL_MP3_SLEEP;
@@ -698,7 +802,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         system(tmp);
                         write(fdSerial, "\r\n", 2);
                         sleep(1);
-                        misc_file_to_serial(fdSerial, "/tmp/aplaymidi");
+                        misc_file_to_serial(fdSerial, "/tmp/aplaymidi", 0);
                         MP3 = FALSE;
                     }
                 }
@@ -764,13 +868,54 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATINI", 5) == 0)
             {
-                misc_file_to_serial(fdSerial, midiLinkINI);
+                misc_file_to_serial(fdSerial, midiLinkINI, TCPTermRows);
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATDIR", 5) == 0)
+            {
+                misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATM", 3) == 0)
+            {
+                if(misc_is_number(&lineBuf[3]))
+                {
+                    switch(lineBuf[3])
+                    {
+                    case '0':
+                        MODEMSOUND = 0;
+                        break;
+                    case '1':
+                        MODEMSOUND = 1;
+                        break;
+                    default:
+                        sprintf(tmp, "\r\nUnsupported Option '%c'");
+                        write(fdSerial, tmp, strlen(tmp));
+                        break;
+                    }
+                }
+                sprintf(tmp, "\r\nModem Sounds = %s", MODEMSOUND?"ON":"OFF");
+                write(fdSerial, tmp, strlen(tmp));
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "ATVER", 5) == 0)
             {
                 write(fdSerial, "\r\n",2);
                 write(fdSerial, helloStr, strlen(helloStr));
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "ATHELP", 6) == 0)
+            {
+                misc_show_at_commands(fdSerial, TCPTermRows);
+                misc_write_ok6(fdSerial);
+            }
+            else if (memcmp(lineBuf, "AT", 2) == 0)
+            {
+                if (lineBuf[2] != (char) 0x00)
+                {
+                    sprintf(buf, "\r\nUnknown Command '%s'", &lineBuf[2]);
+                    write(fdSerial, buf, strlen(buf));
+                }
                 misc_write_ok6(fdSerial);
             }
             else
@@ -997,15 +1142,20 @@ int main(int argc, char *argv[])
 {
     int status;
     int midiPort;
+    char coreName[30] = "";
+    
     unsigned char buf[256];
     //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
-    misc_print(0, "\r");
+    misc_print(0, "\n");
+
+    misc_get_core_name(coreName, sizeof(coreName));
+    misc_print(0, "CORE --> '%s'\n", coreName);
 
     if(misc_check_file(midiLinkINI))
-        ini_read_ini(midiLinkINI);
-
+        ini_read_ini(midiLinkINI, coreName);
+    
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
     else
@@ -1015,7 +1165,7 @@ int main(int argc, char *argv[])
         misc_set_priority(midilinkPriority);
 
     int MIDI = misc_check_device(midiDevice);
-    
+
     if (misc_check_args_option(argc, argv, "MENU") && !MIDI)
     {
         if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
@@ -1038,7 +1188,7 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "UDP"))    mode = ModeUDP;
         if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
     }
-    
+
     killall_mpg123(0);
     killall_aplaymidi(0);
     killall_softsynth(3);
@@ -1046,9 +1196,9 @@ int main(int argc, char *argv[])
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
         if(!misc_check_device(MrAudioDevice)) // && misc_check_file("/etc/asound.conf"))
-        {	
-             misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
-             return -1;   
+        {
+            misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
+            return -1;
         }
 
         if (!misc_check_device(PCMDevice))
@@ -1056,22 +1206,21 @@ int main(int argc, char *argv[])
             //misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
             //system ("modprobe snd-dummy");
             misc_print(0, "ERROR: You have no PCM device --> %s\n", PCMDevice);
-            return -2;     
+            return -2;
+        }
+
+        if (mode == ModeMUNT || mode == ModeMUNTGM)
+            midiPort = start_munt();
+        else if (mode == ModeFSYNTH)
+            midiPort = start_fsynth();
+
+        if (midiPort < 0)
+        {
+            misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
+            close_fd();
+            return -3;
         }
     }
-
-    if (mode == ModeMUNT || mode == ModeMUNTGM)
-        midiPort = start_munt();
-    else if (mode == ModeFSYNTH)
-        midiPort = start_fsynth();
-
-    if (midiPort < 0)
-    {
-        misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
-        close_fd();
-        return -3;
-    }
-
     fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
     if (fdSerial < 0)
     {
@@ -1095,10 +1244,15 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if (misc_check_args_option(argc, argv, "38400"))
-            baudRate = 38400;
+        if(MIDIBaudRate != -1)
+            baudRate = MIDIBaudRate;
         else
-            baudRate = 31250;
+        {
+            if (strcmp(coreName, "AO486") == 0)
+                baudRate = 38400;
+            else
+                baudRate = 31250;
+        }
     }
 
     setbaud_set_baud(serialDevice, fdSerial, baudRate);
@@ -1109,6 +1263,9 @@ int main(int argc, char *argv[])
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
+            if(strlen(MT32LCDMsg) > 0)
+                write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+            //This loop handles softSynth MUNT/FluidSynth
             do
             {
                 int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1131,6 +1288,8 @@ int main(int argc, char *argv[])
 
     if (mode == ModeUDP)
     {
+        if(UDPFlow > 0)
+            serial_set_flow_control(fdSerial, UDPFlow);
         if (strlen(UDPServer) > 7)
         {
             if(!misc_is_ip_addr(UDPServer))
@@ -1175,6 +1334,8 @@ int main(int argc, char *argv[])
     }
     else if (mode == ModeTCP)
     {
+        if(TCPFlow > 0)
+            serial_set_flow_control(fdSerial, TCPFlow);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
         {
@@ -1203,7 +1364,7 @@ int main(int argc, char *argv[])
             close_fd();
             return -12;
         }
-        
+
         if (misc_check_device(midiINDevice))
         {
             fdMidiIN = open(midiINDevice, O_RDONLY);
@@ -1222,8 +1383,6 @@ int main(int argc, char *argv[])
             sleep(2);
         }
 
-        write_midi_packet(all_notes_off, sizeof(all_notes_off));
-        
         if (fdMidiIN != -1)
         {
             status = pthread_create(&midiINInThread, NULL, midiINin_thread_function, NULL);
@@ -1247,8 +1406,32 @@ int main(int argc, char *argv[])
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
     }
+
     show_line();
-    //  Main thread handles MIDI output
+    //send all-notes-off to real MIDI device
+    if(fdMidi != -1)
+    {
+        misc_print(1, "Sending MIDI --> all-notes-off\n");
+        write_midi_packet(all_notes_off, sizeof(all_notes_off));
+        if(strlen(MT32LCDMsg) > 0)
+        {
+            misc_print(1, "Sending MT-32 LCD --> '%s'\n", MT32LCDMsg);
+            write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        }
+    }
+    //only send all-notes-off if UDP is being used with MIDI and not game
+    if (mode == ModeUDP && socket_out != -1 && baudRate == 31250)
+    {
+        misc_print(1, "Sending UDP --> all-notes-off\n");
+        write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
+        if(strlen(MT32LCDMsg) > 0)
+        {
+            misc_print(1, "Sending UDP MT-32 LCD --> '%s'\n", MT32LCDMsg);
+            write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        }
+    }
+
+    //This main loop handles USB MIDI, UDP & TCP
     do
     {
         int rdLen = read(fdSerial, buf, sizeof(buf));

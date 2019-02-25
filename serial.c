@@ -44,6 +44,22 @@ int serial_set_interface_attribs(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// char * serial_hayes_flow_to_str(int hayesModem) 
+//
+char * serial_hayes_flow_to_str(int hayesModem)
+{
+    switch(hayesModem)
+    {
+        case 0: return "Diasble Flow-control";
+        case 3: return "RTS/CTS";
+        case 4: return "XON/XOFF";
+        default: 
+            return "UNKNOWN";
+    }
+    
+}
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // int serial_set_flow_control(int fdSerial, int hayesMode) 
 //
 int serial_set_flow_control(int fdSerial, int hayesMode)

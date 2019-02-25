@@ -12,15 +12,16 @@
 // "/dev/sequencer" does not seem to work for input
 
 static char          * midiLinkINI      = "/media/fat/linux/MidiLink.INI";
+static char          * midiLinkDIR      = "/media/fat/linux/MidiLink.DIR";
 static char          * serialDevice     = "/dev/ttyS1";
-static char          * helloStr         = "BinaryBond007 MidiLink 2.0";
+static char          * helloStr         = "MiSTer MidiLink 2.5 BB7";
 static unsigned char   test_note[3]     = {0x90, 60, 127};
 static char          * midiINDevice     = "/dev/midi2";
 static char          * midiDevice       = "/dev/midi1";
 static char 	     * PCMDevice        = "/dev/snd/pcmC0D0p";
 static char          * MrAudioDevice    = "/dev/MrAudio";
 static int             CPUMASK          = 1;
-
+       
 static char all_notes_off[] = 
 {
     0xb0, 0x7b, 0x00, 0xb0, 0x40, 0x00, 0xb1, 0x7b, 0x00, 0xb1, 0x40, 0x00, 0xb2, 0x7b, 0x00, 0xb2, 0x40, 0x00, 

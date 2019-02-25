@@ -22,10 +22,50 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//  misc_print( const char* format, ... )
+//  
 //
+static char pauseStr[] = "[PAUSE]";
+static char pauseDel[sizeof(pauseStr)];  
 static pthread_mutex_t print_lock;
 extern int MIDI_DEBUG;
+
+static char * athelp[] =
+{
+    "AT       - Attention",
+    "ATBAUD#  - Set baud rate",  
+    "ATBAUD   - Show baud rate menu", 
+    "ATDIR    - Show dialing MidiLink.DIR", 
+    "ATDT     - Dial 'ATDT192.168.1.131:23'",  
+    "ATHELP   - Show valid AT Comamnds",
+    "+++ATH   - Hang-up.",  
+    "ATINI    - Show MidiLink.INI", 
+    "ATIP     - Show IP address",  
+    "AT&K0    - Disable  flow control",
+    "AT&K3    - RTS/CTS  flow control",
+    "AT&K4    - XON/XOFF flow control",
+    "ATMID1   - Switch synth to FluidSynth", 
+    "ATMID2   - Switch synth to MUNT",
+    "ATMID    - Play MIDI file", 
+    "ATMIDSF  - Select FluidSynth SoundFont", 
+    "ATMID!   - Stop currently playing MIDI", 
+    "ATM0     - Disable modem sounds",
+    "ATM1     - Enable modem sounds", 
+    "ATMP3    - Play MP3 file", 
+    "ATMP3!   - Stop playing MP3 File", 
+    "ATROWS   - Do terminal row test", 
+    "ATROWS## - Set number of terminal rows",  
+    "ATRZ     - Receive a file using Zmodem", 
+    "ATSZ     - Send a file via Zmodem",  
+    "ATTEL0   - Disable telnet negotiation",  
+    "ATTEL1   - Enable telnet negotiation ",
+    "ATVER    - Show MidiLink version", 
+    NULL
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  void misc_print(int priority, const char* format, ... )
+//
 void misc_print(int priority, const char* format, ... )
 {
     if(MIDI_DEBUG || priority == 0)
@@ -82,7 +122,7 @@ int misc_check_args_option (int argc, char *argv[], char * option)
 int misc_check_device (char * deviceName)
 {
     struct stat filestat;
-    misc_print(0, "Checking for --> %s : ", deviceName);
+    misc_print(0, "Checking for --> '%s' : ", deviceName);
     if (stat(deviceName, &filestat) != 0)
     {
         misc_print(0, "FALSE\n");
@@ -153,7 +193,7 @@ int misc_is_number(char *testStr)
 {
     char validChr[] = "0987654321";
     int bNum = FALSE;
-    while (*testStr != '\0')    
+    while (*testStr != '\0')
         if (strchr(validChr, *testStr++) == NULL)
             return FALSE;
         else
@@ -355,10 +395,10 @@ int misc_get_midi_port(char * descr)
 //
 // int misc_do_pipe(int fdSerial, char * command, char * arg)
 //
-int misc_do_pipe(int fdSerial,  char * path, char * command, 
-                 char * arg1, 
+int misc_do_pipe(int fdSerial,  char * path, char * command,
+                 char * arg1,
                  char * arg2,
-                 char * arg3, 
+                 char * arg3,
                  char * arg4,
                  char * arg5)
 {
@@ -430,32 +470,6 @@ int misc_do_pipe2(int fdSerial,  char * command)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// int misc_do_pipe2(int fdSerial, char * command)
-//
-int misc_file_to_serial(int fdSerial,  char * fileName)
-{
-    char str[1014];
-    FILE * file;
-    file = fopen(fileName, "r");
-    if (file)
-    {
-        write(fdSerial, "\r\n", 2);
-        while (fgets(str, sizeof(str), file)!= NULL)
-        {
-            write(fdSerial, str, strlen(str));
-            write(fdSerial, "\r", 1);
-        }
-        fclose(file);
-        return TRUE;
-    }
-    else
-    {
-        misc_print(0, "ERROR: misc_file_to_serial('%s') --> '%s'\n", fileName, strerror(errno));
-        return FALSE;
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -526,7 +540,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     int  skip         = 0;
     char * endPtr;
     char strIdx[8];
-    char c;
+    unsigned char c;
     char prompt[10]   = "";
     char strRows[10]  = "";
     char clrScr[]     = "\e[2J\e[H";
@@ -565,7 +579,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                     write (fdSerial, "> ", 2);
                 }
                 else
-                    write (fdSerial, "  -->  ", 7); 
+                    write (fdSerial, "  -->  ", 7);
                 write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
                 write(fdSerial, "\r\n", 2);
                 count++;
@@ -650,4 +664,148 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     }
     free(path2);
     return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int misc_MT32_LCD(char * MT32Message, char * bufOut)
+//
+// format sysex message to change LCD screen
+int misc_MT32_LCD(char * MT32Message, char * buf)
+{
+    unsigned char tmp[] = {0xF0, 0x41, 0x10, 0x16, 0x12, 0x20, 0x00, 0x00,
+                           0,0,0,0,0,   //sysex character data
+                           0,0,0,0,0,   // "
+                           0,0,0,0,0,   // "
+                           0,0,0,0,0,   // "
+                           0x00, /* checksum placedholder */
+                           0xF7  /* end of sysex */
+                          };
+    unsigned char checksum = 0;
+    int MT32messageIndex = 0;
+    for (int tmpIndex = 5; tmpIndex < sizeof(tmp) - 2; tmpIndex++)
+    {
+        if (tmpIndex > 7)
+        {
+            if (MT32messageIndex < strlen(MT32Message))
+                tmp[tmpIndex] = MT32Message[MT32messageIndex++];
+            else
+                tmp[tmpIndex] = 0x20;
+        }
+        checksum += tmp[tmpIndex];
+    }
+    checksum = 128 - checksum % 128;
+    tmp[sizeof(tmp) - 2] = checksum;
+    memcpy(buf, tmp, sizeof(tmp));
+    return sizeof(tmp);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+//
+void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+{
+    (*rowcount)++;
+    if (*rowcount == rows)
+    {	
+       if (CR)
+           write(fdSerial, "\r\n", 2);
+       write(fdSerial, pauseStr, strlen(pauseStr)); 
+       read(fdSerial, c, 1);
+       if(pauseDel[0] != 0x08)
+            memset(pauseDel, 0x08, sizeof(pauseDel));
+       write(fdSerial, pauseDel, strlen(pauseStr));
+       *rowcount = 0;
+       *c = toupper(*c);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_show_at_commands(int fdSerial, int rows)
+//
+void misc_show_at_commands(int fdSerial, int rows)
+{
+    int index = 0;
+    int rowcount = 0;
+    char c = (char) 0x00;
+    
+    while(athelp[index] != NULL && c != 'Q')
+    {
+        write(fdSerial, "\r", 1);
+        if (rowcount != 0 || index == 0) //rowcount not reset
+            write(fdSerial, "\n", 1);
+        write(fdSerial, athelp[index], strlen(athelp[index]));
+        index++;
+        misc_do_rowcheck(fdSerial, rows, &rowcount, &c, TRUE);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// BOOL misc_do_pipe2(int fdSerial, char * command)
+//
+int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
+{
+    char str[1014];
+    FILE * file;
+    int rowcount = 0;
+    char c = (char) 0x00;
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        write(fdSerial, "\r\n", 2);
+        while (fgets(str, sizeof(str), file)!= NULL)
+        {
+            write(fdSerial, str, strlen(str));
+            write(fdSerial, "\r", 1);
+            misc_do_rowcheck(fdSerial, rows, &rowcount, &c, FALSE);
+        }           
+        fclose(file);
+        return TRUE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_file_to_serial('%s') --> '%s'\n", fileName, strerror(errno));
+        return FALSE;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// char misc_replace_char(char * str, int strLen, char old, char new)
+//
+char misc_replace_char(char * str, int strLen, char old, char new)
+{
+    for(int i = 0; i < strLen; i++)
+        if(str[i] == old)
+            str[i] = new;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// misc_get_core_name(char * buf, int maxBuf)
+//
+
+int misc_get_core_name(char * buf, int maxBuf)
+{
+    FILE * file;
+    char * fileName = "/tmp/CORENAME";
+    buf[0] = 0x00;
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        fgets(buf, maxBuf, file);
+        fclose(file);
+        misc_replace_char(buf, strlen(buf), 0x0a, 0x00);
+        misc_replace_char(buf, strlen(buf), 0x0d, 0x00);
+        misc_str_to_upper(buf);
+        return TRUE;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_get_core_name() : Unable to open --> '%s'\n", fileName);
+        return FALSE;
+    }
 }
