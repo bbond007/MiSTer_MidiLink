@@ -339,7 +339,7 @@ void * tcpsock_thread_function (void * x)
             show_debug_buf("TSOCK IN ", buf, rdLen);
         }
         else if(rdLen < 1)
-             misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 1\n");
+            misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 1\n");
     } while (rdLen > 0 && socket_out != -1);
     //tcpsock_close(socket_out);
     if(socket_out != -1)

@@ -4,25 +4,35 @@ This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI 
 MidiLink 2.0 is now included in MiSTer general and incudes MUNT and
 FluidSynth support running on the HPS ARM core!
 
-Uartmode [MIDI/MIDI-38K] : Local  / MUNT   
+Uartmode : MIDI : Local / MUNT   
 
 Use MUNT softSynth.
 
 Speed:
 
-      MIDI     : 31250 BPS
-      MIDI-38K : 38400 BPS
+      Default : 31250 BPS
+      ao486   : 38400 BPS
 
-Uartmode [MIDI/MIDI-38K] : Local  / FSYNTH 
+Roland MT-32/CM-32 roms need to be placed in '/media/fat/mt32-rom-data'
+
+Additional MUNT parameters can be specified in MidiLink.INI
+       
+      MUNT_OPTIONS = 
+
+Uartmode : MIDI : Local / FSYNTH 
 
 Use FluidSynth softSynth.
 
 Speed:
       
-      MIDI     : 31250 BPS
-      MIDI-38K : 38400 BPS
+      Default : 31250 BPS
+      ao486   : 38400 BPS
 
-UartMODE [MIDI/MIDI-38K] : Remote / TCP    
+FluidSynth soundfont is defined in MidiLink.INI
+
+      FSYNTH_SOUNDFONT   = /media/fat/SOUNDFONT/default.sf2
+
+UartMODE : MIDI : Remote / TCP    
 
 Modem mode supporting a small subset of common Hayes 'AT' Commands.
 Default speed for this mode is 115200 BPS
@@ -33,18 +43,13 @@ Direct Connect to another MiSTer or other computer.
 
 Default speed:
 
-      MIDI     : 31250 BPS
-      MIDI-38K : 38400 BPS
-
-
-‘MIDI’ - This option is used with the Amiga / Minimig core. This option sets the UART connection speed to 31250 baud which is the standard MIDI speed.
+      Default : 31250 BPS
+      ao486   : 38400 BPS
 
 Many Amiga applications and most games don’t require any additional drivers for MIDI. Some “newer” applications may require the CAMD driver.
       
       http://aminet.net/package/mus/edit/camd
       
-‘MIDI-38K’ -This option is used with the ao486 core. This option sets the UART Connection speed to 38400 baud. (The MIDI speed of 31250 baud is not a standard speed DOS PC UARTs were capable of doing)
-
 While some sequencer applications may support MIDI on the serial port, DOS games typically require a MPU-401 interface which ao486 unfortunately lacks. In lieu of hardware MPU-401 capability the SoftMPU TSR can be used with a good degree of success.
 
       http://bjt42.github.io/softmpu/
