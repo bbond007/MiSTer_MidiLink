@@ -96,7 +96,6 @@ int tcpsock_server_open(int port)
 //
 // int tcpsock_read(int sock, char * buf, int bufLen)
 //
-
 int tcpsock_read(int sock, char * buf,  int bufLen)
 {
     int rdLen;

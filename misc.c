@@ -59,6 +59,7 @@ static char * athelp[] =
     "ATTEL0   - Disable telnet negotiation",  
     "ATTEL1   - Enable telnet negotiation ",
     "ATVER    - Show MidiLink version", 
+    "ATZ      - Reset modem",
     NULL
 };
 
@@ -601,6 +602,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                     switch(c)
                     {
                     case 0x08: // [DELETE]
+                    case 0x14: // [PETSKII DELETE]
                     case 0xf8: // [BACKSPACE]
                         if (strlen(prompt) > 0)
                         {

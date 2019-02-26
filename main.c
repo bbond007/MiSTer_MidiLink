@@ -52,6 +52,7 @@ char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
+char                    MUNTRomPath[150]       = "/media/fat/mt32-rom-data"; 
 char                    modemConnectSndWAV[50] = "";
 char                    modemDialSndWAV[50]    = "";
 char                    modemRingSndWAV[50]    = "";
@@ -68,6 +69,7 @@ int 			MIDIBaudRate           = -1;
 int                     TCPFlow                = -1;
 int                     UDPFlow                = -1;
 int                     MODEMSOUND             = TRUE;
+int 			TCPATHDelay            = 900;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -115,14 +117,14 @@ void killall_softsynth(int delay)
 //
 int start_munt()
 {
-    char buf[60];
+    char buf[200];
     int midiPort = -1;
     set_pcm_volume(muntVolume);
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
         misc_print(0, "Starting --> mt32d\n");
-    sprintf(buf, "taskset %d mt32d %s &", CPUMASK, MUNTOptions);
+    sprintf(buf, "taskset %d mt32d %s -f %s &", CPUMASK, MUNTOptions, MUNTRomPath);
     system(buf);
     int loop = 0;
     do
@@ -338,9 +340,13 @@ void * tcpsock_thread_function (void * x)
             write(fdSerial, buf, rdLen);
             show_debug_buf("TSOCK IN ", buf, rdLen);
         }
-        else if(rdLen < 0)
-            misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 0\n");
-    } while (socket_out != -1);
+        else if(rdLen < 1)
+            misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 1\n");
+    } while (rdLen > 0 && socket_out != -1);
+    //tcpsock_close(socket_out);
+    if(socket_out != -1)
+        close(socket_out);
+    socket_out = -1;
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
     pthread_exit(NULL);
@@ -373,9 +379,10 @@ void * udpsock_thread_function (void * x)
 //
 void do_check_modem_hangup(int * socket, char * buf, int bufLen)
 {
-    static char lineBuf[8];
+    static char lineBuf[6];
     static char iLineBuf = 0;
-    static char lastChar = 0x00;
+    static int plusCount = 0;
+    static int NEEDSTOP = FALSE;
     static struct timeval start;
     static struct timeval stop;
     char tmp[100] = "";
@@ -384,11 +391,18 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     {
         switch(*p)
         {
+        case '+': // RESET 
+            gettimeofday(&start, NULL);
+            iLineBuf = 0;
+            lineBuf[iLineBuf] = 0x00;
+            plusCount++;
+            NEEDSTOP = TRUE;
+            break;
         case 0x0d:// [RETURN]
-            if(memcmp(lineBuf, "+++ATH", 6) == 0)
+            if(plusCount >= 3 && iLineBuf >= 3 && memcmp(lineBuf, "ATH", 3) == 0)
             {
                 int delay = misc_get_timeval_diff(&start, &stop);
-                if(delay > 900)
+                if(TCPATHDelay == 0 || delay > TCPATHDelay)
                 {
                     tcpsock_close(*socket);
                     *socket =  -1;
@@ -403,21 +417,21 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
-            lastChar = 0x0d;
+            plusCount = 0;
             break;
-        case '+': // RESET BUFFER
-            gettimeofday(&start, NULL);
-            if (lastChar != '+')
-                iLineBuf = 0;
         default:
-            if (lastChar == '+' && *p != '+')
-                gettimeofday(&stop, NULL);
-            if (iLineBuf < sizeof(lineBuf)-1)
+            if (plusCount >= 3 && iLineBuf < sizeof(lineBuf)-1)
             {
+                if (NEEDSTOP)
+                {
+                    gettimeofday(&stop, NULL);
+                    NEEDSTOP = FALSE;
+                }
                 lineBuf[iLineBuf++] = *p;
                 lineBuf[iLineBuf] = 0x00;
             }
-            lastChar = *p;
+            else
+                plusCount = 0;
             break;
         }
     }
@@ -909,6 +923,11 @@ void do_modem_emulation(char * buf, int bufLen)
                 misc_show_at_commands(fdSerial, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
+            else if (memcmp(lineBuf, "ATZ", 3) == 0)
+            {
+                //todo reset stuff... 
+                misc_write_ok6(fdSerial);
+            }
             else if (memcmp(lineBuf, "AT", 2) == 0)
             {
                 if (lineBuf[2] != (char) 0x00)
@@ -926,6 +945,7 @@ void do_modem_emulation(char * buf, int bufLen)
             lineBuf[iLineBuf] = 0x00;
             break;
         case 0x08: // [DELETE]
+        case 0x14: // [PETSKII DELETE]
         case 0xf8: // [BACKSPACE]
             if (iLineBuf > 0)
             {
@@ -1060,7 +1080,14 @@ void * midiINin_thread_function (void * x)
 void write_socket_packet(int sock, char * buf, int bufLen)
 {
     if (mode == ModeTCP)
-        tcpsock_write(sock, buf, bufLen);
+    {
+        if(tcpsock_write(sock, buf, bufLen) < 1)
+        {   
+            close(socket_out);
+            //tcpsock_close(socket_out);
+            socket_out = -1;
+        }
+    }
     else
         udpsock_write(sock, buf, bufLen);
 
