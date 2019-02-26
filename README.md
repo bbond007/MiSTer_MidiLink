@@ -37,9 +37,9 @@ UartMODE : MIDI : Remote / TCP
 Modem mode supporting a small subset of common Hayes 'AT' Commands.
 Default speed for this mode is 115200 BPS
 
-Uartmode [MIDI/MIDI-38K] : Remote / UDP    
+Uartmode : MIDI : Remote / UDP    
 
-Direct Connect to another MiSTer or other computer.
+Direct connect to another MiSTer or other computer.
 
 Default speed:
 
