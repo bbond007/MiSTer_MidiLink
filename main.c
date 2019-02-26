@@ -930,6 +930,7 @@ void do_modem_emulation(char * buf, int bufLen)
             lineBuf[iLineBuf] = 0x00;
             break;
         case 0x08: // [DELETE]
+        case 0x14: // [PETSKII DELETE]
         case 0xf8: // [BACKSPACE]
             if (iLineBuf > 0)
             {
