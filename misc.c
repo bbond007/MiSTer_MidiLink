@@ -59,6 +59,7 @@ static char * athelp[] =
     "ATTEL0   - Disable telnet negotiation",  
     "ATTEL1   - Enable telnet negotiation ",
     "ATVER    - Show MidiLink version", 
+    "ATZ      - Reset modem",
     NULL
 };
 

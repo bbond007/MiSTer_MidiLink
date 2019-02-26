@@ -226,6 +226,7 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATTEL0   - Disable basic telnet negotiation 
       ATTEL1   - Enable basic telnet negotiation (default)
       ATVER    - Show MidiLink version
+      ATZ      - Reset modem 
 
 Navigation within the file picker - ATSZ, ATMIDI and ATMP3
 
