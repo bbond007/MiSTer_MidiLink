@@ -52,6 +52,7 @@ char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
+char                    MUNTRomPath[150]       = "/media/fat/mt32-rom-data"; 
 char                    modemConnectSndWAV[50] = "";
 char                    modemDialSndWAV[50]    = "";
 char                    modemRingSndWAV[50]    = "";
@@ -116,14 +117,14 @@ void killall_softsynth(int delay)
 //
 int start_munt()
 {
-    char buf[60];
+    char buf[200];
     int midiPort = -1;
     set_pcm_volume(muntVolume);
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
         misc_print(0, "Starting --> mt32d\n");
-    sprintf(buf, "taskset %d mt32d %s &", CPUMASK, MUNTOptions);
+    sprintf(buf, "taskset %d mt32d %s -f %s &", CPUMASK, MUNTOptions, MUNTRomPath);
     system(buf);
     int loop = 0;
     do
@@ -378,11 +379,12 @@ void * udpsock_thread_function (void * x)
 //
 void do_check_modem_hangup(int * socket, char * buf, int bufLen)
 {
-    static char lineBuf[12];
+    static char lineBuf[6];
     static char iLineBuf = 0;
-    static char lastChar = 0x00;
+    static int plusCount = 0;
     static struct timeval start;
     static struct timeval stop;
+    static int NEEDSTOP = FALSE;
     char tmp[100] = "";
 
     for (char * p = buf; bufLen-- > 0; p++)
@@ -390,7 +392,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         switch(*p)
         {
         case 0x0d:// [RETURN]
-            if(strstr(lineBuf, "+++ATH") != NULL)
+            if(plusCount >= 3 && iLineBuf >= 3 && memcmp(lineBuf, "ATH", 3) == 0)
             {
                 int delay = misc_get_timeval_diff(&start, &stop);
                 if(TCPATHDelay == 0 || delay > TCPATHDelay)
@@ -408,21 +410,28 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
             }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
-            lastChar = 0x0d;
+            plusCount = 0;
             break;
-        case '+': // RESET BUFFER
+        case '+': // RESET 
             gettimeofday(&start, NULL);
-            if (lastChar != '+')
-                iLineBuf = 0;
+            iLineBuf = 0;
+            lineBuf[iLineBuf] = 0x00;
+            plusCount++;
+            NEEDSTOP = TRUE;
+            break;
         default:
-            if (lastChar == '+' && *p != '+')
-                gettimeofday(&stop, NULL);
-            if (iLineBuf < sizeof(lineBuf)-1)
+            if (plusCount >= 3 && iLineBuf < sizeof(lineBuf)-1)
             {
+                if (NEEDSTOP)
+                {
+                    gettimeofday(&stop, NULL);
+                    NEEDSTOP = FALSE;
+                }
                 lineBuf[iLineBuf++] = *p;
                 lineBuf[iLineBuf] = 0x00;
             }
-            lastChar = *p;
+            else
+                plusCount = 0;
             break;
         }
     }

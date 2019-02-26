@@ -9,6 +9,7 @@
 #include "serial.h"
 
 extern char         fsynthSoundFont[150];
+extern char         MUNTRomPath[150];
 extern char         UDPServer[100];
 extern char         mixerControl[20];
 extern int          MP3Volume;
@@ -36,7 +37,7 @@ extern int          MODEMSOUND;
 extern char         modemConnectSndWAV[50];
 extern char         modemDialSndWAV[50];
 extern char         modemRingSndWAV[50];
-//extern int        TCPATHDelay;
+extern int          TCPATHDelay;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -111,6 +112,10 @@ char ini_process_key_value_pair(char * key, char * value)
         misc_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &muntVolume);
     }
+    else if (strcmp("MUNT_ROM_PATH", key) == 0)
+    {
+        ini_str(key, value, MUNTRomPath, sizeof(MUNTRomPath));
+    }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
@@ -156,10 +161,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &TCPBaudRate);
     }
-    //else if (strcmp("TCP_ATH_DELAY", key) == 0)
-    //{
-    //    ini_int(value, &TCPATHDelay);
-    //}
+    else if (strcmp("TCP_ATH_DELAY", key) == 0)
+    {
+        ini_int(value, &TCPATHDelay);
+    }
     else if (strcmp("MIDI_BAUD", key) == 0)
     {
         ini_int(value, &MIDIBaudRate);
@@ -248,6 +253,7 @@ void ini_print_settings()
     else
         misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");
     misc_print(0, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
+    misc_print(0, "  - MUNT_ROM_PATH      --> '%s'\n", MUNTRomPath);
     if(MP3Volume != -1)
         misc_print(0, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
     else
@@ -272,8 +278,7 @@ void ini_print_settings()
     if(UDPBaudRate > 0)
         misc_print(0, "  - MIDI_BAUD          --> %d\n", MIDIBaudRate);
     else
-        misc_print(0, "  - MIDI_BAUD          --> Default (don't change)\n");
-    
+        misc_print(0, "  - MIDI_BAUD          --> Default (don't change)\n");    
     misc_print(0, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
     if(UDPFlow != -1)
         misc_print(0, "  - UDP_FLOW           --> (%d) %s\n", UDPFlow, serial_hayes_flow_to_str(UDPFlow));
@@ -287,7 +292,7 @@ void ini_print_settings()
         misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
     else
         misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
-//  misc_print(0, "  - TCP_ATH_DELAY      --> %d\n",    TCPATHDelay);
+    misc_print(0, "  - TCP_ATH_DELAY      --> %d\n",    TCPATHDelay);
     misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",    TCPServerPort);
     misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",    TCPTermRows);
     misc_print(0, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
