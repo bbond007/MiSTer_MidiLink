@@ -926,7 +926,6 @@ void do_modem_emulation(char * buf, int bufLen)
             else if (memcmp(lineBuf, "ATZ", 3) == 0)
             {
                 //todo reset stuff... 
-                misc_show_at_commands(fdSerial, TCPTermRows);
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "AT", 2) == 0)
