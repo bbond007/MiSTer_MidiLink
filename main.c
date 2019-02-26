@@ -382,15 +382,22 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     static char lineBuf[6];
     static char iLineBuf = 0;
     static int plusCount = 0;
+    static int NEEDSTOP = FALSE;
     static struct timeval start;
     static struct timeval stop;
-    static int NEEDSTOP = FALSE;
     char tmp[100] = "";
 
     for (char * p = buf; bufLen-- > 0; p++)
     {
         switch(*p)
         {
+        case '+': // RESET 
+            gettimeofday(&start, NULL);
+            iLineBuf = 0;
+            lineBuf[iLineBuf] = 0x00;
+            plusCount++;
+            NEEDSTOP = TRUE;
+            break;
         case 0x0d:// [RETURN]
             if(plusCount >= 3 && iLineBuf >= 3 && memcmp(lineBuf, "ATH", 3) == 0)
             {
@@ -411,13 +418,6 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
             plusCount = 0;
-            break;
-        case '+': // RESET 
-            gettimeofday(&start, NULL);
-            iLineBuf = 0;
-            lineBuf[iLineBuf] = 0x00;
-            plusCount++;
-            NEEDSTOP = TRUE;
             break;
         default:
             if (plusCount >= 3 && iLineBuf < sizeof(lineBuf)-1)

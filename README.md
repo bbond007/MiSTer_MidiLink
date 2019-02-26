@@ -104,6 +104,10 @@ The MidiLink.INI file:
       
       MUNT_OPTIONS       =              --> Optional parameters for MUNT
 
+      MUNT_ROM_PATH      = /media/fat/mt32-rom-data
+
+                                        --> Path to MT-32/CM-32 ROM files
+                                        
       MP3_VOLUME         = 100          --> Volume for MP3 Player (0 - 100)
 
       MUNT_VOLUME        = 90           --> Volume for MUNT (0 - 100)  
@@ -159,6 +163,10 @@ The MidiLink.INI file:
                                             for gaming (Populous)). This 
                                             overrides arg '38400' but only 
                                             when used with arg 'TCP'
+
+      TCP_ATH_DELAY      = 900          --> set to 0 for no delay between 
+                                            +++ and ATH for modem hang-up
+                                            CCGMS on C64 core needs this 
 
       MIDI_BAUD          = 38400        --> Set MIDI baud to 38400 
                                             this is for [A0486] 
