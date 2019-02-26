@@ -68,6 +68,7 @@ int 			MIDIBaudRate           = -1;
 int                     TCPFlow                = -1;
 int                     UDPFlow                = -1;
 int                     MODEMSOUND             = TRUE;
+int 			TCPATHDelay            = 900;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -377,7 +378,7 @@ void * udpsock_thread_function (void * x)
 //
 void do_check_modem_hangup(int * socket, char * buf, int bufLen)
 {
-    static char lineBuf[8];
+    static char lineBuf[12];
     static char iLineBuf = 0;
     static char lastChar = 0x00;
     static struct timeval start;
@@ -389,10 +390,10 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
         switch(*p)
         {
         case 0x0d:// [RETURN]
-            if(memcmp(lineBuf, "+++ATH", 6) == 0)
+            if(strstr(lineBuf, "+++ATH") != NULL)
             {
                 int delay = misc_get_timeval_diff(&start, &stop);
-                if(delay > 900)
+                if(TCPATHDelay == 0 || delay > TCPATHDelay)
                 {
                     tcpsock_close(*socket);
                     *socket =  -1;

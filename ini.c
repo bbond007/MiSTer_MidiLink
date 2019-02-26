@@ -36,6 +36,7 @@ extern int          MODEMSOUND;
 extern char         modemConnectSndWAV[50];
 extern char         modemDialSndWAV[50];
 extern char         modemRingSndWAV[50];
+//extern int        TCPATHDelay;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -155,6 +156,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &TCPBaudRate);
     }
+    //else if (strcmp("TCP_ATH_DELAY", key) == 0)
+    //{
+    //    ini_int(value, &TCPATHDelay);
+    //}
     else if (strcmp("MIDI_BAUD", key) == 0)
     {
         ini_int(value, &MIDIBaudRate);
@@ -198,7 +203,7 @@ char ini_process_key_value_pair(char * key, char * value)
     else if(strcmp("TCP_SOUND_CONNECT", key) == 0)
     {
         ini_str(key, value, modemConnectSndWAV, sizeof(modemConnectSndWAV));
-    }
+    } 
     else if (strcmp("UDP_FLOW", key) == 0)
     {
         ini_int(value, &UDPFlow);
@@ -282,6 +287,7 @@ void ini_print_settings()
         misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
     else
         misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
+//  misc_print(0, "  - TCP_ATH_DELAY      --> %d\n",    TCPATHDelay);
     misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",    TCPServerPort);
     misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",    TCPTermRows);
     misc_print(0, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
