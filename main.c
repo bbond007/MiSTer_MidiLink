@@ -898,30 +898,38 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATM", 3) == 0)
             {
+                char * pct = strchr(&lineBuf[3], '%');
+                if (pct != NULL)
+                    *pct = (char) 0x00;
                 if(misc_is_number(&lineBuf[3]))
                 {
                     int tmpVol  = strtol(&lineBuf[3], &endPtr, 10);
-                    switch(tmpVol)
+                    if(pct)
                     {
-                    case 0:
-                        MODEMSOUND = FALSE;
-                        break;
-                    case 1:
-                        MODEMSOUND = TRUE;
-                        break;
-                    default:
                         if(tmpVol <= 100)
                         {
-                            MODEMSOUND = TRUE;        
                             modemVolume = tmpVol;
                         }
                         else
                         {
-                            sprintf(tmp, "\r\nValid options --> 0-100");
+                            sprintf(tmp, "\r\nValid options --> 0-100%");
                             write(fdSerial, tmp, strlen(tmp));
                         }
-                        break;
                     }
+                    else
+                        switch(tmpVol)
+                        {
+                        case 0:
+                            MODEMSOUND = FALSE;
+                            break;
+                        case 1:
+                            MODEMSOUND = TRUE;
+                            break;
+                        default:
+                            sprintf(tmp, "\r\nUnsupported option --> '%s'", &lineBuf[3]);
+                            write(fdSerial, tmp, strlen(tmp));
+                            break;
+                        }
                 }
                 else
                 {
