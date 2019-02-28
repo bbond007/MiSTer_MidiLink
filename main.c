@@ -577,16 +577,14 @@ int get_softsynth_port(int softSynth)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void do_modem_emulation(char * buf, int bufLen)
+// void handle_at_command(char * lineBuf)
 //
 //
 
 #define KILL_MP3_SLEEP if(MP3){killall_mpg123(1);MP3 = FALSE;}
 
-void do_modem_emulation(char * buf, int bufLen)
+void handle_at_command(char * lineBuf)
 {
-    static char lineBuf[150]    = "";
-    static char iLineBuf        = 0;
     static int TELNET_NEGOTIATE = TRUE;
     static int MP3              = FALSE;
     char tmp[1024]              = "";
@@ -594,398 +592,412 @@ void do_modem_emulation(char * buf, int bufLen)
     char fileName [256];
     char audioError[]           = "\r\nBad news, you have no audio device :( --> %s";
 
+    if(memcmp(lineBuf, "ATDT", 4) == 0)
+    {
+        char * ipAddr = &lineBuf[4];
+        if(ipAddr[0] != (char) 0x00)
+            directory_search(midiLinkDIR, ipAddr, ipAddr);
+        char * prtSep  = strchr(ipAddr, ':');
+        if(prtSep == NULL)
+            prtSep = strchr(ipAddr, '*'); // with NCOMM?
+        char * port = (prtSep == NULL)?NULL:(prtSep + 1);
+        if (prtSep != NULL) *prtSep = 0x00;
+        if (strlen(ipAddr) < 3)
+            misc_show_atdt(fdSerial);
+        else
+        {
+            int ipError = FALSE;
+            int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
+            if (!misc_is_ip_addr(ipAddr))
+            {
+                char domainName[30];
+                getdomainname(domainName, sizeof(domainName));
+                if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, '.') < 1)
+                {
+                    strcat(ipAddr, ".");
+                    strcat(ipAddr, domainName);
+                    misc_print(1, "Doing domain name fix --> %s\n", ipAddr);
+                }
+                if(!misc_hostname_to_ip(ipAddr, ipAddr))
+                {
+                    sprintf(tmp, "\r\nERROR: Unable to convert hostname '%s' to IP address.", ipAddr);
+                    write(fdSerial, tmp, strlen(tmp));
+                    ipError = TRUE;
+                }
+            }
+            if(!ipError)
+            {
+                sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
+                write(fdSerial, tmp, strlen(tmp));
+                serial_do_tcdrain(fdSerial);
+                if(MODEMSOUND)
+                    set_pcm_volume(modemVolume);
+                play_dial_sound(tmp, ipAddr);
+                serial_do_tcdrain(fdSerial);
+                if(MODEMSOUND)
+                    sleep(1);
+                socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
+            }
+            if(socket_out > 0)
+            {
+                if (TELNET_NEGOTIATE)
+                    do_telnet_negotiate();
+                play_ring_sound(tmp);
+                play_connect_sound(tmp);
+                sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
+                write(fdSerial, tmp, strlen(tmp));
+                serial_do_tcdrain(fdSerial);
+                sleep(1);
+                int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
+            }
+            else
+                misc_write_ok6(fdSerial);
+        }
+    }
+    else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
+    {
+        char * baud = &lineBuf[6];
+        int iBaud   = strtol(baud, &endPtr, 10);
+        int iTemp   = setbaud_baud_at_index(iBaud);
+        iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;
+        if (setbaud_is_valid_rate (iBaud))
+        {
+            int sec = 10;
+            sprintf(tmp, "\r\nSetting BAUD to %d in %d seconds...", iBaud, sec);
+            write(fdSerial, tmp, strlen(tmp));
+            sleep(sec);
+            setbaud_set_baud(serialDevice, fdSerial, iBaud);
+            baudRate = iBaud;
+            sprintf(tmp, "\r\nBAUD has been set to %d", iBaud);
+            write(fdSerial, tmp, strlen(tmp));
+        }
+        else
+        {
+            if(baud[0] != 0x00)
+                sprintf(tmp, "\r\nBAUD rate '%s' is not valid.", baud);
+            write(fdSerial, tmp, strlen(tmp));
+            setbaud_show_menu(fdSerial);
+        }
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATIP", 4) == 0)
+    {
+        misc_show_atip(fdSerial);
+    }
+    else if (memcmp(lineBuf, "AT&K", 4) == 0)
+    {
+        char * hayesMode = &lineBuf[4];
+        if(misc_is_number(hayesMode))
+        {
+            int iHayesMode = strtol(hayesMode, &endPtr, 10);
+            serial_set_flow_control(fdSerial, iHayesMode);
+        }
+        else
+            serial_set_flow_control(fdSerial, -1);
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATTEL", 5) == 0)
+    {
+        if (lineBuf[5] == '0')
+            TELNET_NEGOTIATE = FALSE;
+        else if (lineBuf[5] == '1')
+            TELNET_NEGOTIATE = TRUE;
+        sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
+        write(fdSerial, tmp, strlen(tmp));
+    }
+    else if (memcmp(lineBuf, "ATMP3", 5) == 0)
+    {
+        if (misc_check_device(PCMDevice))
+        {
+            if(lineBuf[5] == '!')
+            {
+                sprintf(tmp, "\r\nMP3 --> OFF");
+                write(fdSerial, tmp, strlen(tmp));
+                killall_mpg123(0);
+            }
+            else if(do_file_picker(MP3Path, fileName))
+            {
+                chdir("/root");
+                set_pcm_volume(MP3Volume);
+                sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUMASK, MP3Path, fileName);
+                if(!MP3)
+                {
+                    killall_aplaymidi(0);
+                    killall_softsynth(3);
+                }
+                killall_mpg123(0);
+                misc_print(1, "Play MP3 --> %s\n", tmp);
+                system(tmp);
+                write(fdSerial, "\r\n", 2);
+                sleep(1);
+                misc_file_to_serial(fdSerial, "/tmp/mpg123", TCPTermRows);
+                MP3 = TRUE;
+            }
+        }
+        else
+        {
+            sprintf(tmp, audioError, PCMDevice);
+            write(fdSerial, tmp, strlen(tmp));
+        }
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATMID", 5) == 0)
+    {
+        if (misc_check_device(PCMDevice))
+        {
+            if(lineBuf[5] == '!')
+            {
+                killall_aplaymidi(0);
+                sprintf(tmp, "\r\nMIDI --> OFF");
+                write(fdSerial, tmp, strlen(tmp));
+                system(tmp);
+                sleep(2);
+                int midiPort = get_softsynth_port(-1);
+                if(midiPort != -1)
+                {
+                    alsa_open_seq(midiPort, 0);
+                    alsa_send_midi_raw(all_notes_off, sizeof(all_notes_off));
+                    alsa_close_seq();
+                }
+            }
+            else if(lineBuf[5] == '1')
+            {
+                KILL_MP3_SLEEP;
+                killall_aplaymidi(0);
+                sprintf(tmp, "\r\nLoading --> FluidSynth");
+                write(fdSerial, tmp, strlen(tmp));
+                killall_softsynth(3);
+                TCPSoftSynth = FluidSynth;
+                get_softsynth_port(TCPSoftSynth);
+            }
+            else if(lineBuf[5] == '2')
+            {
+                KILL_MP3_SLEEP;
+                killall_aplaymidi(0);
+                sprintf(tmp, "\r\nLoading --> MUNT");
+                write(fdSerial, tmp, strlen(tmp));
+                killall_softsynth(3);
+                TCPSoftSynth = MUNT;
+                get_softsynth_port(TCPSoftSynth);
+            }
+            else if(lineBuf[5] == 'S' && lineBuf[6] == 'F')
+            {
+                strcpy(tmp, fsynthSoundFont);
+                char * dir = strrchr(tmp, '/');
+                if(dir != NULL)
+                    *dir = (char) 0x00;
+                else
+                    tmp[0] = (char) 0x00;
+                if (do_file_picker(tmp, fileName))
+                {
+                    strcpy(fsynthSoundFont, tmp);
+                    strcat(fsynthSoundFont, "/");
+                    strcat(fsynthSoundFont, fileName);
+                    write(fdSerial, "\r\n SoundFont -->", 16);
+                    write(fdSerial, fsynthSoundFont, strlen(fsynthSoundFont));
+                    sprintf(tmp,"sed -i '{s|^FSYNTH_SOUNDFONT[[:space:]]*=.*|FSYNTH_SOUNDFONT    = %s|}' %s",
+                            fsynthSoundFont, midiLinkINI);
+                    system(tmp);
+                }
+            }
+            else if(do_file_picker(MIDIPath, fileName))
+            {
+                KILL_MP3_SLEEP;
+                killall_aplaymidi(0);
+                int midiPort = get_softsynth_port(TCPSoftSynth);
+                chdir("/root");
+                sprintf(tmp, "taskset %d aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", CPUMASK, midiPort, MIDIPath, fileName);;
+                misc_print(1, "Play MIDI --> %s\n", tmp);
+                system(tmp);
+                write(fdSerial, "\r\n", 2);
+                sleep(1);
+                misc_file_to_serial(fdSerial, "/tmp/aplaymidi", 0);
+                MP3 = FALSE;
+            }
+        }
+        else
+        {
+            sprintf(tmp, audioError, PCMDevice);
+            write(fdSerial, tmp, strlen(tmp));
+        }
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATSZ", 4) == 0)
+    {
+        if(do_file_picker(downloadPath, fileName))
+        {
+            sprintf(tmp, "%s/%s", downloadPath, fileName);
+            misc_print(1, "Zmodem download --> %s\n", tmp);
+            serial_do_tcdrain(fdSerial);
+            misc_do_pipe(fdSerial, "/bin/sz","sz", tmp, NULL, NULL, NULL, NULL);
+            sleep(3);
+        }
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATRZ", 4) == 0)
+    {
+        if(chdir (uploadPath) == 0)
+        {
+            sprintf(tmp, "\r\nUpload path --> '%s'", uploadPath);
+            write(fdSerial, tmp, strlen(tmp));
+            sprintf(tmp, "\r\nUpload file using Zmodem protocol now...\r\n");
+            write(fdSerial, tmp, strlen(tmp));
+            serial_do_tcdrain(fdSerial);
+            misc_do_pipe(fdSerial, "/bin/rz", "rz", NULL, NULL, NULL, NULL, NULL);
+            chdir("/root");
+            sleep(3);
+        }
+        else
+        {
+            sprintf(tmp, "\r\nERROR: Upload path invalid --> '%s'", uploadPath);
+            write(fdSerial, tmp, strlen(tmp));
+        }
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATROWS", 6) == 0)
+    {
+        char * strRows = &lineBuf[6];
+        if(!misc_is_number(strRows))
+        {
+            for (int i = 50; i > 0; i--)
+            {
+                sprintf(tmp, "\r\n%2d", i);
+                write(fdSerial, tmp, strlen(tmp));
+            }
+            write(fdSerial, "\r\n",2);
+        }
+        else
+        {
+            TCPTermRows  = strtol(strRows, &endPtr, 10);
+            sprintf(tmp, "\r\nROWS --> %d", TCPTermRows);
+            write(fdSerial, tmp, strlen(tmp));
+            serial_do_tcdrain(fdSerial);
+            misc_write_ok6(fdSerial);
+        }
+    }
+    else if (memcmp(lineBuf, "ATINI", 5) == 0)
+    {
+        misc_file_to_serial(fdSerial, midiLinkINI, TCPTermRows);
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATDIR", 5) == 0)
+    {
+        misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATM", 3) == 0)
+    {
+        char * pct = strchr(&lineBuf[3], '%');
+        if (pct != NULL)
+            *pct = (char) 0x00;
+        if(misc_is_number(&lineBuf[3]))
+        {
+            int tmpVol  = strtol(&lineBuf[3], &endPtr, 10);
+            if(pct)
+            {
+                if(tmpVol <= 100)
+                {
+                    modemVolume = tmpVol;
+                }
+                else
+                {
+                    sprintf(tmp, "\r\nValid options --> 0-100%");
+                    write(fdSerial, tmp, strlen(tmp));
+                }
+            }
+            else
+                switch(tmpVol)
+                {
+                case 0:
+                    MODEMSOUND = FALSE;
+                    break;
+                case 1:
+                    MODEMSOUND = TRUE;
+                    break;
+                default:
+                    sprintf(tmp, "\r\nUnsupported option --> '%s'", &lineBuf[3]);
+                    write(fdSerial, tmp, strlen(tmp));
+                    break;
+                }
+        }
+        else
+        {
+            if(lineBuf[3] != (char) 0x00)
+            {
+                sprintf(tmp, "\r\nUnsupported option --> '%s'", &lineBuf[3]);
+                write(fdSerial, tmp, strlen(tmp));
+            }
+        }
+        if(modemVolume != -1 && MODEMSOUND)
+            sprintf(tmp, "\r\nModem sounds = %s : volume = %d", MODEMSOUND?"ON":"OFF", modemVolume);
+        else
+            sprintf(tmp, "\r\nModem sounds = %s", MODEMSOUND?"ON":"OFF");
+        write(fdSerial, tmp, strlen(tmp));
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATVER", 5) == 0)
+    {
+        write(fdSerial, "\r\n",2);
+        write(fdSerial, helloStr, strlen(helloStr));
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATHELP", 6) == 0)
+    {
+        misc_show_at_commands(fdSerial, TCPTermRows);
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "ATZ", 3) == 0)
+    {
+        //todo reset stuff...
+        misc_write_ok6(fdSerial);
+    }
+    else if (memcmp(lineBuf, "AT", 2) == 0)
+    {
+        if (lineBuf[2] != (char) 0x00)
+        {
+            sprintf(tmp, "\r\nUnknown Command '%s'", &lineBuf[2]);
+            write(fdSerial, tmp, strlen(tmp));
+        }
+        misc_write_ok6(fdSerial);
+    }
+    else
+    {
+        write(fdSerial, "\r\n", 2);
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void do_modem_emulation(char * buf, int bufLen)
+//
+//
+void do_modem_emulation(char * buf, int bufLen)
+{
+    static char lineBuf[150]    = "";
+    static char iLineBuf        = 0;
+
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
         *p = toupper(*p);
         switch(*p)
         {
-        case ' ':  // [SPACE] no space
+        case ' ':          // [SPACE] no space
             break;
-        case 0x0D: // [RETURN]
-            if(memcmp(lineBuf, "ATDT", 4) == 0)
-            {
-                char * ipAddr = &lineBuf[4];
-                if(ipAddr[0] != (char) 0x00)
-                    directory_search(midiLinkDIR, ipAddr, ipAddr);
-                char * prtSep  = strchr(ipAddr, ':');
-                if(prtSep == NULL)
-                    prtSep = strchr(ipAddr, '*'); // with NCOMM?
-                char * port = (prtSep == NULL)?NULL:(prtSep + 1);
-                if (prtSep != NULL) *prtSep = 0x00;
-                if (strlen(ipAddr) < 3)
-                    misc_show_atdt(fdSerial);
-                else
-                {
-                    int ipError = FALSE;
-                    int iPort = (port == NULL)?23:strtol(port, &endPtr, 10);
-                    if (!misc_is_ip_addr(ipAddr))
-                    {
-                        char domainName[30];
-                        getdomainname(domainName, sizeof(domainName));
-                        if(strcmp(domainName, "(none)") != 0 && misc_count_str_chr(ipAddr, '.') < 1)
-                        {
-                            strcat(ipAddr, ".");
-                            strcat(ipAddr, domainName);
-                            misc_print(1, "Doing domain name fix --> %s\n", ipAddr);
-                        }
-                        if(!misc_hostname_to_ip(ipAddr, ipAddr))
-                        {
-                            sprintf(tmp, "\r\nERROR: Unable to convert hostname '%s' to IP address.", ipAddr);
-                            write(fdSerial, tmp, strlen(tmp));
-                            ipError = TRUE;
-                        }
-                    }
-                    if(!ipError)
-                    {
-                        sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
-                        write(fdSerial, tmp, strlen(tmp));
-                        serial_do_tcdrain(fdSerial);
-                        if(MODEMSOUND)
-                            set_pcm_volume(modemVolume);
-                        play_dial_sound(tmp, ipAddr);
-                        serial_do_tcdrain(fdSerial);
-                        if(MODEMSOUND)
-                            sleep(1);
-                        socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
-                    }
-                    if(socket_out > 0)
-                    {
-                        if (TELNET_NEGOTIATE)
-                            do_telnet_negotiate();
-                        play_ring_sound(tmp);
-                        play_connect_sound(tmp);
-                        sprintf(tmp, "\r\nCONNECT %d\r\n", baudRate);
-                        write(fdSerial, tmp, strlen(tmp));
-                        serial_do_tcdrain(fdSerial);
-                        sleep(1);
-                        int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
-                    }
-                    else
-                        misc_write_ok6(fdSerial);
-                }
-            }
-            else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
-            {
-                char * baud = &lineBuf[6];
-                int iBaud   = strtol(baud, &endPtr, 10);
-                int iTemp   = setbaud_baud_at_index(iBaud);
-                iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;
-                if (setbaud_is_valid_rate (iBaud))
-                {
-                    int sec = 10;
-                    sprintf(tmp, "\r\nSetting BAUD to %d in %d seconds...", iBaud, sec);
-                    write(fdSerial, tmp, strlen(tmp));
-                    sleep(sec);
-                    setbaud_set_baud(serialDevice, fdSerial, iBaud);
-                    baudRate = iBaud;
-                    sprintf(tmp, "\r\nBAUD has been set to %d", iBaud);
-                    write(fdSerial, tmp, strlen(tmp));
-                }
-                else
-                {
-                    if(baud[0] != 0x00)
-                        sprintf(tmp, "\r\nBAUD rate '%s' is not valid.", baud);
-                    write(fdSerial, tmp, strlen(tmp));
-                    setbaud_show_menu(fdSerial);
-                }
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATIP", 4) == 0)
-            {
-                misc_show_atip(fdSerial);
-            }
-            else if (memcmp(lineBuf, "AT&K", 4) == 0)
-            {
-                char * hayesMode = &lineBuf[4];
-                if(misc_is_number(hayesMode))
-                {
-                    int iHayesMode = strtol(hayesMode, &endPtr, 10);
-                    serial_set_flow_control(fdSerial, iHayesMode);
-                }
-                else
-                    serial_set_flow_control(fdSerial, -1);
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATTEL", 5) == 0)
-            {
-                if (lineBuf[5] == '0')
-                    TELNET_NEGOTIATE = FALSE;
-                else if (lineBuf[5] == '1')
-                    TELNET_NEGOTIATE = TRUE;
-                sprintf(tmp, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
-                write(fdSerial, tmp, strlen(tmp));
-            }
-            else if (memcmp(lineBuf, "ATMP3", 5) == 0)
-            {
-                if (misc_check_device(PCMDevice))
-                {
-                    if(lineBuf[5] == '!')
-                    {
-                        sprintf(tmp, "\r\nMP3 --> OFF");
-                        write(fdSerial, tmp, strlen(tmp));
-                        killall_mpg123(0);
-                    }
-                    else if(do_file_picker(MP3Path, fileName))
-                    {
-                        chdir("/root");
-                        set_pcm_volume(MP3Volume);
-                        sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUMASK, MP3Path, fileName);
-                        if(!MP3)
-                        {
-                            killall_aplaymidi(0);
-                            killall_softsynth(3);
-                        }
-                        killall_mpg123(0);
-                        misc_print(1, "Play MP3 --> %s\n", tmp);
-                        system(tmp);
-                        write(fdSerial, "\r\n", 2);
-                        sleep(1);
-                        misc_file_to_serial(fdSerial, "/tmp/mpg123", TCPTermRows);
-                        MP3 = TRUE;
-                    }
-                }
-                else
-                {
-                    sprintf(tmp, audioError, PCMDevice);
-                    write(fdSerial, tmp, strlen(tmp));
-                }
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATMID", 5) == 0)
-            {
-                if (misc_check_device(PCMDevice))
-                {
-                    if(lineBuf[5] == '!')
-                    {
-                        killall_aplaymidi(0);
-                        sprintf(tmp, "\r\nMIDI --> OFF");
-                        write(fdSerial, tmp, strlen(tmp));
-                        system(tmp);
-                        sleep(2);
-                        int midiPort = get_softsynth_port(-1);
-                        if(midiPort != -1)
-                        {
-                            alsa_open_seq(midiPort, 0);
-                            alsa_send_midi_raw(all_notes_off, sizeof(all_notes_off));
-                            alsa_close_seq();
-                        }
-                    }
-                    else if(lineBuf[5] == '1')
-                    {
-                        KILL_MP3_SLEEP;
-                        killall_aplaymidi(0);
-                        sprintf(tmp, "\r\nLoading --> FluidSynth");
-                        write(fdSerial, tmp, strlen(tmp));
-                        killall_softsynth(3);
-                        TCPSoftSynth = FluidSynth;
-                        get_softsynth_port(TCPSoftSynth);
-                    }
-                    else if(lineBuf[5] == '2')
-                    {
-                        KILL_MP3_SLEEP;
-                        killall_aplaymidi(0);
-                        sprintf(tmp, "\r\nLoading --> MUNT");
-                        write(fdSerial, tmp, strlen(tmp));
-                        killall_softsynth(3);
-                        TCPSoftSynth = MUNT;
-                        get_softsynth_port(TCPSoftSynth);
-                    }
-                    else if(lineBuf[5] == 'S' && lineBuf[6] == 'F')
-                    {
-                        strcpy(tmp, fsynthSoundFont);
-                        char * dir = strrchr(tmp, '/');
-                        if(dir != NULL)
-                            *dir = (char) 0x00;
-                        else
-                            tmp[0] = (char) 0x00;
-                        if (do_file_picker(tmp, fileName))
-                        {
-                            strcpy(fsynthSoundFont, tmp);
-                            strcat(fsynthSoundFont, "/");
-                            strcat(fsynthSoundFont, fileName);
-                            write(fdSerial, "\r\n SoundFont -->", 16);
-                            write(fdSerial, fsynthSoundFont, strlen(fsynthSoundFont));
-                            sprintf(tmp,"sed -i '{s|^FSYNTH_SOUNDFONT[[:space:]]*=.*|FSYNTH_SOUNDFONT    = %s|}' %s",
-                                    fsynthSoundFont, midiLinkINI);
-                            system(tmp);
-                        }
-                    }
-                    else if(do_file_picker(MIDIPath, fileName))
-                    {
-                        KILL_MP3_SLEEP;
-                        killall_aplaymidi(0);
-                        int midiPort = get_softsynth_port(TCPSoftSynth);
-                        chdir("/root");
-                        sprintf(tmp, "taskset %d aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", CPUMASK, midiPort, MIDIPath, fileName);;
-                        misc_print(1, "Play MIDI --> %s\n", tmp);
-                        system(tmp);
-                        write(fdSerial, "\r\n", 2);
-                        sleep(1);
-                        misc_file_to_serial(fdSerial, "/tmp/aplaymidi", 0);
-                        MP3 = FALSE;
-                    }
-                }
-                else
-                {
-                    sprintf(tmp, audioError, PCMDevice);
-                    write(fdSerial, tmp, strlen(tmp));
-                }
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATSZ", 4) == 0)
-            {
-                if(do_file_picker(downloadPath, fileName))
-                {
-                    sprintf(tmp, "%s/%s", downloadPath, fileName);
-                    misc_print(1, "Zmodem download --> %s\n", tmp);
-                    serial_do_tcdrain(fdSerial);
-                    misc_do_pipe(fdSerial, "/bin/sz","sz", tmp, NULL, NULL, NULL, NULL);
-                    sleep(3);
-                }
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATRZ", 4) == 0)
-            {
-                if(chdir (uploadPath) == 0)
-                {
-                    sprintf(tmp, "\r\nUpload path --> '%s'", uploadPath);
-                    write(fdSerial, tmp, strlen(tmp));
-                    sprintf(tmp, "\r\nUpload file using Zmodem protocol now...\r\n");
-                    write(fdSerial, tmp, strlen(tmp));
-                    serial_do_tcdrain(fdSerial);
-                    misc_do_pipe(fdSerial, "/bin/rz", "rz", NULL, NULL, NULL, NULL, NULL);
-                    chdir("/root");
-                    sleep(3);
-                }
-                else
-                {
-                    sprintf(tmp, "\r\nERROR: Upload path invalid --> '%s'", uploadPath);
-                    write(fdSerial, tmp, strlen(tmp));
-                }
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATROWS", 6) == 0)
-            {
-                char * strRows = &lineBuf[6];
-                if(!misc_is_number(strRows))
-                {
-                    for (int i = 50; i > 0; i--)
-                    {
-                        sprintf(tmp, "\r\n%2d", i);
-                        write(fdSerial, tmp, strlen(tmp));
-                    }
-                    write(fdSerial, "\r\n",2);
-                }
-                else
-                {
-                    TCPTermRows  = strtol(strRows, &endPtr, 10);
-                    sprintf(tmp, "\r\nROWS --> %d", TCPTermRows);
-                    write(fdSerial, tmp, strlen(tmp));
-                    serial_do_tcdrain(fdSerial);
-                    misc_write_ok6(fdSerial);
-                }
-            }
-            else if (memcmp(lineBuf, "ATINI", 5) == 0)
-            {
-                misc_file_to_serial(fdSerial, midiLinkINI, TCPTermRows);
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATDIR", 5) == 0)
-            {
-                misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATM", 3) == 0)
-            {
-                char * pct = strchr(&lineBuf[3], '%');
-                if (pct != NULL)
-                    *pct = (char) 0x00;
-                if(misc_is_number(&lineBuf[3]))
-                {
-                    int tmpVol  = strtol(&lineBuf[3], &endPtr, 10);
-                    if(pct)
-                    {
-                        if(tmpVol <= 100)
-                        {
-                            modemVolume = tmpVol;
-                        }
-                        else
-                        {
-                            sprintf(tmp, "\r\nValid options --> 0-100%");
-                            write(fdSerial, tmp, strlen(tmp));
-                        }
-                    }
-                    else
-                        switch(tmpVol)
-                        {
-                        case 0:
-                            MODEMSOUND = FALSE;
-                            break;
-                        case 1:
-                            MODEMSOUND = TRUE;
-                            break;
-                        default:
-                            sprintf(tmp, "\r\nUnsupported option --> '%s'", &lineBuf[3]);
-                            write(fdSerial, tmp, strlen(tmp));
-                            break;
-                        }
-                }
-                else
-                {
-                    if(lineBuf[3] != (char) 0x00)
-                    {
-                        sprintf(tmp, "\r\nUnsupported option --> '%s'", &lineBuf[3]);
-                        write(fdSerial, tmp, strlen(tmp));
-                    }
-                }
-                if(modemVolume != -1 && MODEMSOUND)
-                    sprintf(tmp, "\r\nModem sounds = %s : volume = %d", MODEMSOUND?"ON":"OFF", modemVolume);
-                else
-                    sprintf(tmp, "\r\nModem sounds = %s", MODEMSOUND?"ON":"OFF");
-                write(fdSerial, tmp, strlen(tmp));
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATVER", 5) == 0)
-            {
-                write(fdSerial, "\r\n",2);
-                write(fdSerial, helloStr, strlen(helloStr));
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATHELP", 6) == 0)
-            {
-                misc_show_at_commands(fdSerial, TCPTermRows);
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "ATZ", 3) == 0)
-            {
-                //todo reset stuff...
-                misc_write_ok6(fdSerial);
-            }
-            else if (memcmp(lineBuf, "AT", 2) == 0)
-            {
-                if (lineBuf[2] != (char) 0x00)
-                {
-                    sprintf(buf, "\r\nUnknown Command '%s'", &lineBuf[2]);
-                    write(fdSerial, buf, strlen(buf));
-                }
-                misc_write_ok6(fdSerial);
-            }
-            else
-            {
-                write(fdSerial, "\r\n", 2);
-            }
-            iLineBuf = 0;
-            lineBuf[iLineBuf] = 0x00;
-            break;
-        case 0x08: // [DELETE]
-        case 0x14: // [PETSKII DELETE]
-        case 0xf8: // [BACKSPACE]
+        case 0x08:         // [DELETE]
+        case 0x14:         // [PETSKII DELETE]
+        case 0xf8:         // [BACKSPACE]
             if (iLineBuf > 0)
             {
                 lineBuf[--iLineBuf] = 0x00;
                 write(fdSerial, p, 1);
             }
+            break;
+        case 0x0D:         // [RETURN]
+            handle_at_command(lineBuf);
+            iLineBuf = 0;
+            lineBuf[iLineBuf] = 0x00;
             break;
         default:
             if (iLineBuf < 80)
