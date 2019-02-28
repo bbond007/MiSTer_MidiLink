@@ -917,7 +917,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         }
                         else
                         {
-                            sprintf(tmp, "\r\nValid options are 0-100");
+                            sprintf(tmp, "\r\nValid options --> 0-100");
                             write(fdSerial, tmp, strlen(tmp));
                         }
                         break;
@@ -927,7 +927,7 @@ void do_modem_emulation(char * buf, int bufLen)
                 {
                     if(lineBuf[3] != (char) 0x00)
                     {
-                        sprintf(tmp, "\r\nUnsupported option '%s'", &lineBuf[3]);
+                        sprintf(tmp, "\r\nUnsupported option --> '%s'", &lineBuf[3]);
                         write(fdSerial, tmp, strlen(tmp));
                     }
                 }
