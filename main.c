@@ -577,11 +577,11 @@ int get_softsynth_port(int softSynth)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void handle_at_command(char * lineBuf)
+// void handle_at_command(char * lineBuf, int OK)
 //
 //
 #define KILL_MP3_SLEEP if(MP3){killall_mpg123(1);MP3 = FALSE;}
-void handle_at_command(char * lineBuf)
+void handle_at_command(char * lineBuf, int OK)
 {
     static int TELNET_NEGOTIATE = TRUE;
     static int MP3              = FALSE;
@@ -649,7 +649,7 @@ void handle_at_command(char * lineBuf)
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
             }
             else
-                misc_write_ok6(fdSerial);
+                if (OK) misc_write_ok6(fdSerial);
         }
     }
     else if (memcmp(lineBuf, "ATBAUD", 6) == 0)
@@ -676,7 +676,7 @@ void handle_at_command(char * lineBuf)
             write(fdSerial, tmp, strlen(tmp));
             setbaud_show_menu(fdSerial);
         }
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATIP", 4) == 0)
     {
@@ -692,7 +692,7 @@ void handle_at_command(char * lineBuf)
         }
         else
             serial_set_flow_control(fdSerial, -1);
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATTEL", 5) == 0)
     {
@@ -737,7 +737,7 @@ void handle_at_command(char * lineBuf)
             sprintf(tmp, audioError, PCMDevice);
             write(fdSerial, tmp, strlen(tmp));
         }
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATMID", 5) == 0)
     {
@@ -818,7 +818,7 @@ void handle_at_command(char * lineBuf)
             sprintf(tmp, audioError, PCMDevice);
             write(fdSerial, tmp, strlen(tmp));
         }
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATSZ", 4) == 0)
     {
@@ -830,7 +830,7 @@ void handle_at_command(char * lineBuf)
             misc_do_pipe(fdSerial, "/bin/sz","sz", tmp, NULL, NULL, NULL, NULL);
             sleep(3);
         }
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATRZ", 4) == 0)
     {
@@ -850,7 +850,7 @@ void handle_at_command(char * lineBuf)
             sprintf(tmp, "\r\nERROR: Upload path invalid --> '%s'", uploadPath);
             write(fdSerial, tmp, strlen(tmp));
         }
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATROWS", 6) == 0)
     {
@@ -870,18 +870,18 @@ void handle_at_command(char * lineBuf)
             sprintf(tmp, "\r\nROWS --> %d", TCPTermRows);
             write(fdSerial, tmp, strlen(tmp));
             serial_do_tcdrain(fdSerial);
-            misc_write_ok6(fdSerial);
+            if (OK) misc_write_ok6(fdSerial);
         }
     }
     else if (memcmp(lineBuf, "ATINI", 5) == 0)
     {
         misc_file_to_serial(fdSerial, midiLinkINI, TCPTermRows);
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATDIR", 5) == 0)
     {
         misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATM", 3) == 0)
     {
@@ -931,23 +931,23 @@ void handle_at_command(char * lineBuf)
         else
             sprintf(tmp, "\r\nModem sounds = %s", MODEMSOUND?"ON":"OFF");
         write(fdSerial, tmp, strlen(tmp));
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATVER", 5) == 0)
     {
         write(fdSerial, "\r\n",2);
         write(fdSerial, helloStr, strlen(helloStr));
-        misc_write_ok6(fdSerial);
+        if(OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATHELP", 6) == 0)
     {
         misc_show_at_commands(fdSerial, TCPTermRows);
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
         //todo reset stuff...
-        misc_write_ok6(fdSerial);
+       if (OK) misc_write_ok6(fdSerial);
     }
     else if (memcmp(lineBuf, "AT", 2) == 0)
     {
@@ -956,7 +956,7 @@ void handle_at_command(char * lineBuf)
             sprintf(tmp, "\r\nUnknown Command '%s'", &lineBuf[2]);
             write(fdSerial, tmp, strlen(tmp));
         }
-        misc_write_ok6(fdSerial);
+        if (OK) misc_write_ok6(fdSerial);
     }
 }
 
@@ -990,13 +990,13 @@ void do_modem_emulation(char * buf, int bufLen)
             break;
         case 0x0D:         // [RETURN]
             lbp = lineBuf;
-            if(iLineBuf > 2 && lineBuf[0] == 'A' && lineBuf[1] == 'T') 
+            if(iLineBuf > 1 && lineBuf[0] == 'A' && lineBuf[1] == 'T') 
                 while (lbp)
                 {
                     char * amp = strchr(lbp, '&');
                     if(amp) 
                         *amp = 0x00;
-                    handle_at_command(lbp);
+                    handle_at_command(lbp, amp?FALSE:TRUE);
                     if(amp)
                     {
                         lbp = amp-1;
