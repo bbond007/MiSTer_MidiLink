@@ -976,7 +976,8 @@ void do_modem_emulation(char * buf, int bufLen)
 {
     static char lineBuf[150]    = "";
     static char iLineBuf        = 0;
-
+    char * lbp;
+    
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
@@ -995,7 +996,18 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             break;
         case 0x0D:         // [RETURN]
-            handle_at_command(lineBuf);
+            lbp = lineBuf;
+            while (lbp)
+            {
+                char * amp = strchr(lbp, '&');
+                if(amp) 
+                    *amp = 0x00;
+                handle_at_command(lbp);
+                if(amp)
+                    lbp = amp+1;
+                else
+                    lbp = NULL;
+            }
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
             break;
