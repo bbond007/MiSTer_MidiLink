@@ -962,9 +962,8 @@ void handle_at_command(char * lineBuf)
     }
     else
     {
-        write(fdSerial, "\r\n", 2);
+       // write(fdSerial, "\r\n", 2);
     }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -997,21 +996,25 @@ void do_modem_emulation(char * buf, int bufLen)
             break;
         case 0x0D:         // [RETURN]
             lbp = lineBuf;
-            while (lbp)
-            {
-                char * amp = strchr(lbp, '&');
-                if(amp) 
-                    *amp = 0x00;
-                handle_at_command(lbp);
-                if(amp)
+            if(iLineBuf > 2 && lbp[0] == 'A' && lbp[1] == 'T') 
+                while (lbp)
                 {
-                    lbp = amp-1;
-                    lbp[0] = 'A';
-                    lbp[1] = 'T';
+                    char * amp = strchr(lbp, '&');
+                    if(amp) 
+                        *amp = 0x00;
+                        handle_at_command(lbp);
+                    if(amp)
+                    {
+                        lbp = amp-1;
+                        lbp[0] = 'A';
+                        lbp[1] = 'T';
+                    }
+                    else
+                        lbp = NULL;
                 }
-                else
-                    lbp = NULL;
-            }
+            else
+                write(fdSerial, "\r\n", 2);
+                
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
             break;
