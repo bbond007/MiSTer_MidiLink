@@ -52,7 +52,7 @@ char 		        MIDIPath[500]          = "/media/fat/MIDI";
 char 		        downloadPath[500]      = "/media/fat";
 char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char         		fsynthSoundFont [150]  = "/media/fat/soundfonts/SC-55.sf2";
-char                    MUNTRomPath[150]       = "/media/fat/mt32-rom-data"; 
+char                    MUNTRomPath[150]       = "/media/fat/mt32-rom-data";
 char                    modemConnectSndWAV[50] = "";
 char                    modemDialSndWAV[50]    = "";
 char                    modemRingSndWAV[50]    = "";
@@ -62,6 +62,7 @@ char 			MUNTOptions[30]        = "";
 int                     MP3Volume              = -1;
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
+int                     modemVolume            = -1;
 int 			midilinkPriority       = 0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
@@ -239,7 +240,7 @@ void play_ring_sound(char * tmp)
             system(tmp);
         }
         else
-           modem_snd("R");
+            modem_snd("R");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -262,6 +263,7 @@ void play_dial_sound(char * tmp, char * ipAddr)
         else
             modem_snd(ipAddr);
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void * tcplst_thread_function(void * x)
@@ -285,6 +287,8 @@ void * tcplst_thread_function (void * x)
             {
                 char ringStr[] = "\r\nRING";
                 write(fdSerial, ringStr, strlen(ringStr));
+                if(MODEMSOUND)
+                    set_pcm_volume(modemVolume);
                 play_ring_sound(buf);
                 play_connect_sound(buf);
                 sprintf(buf, "\r\nCONNECT %d\r\n", baudRate);
@@ -391,7 +395,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
     {
         switch(*p)
         {
-        case '+': // RESET 
+        case '+': // RESET
             gettimeofday(&start, NULL);
             iLineBuf = 0;
             lineBuf[iLineBuf] = 0x00;
@@ -637,6 +641,8 @@ void do_modem_emulation(char * buf, int bufLen)
                         sprintf(tmp, "\r\nDIALING %s:%d\r\n", ipAddr, iPort);
                         write(fdSerial, tmp, strlen(tmp));
                         serial_do_tcdrain(fdSerial);
+                        if(MODEMSOUND)
+                            set_pcm_volume(modemVolume);
                         play_dial_sound(tmp, ipAddr);
                         serial_do_tcdrain(fdSerial);
                         if(MODEMSOUND)
@@ -894,21 +900,41 @@ void do_modem_emulation(char * buf, int bufLen)
             {
                 if(misc_is_number(&lineBuf[3]))
                 {
-                    switch(lineBuf[3])
+                    int tmpVol  = strtol(&lineBuf[3], &endPtr, 10);
+                    switch(tmpVol)
                     {
-                    case '0':
-                        MODEMSOUND = 0;
+                    case 0:
+                        MODEMSOUND = FALSE;
                         break;
-                    case '1':
-                        MODEMSOUND = 1;
+                    case 1:
+                        MODEMSOUND = TRUE;
                         break;
                     default:
-                        sprintf(tmp, "\r\nUnsupported Option '%c'");
-                        write(fdSerial, tmp, strlen(tmp));
+                        if(tmpVol <= 100)
+                        {
+                            MODEMSOUND = TRUE;        
+                            modemVolume = tmpVol;
+                        }
+                        else
+                        {
+                            sprintf(tmp, "\r\nValid options are 0-100");
+                            write(fdSerial, tmp, strlen(tmp));
+                        }
                         break;
                     }
                 }
-                sprintf(tmp, "\r\nModem Sounds = %s", MODEMSOUND?"ON":"OFF");
+                else
+                {
+                    if(lineBuf[3] != (char) 0x00)
+                    {
+                        sprintf(tmp, "\r\nUnsupported option '%s'", &lineBuf[3]);
+                        write(fdSerial, tmp, strlen(tmp));
+                    }
+                }
+                if(modemVolume != -1 && MODEMSOUND)
+                    sprintf(tmp, "\r\nModem sounds = %s : volume = %d", MODEMSOUND?"ON":"OFF", modemVolume);
+                else
+                    sprintf(tmp, "\r\nModem sounds = %s", MODEMSOUND?"ON":"OFF");
                 write(fdSerial, tmp, strlen(tmp));
                 misc_write_ok6(fdSerial);
             }
@@ -925,7 +951,7 @@ void do_modem_emulation(char * buf, int bufLen)
             }
             else if (memcmp(lineBuf, "ATZ", 3) == 0)
             {
-                //todo reset stuff... 
+                //todo reset stuff...
                 misc_write_ok6(fdSerial);
             }
             else if (memcmp(lineBuf, "AT", 2) == 0)
@@ -1082,7 +1108,7 @@ void write_socket_packet(int sock, char * buf, int bufLen)
     if (mode == ModeTCP)
     {
         if(tcpsock_write(sock, buf, bufLen) < 1)
-        {   
+        {
             close(socket_out);
             //tcpsock_close(socket_out);
             socket_out = -1;
@@ -1170,7 +1196,7 @@ int main(int argc, char *argv[])
     int status;
     int midiPort;
     char coreName[30] = "";
-    
+
     unsigned char buf[256];
     //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
@@ -1182,7 +1208,7 @@ int main(int argc, char *argv[])
 
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI, coreName);
-    
+
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
     else
