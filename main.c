@@ -1004,7 +1004,11 @@ void do_modem_emulation(char * buf, int bufLen)
                     *amp = 0x00;
                 handle_at_command(lbp);
                 if(amp)
-                    lbp = amp+1;
+                {
+                    lbp = amp-1;
+                    lbp[0] = 'A';
+                    lbp[1] = 'T';
+                }
                 else
                     lbp = NULL;
             }
