@@ -213,15 +213,20 @@ void show_debug_buf(char * descr, char * buf, int bufLen)
 void play_connect_sound(char * tmp)
 {
     if (MODEMSOUND)
+    {
+        killall_aplaymidi(0);
+        killall_softsynth(0);
+        killall_mpg123(0);
+        system("killall aplay");
         if(strlen(modemConnectSndWAV) > 0 && misc_check_file(modemConnectSndWAV))
-        {
-            system("killall aplay");
+        {    
             misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
             sprintf(tmp, "aplay %s", modemConnectSndWAV);
             system(tmp);
         }
         else
             modem_snd("C");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -232,15 +237,20 @@ void play_connect_sound(char * tmp)
 void play_ring_sound(char * tmp)
 {
     if (MODEMSOUND)
+    {
+        killall_aplaymidi(0);
+        killall_softsynth(0);
+        killall_mpg123(0);
+        system("killall aplay");
         if(strlen(modemRingSndWAV) > 0 && misc_check_file(modemRingSndWAV))
         {
-            system("killall aplay");
             misc_print(1, "Playing WAV --> '%s'\n", modemRingSndWAV);
             sprintf(tmp, "aplay %s", modemRingSndWAV);
             system(tmp);
         }
         else
             modem_snd("R");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -248,20 +258,23 @@ void play_ring_sound(char * tmp)
 // void play_dial_sound(char * tmp, char * ipAddr)
 //
 //
-
 void play_dial_sound(char * tmp, char * ipAddr)
 {
-
     if (MODEMSOUND)
+    {
+        killall_aplaymidi(0);
+        killall_softsynth(0);
+        killall_mpg123(0);
+        system("killall aplay");
         if (strlen(modemDialSndWAV) > 0 && misc_check_file(modemDialSndWAV))
         {
-            system("killall aplay");
             misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
             sprintf(tmp, "aplay %s", modemDialSndWAV);
             system(tmp);
         }
         else
             modem_snd(ipAddr);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +286,7 @@ void * tcplst_thread_function (void * x)
 {
     unsigned char buf[100];
     int rdLen;
-
+    
     do
     {
         socket_in = tcpsock_accept(socket_lst);
