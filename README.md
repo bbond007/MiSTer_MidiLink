@@ -186,7 +186,7 @@ The MidiLink.INI file:
       #TCP_SOUND_DIAL    =              --> optional WAV file for TCP modem 
                                             dial
 
-      #TCP_SOUND_CONNET  =              --> optional WAV file for TCP modem 
+      #TCP_SOUND_CONNECT =              --> optional WAV file for TCP modem 
                                             connect
 
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
@@ -215,8 +215,8 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATMID    - Play MIDI file (see file picker)
       ATMIDSF  - Select FluidSynth SoundFont (Change MidiLink.INI)
       ATMID!   - Stop currently playing MIDI
-      ATM0     - Enable modem sounds
-      ATM1     - Disable modem sounds 
+      ATM0     - Disable modem sounds
+      ATM1     - Enable modem sounds 
       ATMP3    - Play MP3 file (see file picker)
       ATMP3!   - Stop currently playing MP3 File
       ATROWS   - Do terminal row test
