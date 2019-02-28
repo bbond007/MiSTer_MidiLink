@@ -927,7 +927,7 @@ void handle_at_command(char * lineBuf, int OK)
             }
         }
         if(modemVolume != -1 && MODEMSOUND)
-            sprintf(tmp, "\r\nModem sounds = %s : volume = %d%c", MODEMSOUND?"ON":"OFF", modemVolume, '%');
+            sprintf(tmp, "\r\nModem sounds = %s : volume = %d%%", MODEMSOUND?"ON":"OFF", modemVolume);
         else
             sprintf(tmp, "\r\nModem sounds = %s", MODEMSOUND?"ON":"OFF");
         write(fdSerial, tmp, strlen(tmp));
