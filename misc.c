@@ -251,24 +251,6 @@ int misc_get_ipaddr(char * interface, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void misc_write_ok6(int fdSerial)
-//
-void misc_write_ok6(int fdSerial)
-{
-    write(fdSerial, "\r\nOK\r\n", 6);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// void misc_write_ok4(int fdSerial)
-//
-void misc_write_ok4(int fdSerial)
-{
-    write(fdSerial, "OK\r\n", 4);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
 // void misc_show_atdt(int fdSerial)
 //
 void misc_show_atdt(int fdSerial)
@@ -283,7 +265,6 @@ void misc_show_atdt(int fdSerial)
     write(fdSerial, example1, strlen(example1));
     write(fdSerial, example2, strlen(example2));
     write(fdSerial, example3, strlen(example3));
-    misc_write_ok6(fdSerial);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -301,7 +282,6 @@ void misc_show_atip(int fdSerial)
     write(fdSerial, "\r\n", 2);
     misc_get_ipaddr("wlan0", tmp);
     write(fdSerial, tmp, strlen(tmp));
-    misc_write_ok6(fdSerial);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////

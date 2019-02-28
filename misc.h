@@ -14,8 +14,6 @@ void misc_show_atip(int fdSerial);
 long misc_get_timeval_diff(struct timeval * start, struct timeval * stop);
 int  misc_check_module_loaded (char * modName);
 int  misc_get_midi_port(char * descr);
-void misc_write_ok6(int fdSerial);
-void misc_write_ok4(int fdSerial);
 int  misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR);
 void misc_d_type_to_str(unsigned char type, char * buf);
 int  misc_file_to_serial(int fdSerial,  char * fileName, int rows);
