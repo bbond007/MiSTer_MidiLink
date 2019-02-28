@@ -15,6 +15,7 @@ extern char         mixerControl[20];
 extern int          MP3Volume;
 extern int          muntVolume;
 extern int          fsynthVolume;
+extern int          modemVolume;
 extern int          midilinkPriority;
 extern unsigned int UDPServerPort;
 extern unsigned int TCPServerPort;
@@ -120,6 +121,11 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &fsynthVolume);
+    }
+    else if(strcmp("MODEM_VOLUME", key) == 0)
+    {
+        misc_replace_char(value, strlen(value), '%', 0x00);
+        ini_int(value, &modemVolume);
     }
     else if (strcmp("MIXER_CONTROL", key) == 0)
     {
@@ -266,6 +272,10 @@ void ini_print_settings()
         misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
         misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
+    if(fsynthVolume != -1)
+        misc_print(0, "  - MODEM_VOLUME       --> %d%c\n", modemVolume, '%');
+    else
+        misc_print(0, "  - MODEM_VOLUME       --> Default (don't set)\n");
     misc_print(0, "  - MIXER_CONTROL      --> %s\n", mixerControl);
     misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,

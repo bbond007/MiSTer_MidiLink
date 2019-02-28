@@ -113,6 +113,8 @@ The MidiLink.INI file:
       MUNT_VOLUME        = 90           --> Volume for MUNT (0 - 100)  
       
       FSYNTH_VOLUME      = 100          --> Volume for FluidSynth (0 - 100)
+
+      MODEM_VOLUME       = 100          --> Volume for modem emulation
       
       FSYNTH_SOUNDFONT   = /media/fat/SOUNDFONT/default.sf2
                                         --> This is the soundfont For 
@@ -186,7 +188,7 @@ The MidiLink.INI file:
       #TCP_SOUND_DIAL    =              --> optional WAV file for TCP modem 
                                             dial
 
-      #TCP_SOUND_CONNET  =              --> optional WAV file for TCP modem 
+      #TCP_SOUND_CONNECT =              --> optional WAV file for TCP modem 
                                             connect
 
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
@@ -215,8 +217,9 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATMID    - Play MIDI file (see file picker)
       ATMIDSF  - Select FluidSynth SoundFont (Change MidiLink.INI)
       ATMID!   - Stop currently playing MIDI
-      ATM0     - Enable modem sounds
-      ATM1     - Disable modem sounds 
+      ATM0     - Disable modem sounds
+      ATM1     - Enable modem sounds 
+      ATM##%   - Set modem volume to 0% - 100%
       ATMP3    - Play MP3 file (see file picker)
       ATMP3!   - Stop currently playing MP3 File
       ATROWS   - Do terminal row test
