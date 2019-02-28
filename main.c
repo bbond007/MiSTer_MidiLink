@@ -580,9 +580,7 @@ int get_softsynth_port(int softSynth)
 // void handle_at_command(char * lineBuf)
 //
 //
-
 #define KILL_MP3_SLEEP if(MP3){killall_mpg123(1);MP3 = FALSE;}
-
 void handle_at_command(char * lineBuf)
 {
     static int TELNET_NEGOTIATE = TRUE;
@@ -960,10 +958,6 @@ void handle_at_command(char * lineBuf)
         }
         misc_write_ok6(fdSerial);
     }
-    else
-    {
-       // write(fdSerial, "\r\n", 2);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -996,13 +990,13 @@ void do_modem_emulation(char * buf, int bufLen)
             break;
         case 0x0D:         // [RETURN]
             lbp = lineBuf;
-            if(iLineBuf > 2 && lbp[0] == 'A' && lbp[1] == 'T') 
+            if(iLineBuf > 2 && lineBuf[0] == 'A' && lineBuf[1] == 'T') 
                 while (lbp)
                 {
                     char * amp = strchr(lbp, '&');
                     if(amp) 
                         *amp = 0x00;
-                        handle_at_command(lbp);
+                    handle_at_command(lbp);
                     if(amp)
                     {
                         lbp = amp-1;
