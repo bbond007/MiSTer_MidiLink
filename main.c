@@ -1287,6 +1287,7 @@ int main(int argc, char *argv[])
         if(!misc_check_device(MrAudioDevice)) // && misc_check_file("/etc/asound.conf"))
         {
             misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
+            close_fd();
             return -1;
         }
 
@@ -1295,6 +1296,7 @@ int main(int argc, char *argv[])
             //misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
             //system ("modprobe snd-dummy");
             misc_print(0, "ERROR: You have no PCM device --> %s\n", PCMDevice);
+            close_fd();
             return -2;
         }
 
