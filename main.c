@@ -685,9 +685,9 @@ int handle_at_command(char * lineBuf)
     {
         misc_show_atip(fdSerial);
     }
-    else if (memcmp(lineBuf, "ATK", 4) == 0)
+    else if (memcmp(lineBuf, "ATK", 3) == 0)
     {
-        char * hayesMode = &lineBuf[4];
+        char * hayesMode = &lineBuf[3];
         if(misc_is_number(hayesMode))
         {
             int iHayesMode = strtol(hayesMode, &endPtr, 10);
