@@ -19,47 +19,51 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include "misc.h"
+#include "ini.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//  
 //
-static char pauseStr[] = "[PAUSE]";
-static char pauseDel[sizeof(pauseStr)];  
+//
+static char            pauseStr[] = "[PAUSE]";
+static char            pauseDel[sizeof(pauseStr)];
 static pthread_mutex_t print_lock;
-extern int MIDI_DEBUG;
+static pthread_mutex_t swrite_lock;
+extern int             MIDI_DEBUG;
+extern enum ASCIITRANS TCPAsciiTrans;
 
 static char * athelp[] =
 {
     "AT       - Attention",
-    "ATBAUD#  - Set baud rate",  
-    "ATBAUD   - Show baud rate menu", 
-    "ATDIR    - Show dialing MidiLink.DIR", 
-    "ATDT     - Dial 'ATDT192.168.1.131:23'",  
+    "ATBAUD#  - Set baud rate",
+    "ATBAUD   - Show baud rate menu",
+    "ATDIR    - Show dialing MidiLink.DIR",
+    "ATDT     - Dial 'ATDT192.168.1.131:23'",
     "ATHELP   - Show valid AT Comamnds",
-    "+++ATH   - Hang-up.",  
-    "ATINI    - Show MidiLink.INI", 
-    "ATIP     - Show IP address",  
+    "+++ATH   - Hang-up.",
+    "ATINI    - Show MidiLink.INI",
+    "ATIP     - Show IP address",
     "AT&K0    - Disable  flow control",
     "AT&K3    - RTS/CTS  flow control",
     "AT&K4    - XON/XOFF flow control",
-    "ATMID1   - Switch synth to FluidSynth", 
+    "ATMID1   - Switch synth to FluidSynth",
     "ATMID2   - Switch synth to MUNT",
-    "ATMID    - Play MIDI file", 
-    "ATMIDSF  - Select FluidSynth SoundFont", 
-    "ATMID!   - Stop currently playing MIDI", 
+    "ATMID    - Play MIDI file",
+    "ATMIDSF  - Select FluidSynth SoundFont",
+    "ATMID!   - Stop currently playing MIDI",
     "ATM0     - Disable modem sounds",
     "ATM1     - Enable modem sounds",
-    "ATM###%  - Set modem volume [0-100%]", 
-    "ATMP3    - Play MP3 file", 
-    "ATMP3!   - Stop playing MP3 File", 
-    "ATROWS   - Do terminal row test", 
-    "ATROWS## - Set number of terminal rows",  
-    "ATRZ     - Receive a file using Zmodem", 
-    "ATSZ     - Send a file via Zmodem",  
-    "ATTEL0   - Disable telnet negotiation",  
-    "ATTEL1   - Enable telnet negotiation ",
-    "ATVER    - Show MidiLink version", 
+    "ATM###%%  - Set modem volume [0-100%%]",
+    "ATMP3    - Play MP3 file",
+    "ATMP3!   - Stop playing MP3 File",
+    "ATROWS   - Do terminal row test",
+    "ATROWS## - Set number of terminal rows",
+    "ATRZ     - Receive a file using Zmodem",
+    "ATSZ     - Send a file via Zmodem",
+    "ATTEL0   - Disable telnet negotiation",
+    "ATTEL1   - Enable telnet negotiation",
+    "ATTRANS# - Set ASCII translation",
+    "ATVER    - Show MidiLink version",
     "ATZ      - Reset modem",
     NULL
 };
@@ -83,7 +87,7 @@ void misc_print(int priority, const char* format, ... )
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void_misc__str_to_upper(char *str)
+// void misc_str_to_upper(char *str)
 //
 void misc_str_to_upper(char *str)
 {
@@ -94,6 +98,89 @@ void misc_str_to_upper(char *str)
         temp++;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  void misc_ascii_to_petsky(char * buf, int bufLen)
+//
+void misc_ascii_to_petskii(char * buf, int bufLen)
+{
+    for(int i = 0; i < bufLen; i++)
+    {
+        switch(buf[i])
+        {
+        case 0x08:
+            buf[i] == 0x14;
+            break;
+        default:
+            if (toupper(buf[i]) == buf[i])
+                buf[i] = tolower(buf[i]);
+            else
+                buf[i] = toupper(buf[i]);
+            break;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  int misc_str_to_trans(char * str)
+//
+int misc_str_to_trans(char * str)
+{
+    misc_str_to_upper(str);
+    if      (strcmp(str, "PETSKII") == 0)
+        return AsciiToPetskii;
+    else if (strcmp(str, "ATASCII") == 0)
+        return AsciiToAtascii;
+    else
+        return AsciiNoTrans;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  char * misc_trans_to_str(enum ASCIITRANS mode)
+//
+char * misc_trans_to_str(enum ASCIITRANS mode)
+{
+    switch(mode)
+    {
+    case AsciiNoTrans:
+        return "NONE";
+    case AsciiToPetskii:
+        return "PETSKII";
+    case AsciiToAtascii:
+        return "ATASKII";
+    default:
+        return "UNKNOWN!";
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  void misc_swrint(int priority, const char* format, ... )
+//
+void misc_swrite(int fdSerial, const char* format, ... )
+{
+    char buf[512];
+    pthread_mutex_lock(&swrite_lock);
+    va_list args;
+    va_start (args, format);
+    vsprintf (buf, format, args);
+    va_end (args);
+    int bufLen = strlen(buf);
+    switch(TCPAsciiTrans)
+    {
+    case AsciiToPetskii:
+        misc_ascii_to_petskii(buf, bufLen);
+        break;
+    default:
+        break;
+    }
+    write(fdSerial, buf, bufLen);
+    pthread_mutex_unlock(&swrite_lock);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -255,16 +342,13 @@ int misc_get_ipaddr(char * interface, char * buf)
 //
 void misc_show_atdt(int fdSerial)
 {
-    char serror   [] = "\r\nSyntax Error";
-    char line[] = "\r\n----------------------------------";
-    char example1 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG";
-    char example2 [] = "\r\nEXAMPLE --> ATDT192.168.1.100:1999";
-    char example3 [] = "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999";
-    write(fdSerial, serror,   strlen(serror));
-    write(fdSerial, line,     strlen(line));
-    write(fdSerial, example1, strlen(example1));
-    write(fdSerial, example2, strlen(example2));
-    write(fdSerial, example3, strlen(example3));
+    char * sep = "\r\n----------------------------------";
+    misc_swrite(fdSerial, "\r\nSyntax Error");
+    misc_swrite(fdSerial, sep);
+    misc_swrite(fdSerial, "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG");
+    misc_swrite(fdSerial, "\r\nEXAMPLE --> ATDT192.168.1.100:1999");
+    misc_swrite(fdSerial, "\r\nEXAMPLE --> ATDTBBS.DOMAIN.ORG*1999");
+    misc_swrite(fdSerial, sep);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -274,14 +358,13 @@ void misc_show_atdt(int fdSerial)
 void misc_show_atip(int fdSerial)
 {
     char tmp[50];
-    sprintf(tmp, "\r\n-------------------------\r\n");
-    write(fdSerial, tmp, strlen(tmp));
+    char * sep = "\r\n-------------------------";
+    misc_swrite(fdSerial, sep);
     misc_get_ipaddr("eth0", tmp);
-    write(fdSerial, " ", 1);
-    write(fdSerial, tmp, strlen(tmp));
-    write(fdSerial, "\r\n", 2);
+    misc_swrite(fdSerial, "\r\n %s", tmp);
     misc_get_ipaddr("wlan0", tmp);
-    write(fdSerial, tmp, strlen(tmp));
+    misc_swrite(fdSerial, "\r\n%s", tmp);
+    misc_swrite(fdSerial, sep);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -452,7 +535,6 @@ int misc_do_pipe2(int fdSerial,  char * command)
     }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int misc_count_str_char(char * str, chr chr);
@@ -538,32 +620,27 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     max = scandir(path2, &namelist, NULL, alphasort);
     if (max < 0)
     {
-        char err[] = "\r\nBad Path --> ";
-        write(fdSerial, err, strlen(err));
-        write(fdSerial, path, strlen(path));
+        misc_swrite(fdSerial, "\r\nBad Path --> ");
+        misc_swrite(fdSerial, path);
     }
     else
     {
-        //write(fdSerial, "\r\n", 2);
-        write(fdSerial, clrScr, strlen(clrScr));
+        misc_swrite(fdSerial, clrScr);
         while (index < max)
         {
             if(strlen(namelist[index]->d_name) > 0 &&
                     namelist[index]->d_name[0] != '.')
             {
-                sprintf(strIdx, "%6d", count + 1);
-                write(fdSerial,strIdx, strlen(strIdx));
+                misc_swrite(fdSerial, "%2d", count + 1);
                 if (namelist[index]->d_type != DT_REG)
                 {
                     misc_d_type_to_str(namelist[index]->d_type, strType);
-                    write (fdSerial, " <", 2);
-                    write (fdSerial, strType, strlen(strType));
-                    write (fdSerial, "> ", 2);
+                    misc_swrite(fdSerial, " <%s> ", strType);
                 }
                 else
-                    write (fdSerial, "  -->  ", 7);
-                write(fdSerial, namelist[index]->d_name, strlen(namelist[index]->d_name));
-                write(fdSerial, "\r\n", 2);
+                    misc_swrite(fdSerial, "  -->  ");
+                misc_swrite(fdSerial, namelist[index]->d_name);
+                misc_swrite(fdSerial, "\r\n");
                 count++;
             }
             else
@@ -572,9 +649,9 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
             if ((count == rows && rows > 0) || index == max)
             {
                 if(index == max)
-                    write (fdSerial, promptEnd,  strlen(promptEnd));
+                    misc_swrite(fdSerial, promptEnd);
                 else
-                    write (fdSerial, promptMore, strlen(promptMore));
+                    misc_swrite(fdSerial, promptMore);
                 prompt[0] = (char) 0x00;
                 do
                 {
@@ -634,11 +711,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 else
                     page++;
                 count = 0;
-                write(fdSerial, clrScr, strlen(clrScr));
+                misc_swrite(fdSerial, clrScr);
                 if (c == 'Q')
                     break;
                 //else if(index < max) //no clear on exit
-                //   write(fdSerial, clrScr, strlen(clrScr));
+                //   misc_swrite(fdSerial,  clrScr);
             }
         }
         for(index = 0; index < max; index++)
@@ -691,16 +768,16 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
 {
     (*rowcount)++;
     if (*rowcount == rows)
-    {	
-       if (CR)
-           write(fdSerial, "\r\n", 2);
-       write(fdSerial, pauseStr, strlen(pauseStr)); 
-       read(fdSerial, c, 1);
-       if(pauseDel[0] != 0x08)
+    {
+        if (CR)
+            misc_swrite(fdSerial, "\r\n");
+        misc_swrite(fdSerial, pauseStr);
+        read(fdSerial, c, 1);
+        if(pauseDel[0] != 0x08)
             memset(pauseDel, 0x08, sizeof(pauseDel));
-       write(fdSerial, pauseDel, strlen(pauseStr));
-       *rowcount = 0;
-       *c = toupper(*c);
+        misc_swrite(fdSerial, pauseDel);
+        *rowcount = 0;
+        *c = toupper(*c);
     }
 }
 
@@ -713,13 +790,13 @@ void misc_show_at_commands(int fdSerial, int rows)
     int index = 0;
     int rowcount = 0;
     char c = (char) 0x00;
-    
+
     while(athelp[index] != NULL && c != 'Q')
     {
-        write(fdSerial, "\r", 1);
+        misc_swrite(fdSerial, "\r");
         if (rowcount != 0 || index == 0) //rowcount not reset
-            write(fdSerial, "\n", 1);
-        write(fdSerial, athelp[index], strlen(athelp[index]));
+            misc_swrite(fdSerial, "\n");
+        misc_swrite(fdSerial, athelp[index]);
         index++;
         misc_do_rowcheck(fdSerial, rows, &rowcount, &c, TRUE);
     }
@@ -738,13 +815,13 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
     file = fopen(fileName, "r");
     if (file)
     {
-        write(fdSerial, "\r\n", 2);
+        misc_swrite(fdSerial, "\r\n");
         while (fgets(str, sizeof(str), file)!= NULL)
         {
-            write(fdSerial, str, strlen(str));
-            write(fdSerial, "\r", 1);
+            misc_swrite(fdSerial, str);
+            misc_swrite(fdSerial, "\r");
             misc_do_rowcheck(fdSerial, rows, &rowcount, &c, FALSE);
-        }           
+        }
         fclose(file);
         return TRUE;
     }

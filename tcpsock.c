@@ -22,9 +22,8 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
     int sock = 0, valread;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
-        if (fdSerial > 0)
-            write(fdSerial, tmp, strlen(tmp));
+        if(fdSerial > 0)
+            misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
         return -1;
     }
     memset(&server_addr, 0, sizeof(server_addr));
@@ -33,17 +32,15 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
 
     if (inet_pton(AF_INET, ipAddr, &server_addr.sin_addr) <= 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : '%s'", ipAddr);
         if (fdSerial > 0)
-            write(fdSerial, tmp, strlen(tmp));
+            misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : '%s'", ipAddr);
         return -1;
     }
 
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
-        sprintf(tmp,"\r\nERROR: tcpsock_client_connect() --> %s", strerror(errno));
         if (fdSerial > 0)
-            write(fdSerial, tmp, strlen(tmp));
+            misc_swrite(fdSerial,"\r\nERROR: tcpsock_client_connect() --> %s", strerror(errno));
         return -1;
     }
     return sock;

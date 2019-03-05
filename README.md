@@ -13,7 +13,7 @@ Speed:
       Default : 31250 BPS
       ao486   : 38400 BPS
 
-Roland MT-32/CM-32 roms need to be placed in '/media/fat/mt32-rom-data'
+Roland MT-32/CM-32 roms need to be placed in '/media/fat/linux/mt32-rom-data'
 
 Additional MUNT parameters can be specified in MidiLink.INI
        
@@ -30,7 +30,7 @@ Speed:
 
 FluidSynth soundfont is defined in MidiLink.INI
 
-      FSYNTH_SOUNDFONT   = /media/fat/SOUNDFONT/default.sf2
+      FSYNTH_SOUNDFONT   = /media/fat/linux/SOUNDFONT/sc-55.sf2
 
 UartMODE : MIDI : Remote / TCP    
 
@@ -159,6 +159,11 @@ The MidiLink.INI file:
                            
       TCP_TERM_SYNTH     = FluidSynth   --> Default synth for TCP 'ATMID'
 
+      TCP_TERM_TRANS     = PETSKII      --> Optionl ASCII translation
+                                            (for Commodore 64 / Atari 8-bit) 
+                                            Options: NONE, PETSKII, ATASCII
+                                            Default : NONE    
+
       TCP_BAUD           = 9600         --> Set a different BPS for socket
                                             connection (this is useful 
                                             this for serial connection
@@ -181,7 +186,7 @@ The MidiLink.INI file:
       TCP_SOUND          = TRUE         --> TCP option:
                                             Play /media/fat/SOUNDS/dial.wav
                                             Play /media/fat/SOUNDS/connect.wav
-
+      
       #TCP_SOUND_RING    =              --> optional WAV file for TCP modem 
                                             ring
 
@@ -225,9 +230,10 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATROWS   - Do terminal row test
       ATROWS## - Set number of terminal rows for MIDI, MP3 and Zmodem file picker (0 for continious list - no pause between p
       ATRZ     - Receive a file using Zmodem
-      ATSZ     - Send a file via Zmodem (see file Picker)
+      ATSZ     - Send a file via Zmodem (see file Picker) 
       ATTEL0   - Disable basic telnet negotiation 
       ATTEL1   - Enable basic telnet negotiation (default)
+      ATTRANS# - Set ASCII translation (0-NONE, 1-PETSKII, 2-ATASCII)
       ATVER    - Show MidiLink version
       ATZ      - Reset modem 
 
