@@ -158,7 +158,7 @@ char * misc_trans_to_str(enum ASCIITRANS mode)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//  void misc_swrint(int priority, const char* format, ... )
+//  void misc_swrite(int priority, const char* format, ... )
 //
 void misc_swrite(int fdSerial, const char* format, ... )
 {
@@ -183,10 +183,10 @@ void misc_swrite(int fdSerial, const char* format, ... )
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//  void misc_swrint_nt(int priority, const char* format, ... )
+//  void misc_swrite_no_trans(int priority, const char* format, ... )
 //  PETSKII translation seems to screw uo Quantup-link because its looking for "connect" vs "CONNECT"
 //
-void misc_swrite_nt(int fdSerial, const char* format, ... )
+void misc_swrite_no_trans(int fdSerial, const char* format, ... )
 {
     char buf[512];
     pthread_mutex_lock(&swrite_lock);
