@@ -299,12 +299,12 @@ void * tcplst_thread_function (void * x)
             misc_print(1, "CONNECT --> %s\n", buf);
             if(socket_out == -1)
             {
-                misc_swrite(fdSerial, "\r\nRING");
+                misc_swrite_nt(fdSerial, "\r\nRING");
                 if(MODEMSOUND)
                     set_pcm_volume(modemVolume);
                 play_ring_sound(buf);
                 play_connect_sound(buf);
-                misc_swrite(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                misc_swrite_nt(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -426,7 +426,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     misc_swrite(fdSerial, tmp);
                     sleep(1);
-                    misc_swrite(fdSerial, "OK\r\n");
+                    misc_swrite_nt(fdSerial, "OK\r\n");
                 }
                 else
                     misc_print(1, "HANG-UP Rejected --> %d\n", delay);
@@ -651,7 +651,7 @@ int handle_at_command(char * lineBuf)
                     do_telnet_negotiate();
                 play_ring_sound(tmp);
                 play_connect_sound(tmp);
-                misc_swrite(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                misc_swrite_nt(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 serial_do_tcdrain(fdSerial);
                 sleep(1);
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
@@ -998,7 +998,7 @@ void do_modem_emulation(char * buf, int bufLen)
                         lbp = NULL;
                 }
                 if (!CONNECT)
-                    misc_swrite(fdSerial, "\r\nOK\r\n");
+                    misc_swrite_nt(fdSerial, "\r\nOK\r\n");
             }
             else
                 misc_swrite(fdSerial, "\r\n");

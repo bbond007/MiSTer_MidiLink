@@ -181,6 +181,22 @@ void misc_swrite(int fdSerial, const char* format, ... )
     pthread_mutex_unlock(&swrite_lock);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  void misc_swrint_nt(int priority, const char* format, ... )
+//  PETSKII translation seems to screw uo Quantup-link because its looking for "connect" vs "CONNECT"
+//
+void misc_swrite_nt(int fdSerial, const char* format, ... )
+{
+    char buf[512];
+    pthread_mutex_lock(&swrite_lock);
+    va_list args;
+    va_start (args, format);
+    vsprintf (buf, format, args);
+    va_end (args);
+    write(fdSerial, buf, strlen(buf));
+    pthread_mutex_unlock(&swrite_lock);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
