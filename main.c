@@ -315,11 +315,14 @@ void * tcplst_thread_function (void * x)
                     }
                     else if (rdLen == 0)
                     {
-                        tcpsock_close(socket_in);
+                        //tcpsock_close(socket_in);
+                        if(socket_in != -1) 
+                            close(socket_in);
                         socket_in = -1;
                         misc_print(1, "tcplst_thread_function() --> Connection Closed.\n");
                     }
                 } while (socket_in != -1);
+                misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
             }
             else
             {
@@ -365,6 +368,7 @@ void * tcpsock_thread_function (void * x)
     socket_out = -1;
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
+    misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
     pthread_exit(NULL);
 }
 
