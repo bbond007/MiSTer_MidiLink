@@ -315,7 +315,6 @@ void * tcplst_thread_function (void * x)
                     }
                     else if (rdLen == 0)
                     {
-                        //tcpsock_close(socket_in);
                         if(socket_in != -1) 
                             close(socket_in);
                         socket_in = -1;
@@ -362,7 +361,6 @@ void * tcpsock_thread_function (void * x)
         else if(rdLen < 1)
             misc_print(1, "ERROR: tcpsock_thread_function() --> rdLen < 1\n");
     } while (rdLen > 0 && socket_out != -1);
-    //tcpsock_close(socket_out);
     if(socket_out != -1)
         close(socket_out);
     socket_out = -1;

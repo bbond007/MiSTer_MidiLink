@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <linux/soundcard.h>
 #include <errno.h>
 #include "misc.h"
@@ -26,6 +27,15 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
             misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
         return -1;
     }
+   
+    int nodelay_flag = 1;
+    if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*) &nodelay_flag, sizeof(int)) < 0)
+    {
+        if(fdSerial > 0)
+            misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> setsockopt(TCP_NODELAY) : %s", strerror(errno));
+        //return -1;
+    }
+
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
