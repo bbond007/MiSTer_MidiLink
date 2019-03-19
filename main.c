@@ -185,6 +185,19 @@ void killall_aplaymidi(int delay)
     if(delay)
         sleep(delay);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void killall_aplaymidi()
+//
+void killall_aplay(int delay)
+{
+    misc_print(0, "Killing --> aplay\n");
+    system("killall -q aplay");
+    if(delay)
+        sleep(delay);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void show_debug_buf(char * descr, char * buf, int bufLen)
@@ -218,7 +231,7 @@ void play_connect_sound(char * tmp)
         killall_aplaymidi(0);
         killall_softsynth(0);
         killall_mpg123(0);
-        system("killall aplay");
+        killall_aplay(0);
         if(strlen(modemConnectSndWAV) > 0 && misc_check_file(modemConnectSndWAV))
         {    
             misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
@@ -242,7 +255,7 @@ void play_ring_sound(char * tmp)
         killall_aplaymidi(0);
         killall_softsynth(0);
         killall_mpg123(0);
-        system("killall aplay");
+        killall_aplay(0);
         if(strlen(modemRingSndWAV) > 0 && misc_check_file(modemRingSndWAV))
         {
             misc_print(1, "Playing WAV --> '%s'\n", modemRingSndWAV);
@@ -266,7 +279,7 @@ void play_dial_sound(char * tmp, char * ipAddr)
         killall_aplaymidi(0);
         killall_softsynth(0);
         killall_mpg123(0);
-        system("killall aplay");
+        killall_aplay(0);
         if (strlen(modemDialSndWAV) > 0 && misc_check_file(modemDialSndWAV))
         {
             misc_print(1, "Playing WAV --> '%s'\n", modemDialSndWAV);
@@ -293,6 +306,7 @@ void * tcplst_thread_function (void * x)
         socket_in = tcpsock_accept(socket_lst);
         if(socket_in != -1)
         {
+            tcpsock_set_tcp_nodelay(socket_in);
             tcpsock_set_timeout(socket_in, 10);
             misc_print(1,"Incomming connection\n");
             tcpsock_get_ip(socket_in, buf);

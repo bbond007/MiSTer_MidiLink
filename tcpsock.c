@@ -13,6 +13,21 @@
 static struct sockaddr_in server_addr;
 extern int MIDI_DEBUG;
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int tcpsock_set_tcp_nodelay(int sock)
+//
+int tcpsock_set_tcp_nodelay(int sock)
+{
+    int nodelay_flag = 1;
+    misc_swrite(1, "Setting --> TCP_NODELAY\n");
+    if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*) &nodelay_flag, sizeof(int)) < 0)
+    {
+            misc_swrite(1, "ERROR: tcpsock_set_tcp_nodelay() -->  %s\n", strerror(errno));
+    }
+}
+    
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int udpsock_client_connect(char * ipAddr, int port)
@@ -27,14 +42,8 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
             misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
         return -1;
     }
-   
-    int nodelay_flag = 1;
-    if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*) &nodelay_flag, sizeof(int)) < 0)
-    {
-        if(fdSerial > 0)
-            misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> setsockopt(TCP_NODELAY) : %s", strerror(errno));
-        //return -1;
-    }
+       
+    tcpsock_set_tcp_nodelay(sock);
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -82,6 +91,9 @@ int tcpsock_server_open(int port)
         misc_print(1, "ERROR: socket_server_open() --> socket creation failed");
         return -1;
     }
+    
+    tcpsock_set_tcp_nodelay(sock);
+
     memset(&servaddr, 0, sizeof(servaddr));
     // Filling server information
     servaddr.sin_family      = AF_INET; // IPv4
