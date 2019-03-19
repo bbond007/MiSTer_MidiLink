@@ -1325,9 +1325,7 @@ int main(int argc, char *argv[])
         close_fd();
         return -4;
     }
-    //printf("TST --> serial_set_interface_attribs - start\n");
     serial_set_interface_attribs(fdSerial);
-    //printf("TST --> serial_set_interface_attribs - end\n");
     if (mode == ModeUDP && UDPBaudRate != -1)
     {
         baudRate = UDPBaudRate;

@@ -225,7 +225,6 @@ int modem_snd(char * number)
         }
     }
     snd_pcm_drain(handle);
-    //sleep(1);
     snd_pcm_close(handle);
     return TRUE;
 }
