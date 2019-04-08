@@ -6,12 +6,28 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <linux/soundcard.h>
 #include <errno.h>
 #include "misc.h"
 static struct sockaddr_in server_addr;
 extern int MIDI_DEBUG;
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int tcpsock_set_tcp_nodelay(int sock)
+//
+int tcpsock_set_tcp_nodelay(int sock)
+{
+    int nodelay_flag = 1;
+    misc_swrite(1, "Setting --> TCP_NODELAY\n");
+    if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*) &nodelay_flag, sizeof(int)) < 0)
+    {
+            misc_swrite(1, "ERROR: tcpsock_set_tcp_nodelay() -->  %s\n", strerror(errno));
+    }
+}
+    
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int udpsock_client_connect(char * ipAddr, int port)
@@ -22,28 +38,28 @@ int tcpsock_client_connect(char * ipAddr, int port, int fdSerial)
     int sock = 0, valread;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
-        if (fdSerial > 0)
-            write(fdSerial, tmp, strlen(tmp));
+        if(fdSerial > 0)
+            misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> Socket creation error : %s", strerror(errno));
         return -1;
     }
+       
+    tcpsock_set_tcp_nodelay(sock);
+
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
 
     if (inet_pton(AF_INET, ipAddr, &server_addr.sin_addr) <= 0)
     {
-        sprintf(tmp, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : '%s'", ipAddr);
         if (fdSerial > 0)
-            write(fdSerial, tmp, strlen(tmp));
+            misc_swrite(fdSerial, "\r\nERROR: tcpsock_client_connect() --> Invalid IP address : '%s'", ipAddr);
         return -1;
     }
 
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
-        sprintf(tmp,"\r\nERROR: tcpsock_client_connect() --> %s", strerror(errno));
         if (fdSerial > 0)
-            write(fdSerial, tmp, strlen(tmp));
+            misc_swrite(fdSerial,"\r\nERROR: tcpsock_client_connect() --> %s", strerror(errno));
         return -1;
     }
     return sock;
@@ -75,6 +91,9 @@ int tcpsock_server_open(int port)
         misc_print(1, "ERROR: socket_server_open() --> socket creation failed");
         return -1;
     }
+    
+    tcpsock_set_tcp_nodelay(sock);
+
     memset(&servaddr, 0, sizeof(servaddr));
     // Filling server information
     servaddr.sin_family      = AF_INET; // IPv4

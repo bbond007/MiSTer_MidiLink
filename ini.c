@@ -8,37 +8,38 @@
 #include "misc.h"
 #include "serial.h"
 
-extern char         fsynthSoundFont[150];
-extern char         MUNTRomPath[150];
-extern char         UDPServer[100];
-extern char         mixerControl[20];
-extern int          MP3Volume;
-extern int          muntVolume;
-extern int          fsynthVolume;
-extern int          modemVolume;
-extern int          midilinkPriority;
-extern unsigned int UDPServerPort;
-extern unsigned int TCPServerPort;
-extern unsigned int TCPTermRows;
-extern int          UDPBaudRate;
-extern int          TCPBaudRate;
-extern int          MIDIBaudRate;
-extern int          TCPSoftSynth;
-extern int          TCPFlow;
-extern int          UDPFlow;
-extern unsigned int UDPServerFilterIP;
-extern unsigned int DELAYSYSEX;
-extern char         MP3Path[500];
-extern char 	    MIDIPath[500];
-extern char         downloadPath[500];
-extern char         uploadPath[100];
-extern char         MUNTOptions[30];
-extern char         MT32LCDMsg[21];
-extern int          MODEMSOUND;
-extern char         modemConnectSndWAV[50];
-extern char         modemDialSndWAV[50];
-extern char         modemRingSndWAV[50];
-extern int          TCPATHDelay;
+extern char            fsynthSoundFont[150];
+extern char            MUNTRomPath[150];
+extern char            UDPServer[100];
+extern char            mixerControl[20];
+extern int             MP3Volume;
+extern int             muntVolume;
+extern int             fsynthVolume;
+extern int             modemVolume;
+extern int             midilinkPriority;
+extern unsigned int    UDPServerPort;
+extern unsigned int    TCPServerPort;
+extern unsigned int    TCPTermRows;
+extern int             UDPBaudRate;
+extern int             TCPBaudRate;
+extern int             MIDIBaudRate;
+extern int             TCPFlow;
+extern int             UDPFlow;
+extern unsigned int    UDPServerFilterIP;
+extern unsigned int    DELAYSYSEX;
+extern char            MP3Path[500];
+extern char 	       MIDIPath[500];
+extern char            downloadPath[500];
+extern char            uploadPath[100];
+extern char            MUNTOptions[30];
+extern char            MT32LCDMsg[21];
+extern int             MODEMSOUND;
+extern char            modemConnectSndWAV[50];
+extern char            modemDialSndWAV[50];
+extern char            modemRingSndWAV[50];
+extern int             TCPATHDelay;
+extern enum ASCIITRANS TCPAsciiTrans;
+extern enum SOFTSYNTH  TCPSoftSynth;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -215,6 +216,11 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, modemConnectSndWAV, sizeof(modemConnectSndWAV));
     } 
+    else if(strcmp("TCP_TERM_TRANS", key) == 0)
+    {
+        misc_str_to_upper(value);
+        TCPAsciiTrans = misc_str_to_trans(value);
+    }
     else if (strcmp("UDP_FLOW", key) == 0)
     {
         ini_int(value, &UDPFlow);
@@ -310,6 +316,7 @@ void ini_print_settings()
     misc_print(0, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
     misc_print(0, "  - TCP_TERM_MIDI      --> '%s'\n",    MIDIPath);
     misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",   (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
+    misc_print(0, "  - TCP_TERM_TRANS     --> %s\n",    misc_trans_to_str(TCPAsciiTrans));
     misc_print(0, "  - TCP_SOUND          --> %s\n",    MODEMSOUND?"TRUE":"FALSE");
     if (strlen(modemDialSndWAV) > 0)
         misc_print(0, "  - TCP_SOUND_DIAL     --> '%s'\n",  modemDialSndWAV);

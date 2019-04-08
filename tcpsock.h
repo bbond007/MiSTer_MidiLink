@@ -1,3 +1,4 @@
+int  tcpsock_set_tcp_nodelay(int sock);
 int  tcpsock_client_connect(char * ipAddr, int port, int fdSerial); 
 int  tcpsock_write(int sock, char * buf, int bufLen);
 int  tcpsock_server_open(int port);

@@ -90,16 +90,14 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
             VALID = TRUE;
             break;
         default:
-            sprintf(tmp, "\r\nUnsupported flow-Control --> '%d'", hayesMode);
-            char example[] =  "\r\n---------------------------"
-                              "\r\nSupported modes are:"
-                              "\r\n  0 - Disble flow-control"
-                              "\r\n  3 - RTS/CTS"
-                              "\r\n  4 - XON/XOFF";
             VALID = FALSE;
             if (hayesMode >= 0)
-                write(fdSerial, tmp, strlen(tmp));
-            write(fdSerial, example, strlen(example));
+                misc_swrite(fdSerial, "\r\nUnsupported flow-Control --> '%d'", hayesMode);
+            misc_swrite(fdSerial, "\r\n---------------------------"
+                                  "\r\nSupported modes are:"
+                                  "\r\n  0 - Disble flow-control"
+                                  "\r\n  3 - RTS/CTS"
+                                  "\r\n  4 - XON/XOFF");
     }
     if (VALID)
         if (tcsetattr(fdSerial, TCSANOW, &tty) != 0)

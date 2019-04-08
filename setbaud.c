@@ -102,19 +102,16 @@ int setbaud_is_valid_rate (int baud)
 int setbaud_show_menu(int fdSerial)
 {
     char line[] = "\r\n----------------------------------";
-    write(fdSerial, line, sizeof(line));
+    misc_swrite(fdSerial, line);
     for (int index = 0; index < 4; index++)
     {
-         write(fdSerial, "\r\n", 2);
-         write(fdSerial, baudStr[index], strlen(baudStr[index]));
+         misc_swrite(fdSerial,"\r\n");
+         misc_swrite(fdSerial, baudStr[index]);
     }
-    write(fdSerial, line, sizeof(line));
-    char example1[] = "\r\nEXAMPLE --> ATBAUD9600";
-    char example2[] = "\r\nEXAMPLE --> ATBAUD6";
-    write(fdSerial, example1, strlen(example1));
-    write(fdSerial, example2, strlen(example2));   
+    misc_swrite(fdSerial, line);
+    misc_swrite(fdSerial, "\r\nEXAMPLE --> ATBAUD9600");
+    misc_swrite(fdSerial, "\r\nEXAMPLE --> ATBAUD6");
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //

@@ -1,3 +1,3 @@
-MiSTer goes in /media/fat/
 MidiLink.INI goes in /media/fat/linux
-midilink_updater.sh will replace existing /sbin/midilink and download soundsfonts and ROM
+midilink_updater.sh will replace existing /sbin/midilink and download soundsfonts and CM-32/MT-32 ROM
+soundfount_installer.sh will download soundsfonts and CM-32/MT-32 ROM
