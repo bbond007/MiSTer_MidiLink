@@ -40,6 +40,7 @@ extern char            modemRingSndWAV[50];
 extern int             TCPATHDelay;
 extern enum ASCIITRANS TCPAsciiTrans;
 extern enum SOFTSYNTH  TCPSoftSynth;
+extern int             MUNTCPUMask;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -117,6 +118,10 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("MUNT_ROM_PATH", key) == 0)
     {
         ini_str(key, value, MUNTRomPath, sizeof(MUNTRomPath));
+    }
+    else if (strcmp("MUNT_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &MUNTCPUMask);
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
@@ -274,6 +279,7 @@ void ini_print_settings()
         misc_print(0, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
         misc_print(0, "  - MUNT_VOLUME        --> Default (don't set)\n");
+    misc_print(0, "  - MUNT_CPU_MASK      --> %d\n",MUNTCPUMask);
     if(fsynthVolume != -1)
         misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else

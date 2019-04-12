@@ -72,6 +72,7 @@ int                     TCPFlow                = -1;
 int                     UDPFlow                = -1;
 int                     MODEMSOUND             = TRUE;
 int 			TCPATHDelay            = 900;
+int                     MUNTCPUMask            = 1;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = 22;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -125,8 +126,13 @@ int start_munt()
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
-        misc_print(0, "Starting --> mt32d\n");
-    sprintf(buf, "taskset %d mt32d %s -f %s &", CPUMASK, MUNTOptions, MUNTRomPath);
+        {
+            misc_print(0, "Starting --> mt32d");
+            if (CPUMASK != MUNTCPUMask)
+                misc_print(0, " : CPUMASK = %d", MUNTCPUMask);
+            misc_print(0, "\n");
+        }
+    sprintf(buf, "taskset %d mt32d %s -f %s &", MUNTCPUMask, MUNTOptions, MUNTRomPath);
     system(buf);
     int loop = 0;
     do
@@ -1238,7 +1244,7 @@ int main(int argc, char *argv[])
     int status;
     int midiPort;
     char coreName[30] = "";
-
+    MUNTCPUMask = CPUMASK;
     unsigned char buf[256];
     //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
