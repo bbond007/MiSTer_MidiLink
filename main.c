@@ -957,6 +957,16 @@ int handle_at_command(char * lineBuf)
     {
         misc_show_at_commands(fdSerial, TCPTermRows);
     }
+    else if (memcmp(lineBuf, "ATUARTTEST", 6) == 0)
+    {
+        if (lineBuf[10] == '!')
+             TCPTermRows  = 0;           
+        while (TRUE)
+        {
+            misc_show_at_commands(fdSerial, TCPTermRows);
+            misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
+        }
+    }
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
         //todo reset stuff...
