@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <linux/soundcard.h>
 #include <ctype.h>
 #include <sys/time.h>
-#include "setbaud.h"
 #include "serial.h"
+#include "serial2.h"
 #include "config.h"
 #include "misc.h"
 #include "udpsock.h"
@@ -325,6 +325,7 @@ void * tcplst_thread_function (void * x)
                 play_ring_sound(buf);
                 play_connect_sound(buf);
                 misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                serial2_setDCD(fdSerial, TRUE);
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -342,6 +343,7 @@ void * tcplst_thread_function (void * x)
                     }
                 } while (socket_in != -1);
                 misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
+                serial2_setDCD(fdSerial, FALSE);
             }
             else
             {
@@ -444,6 +446,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                 {
                     tcpsock_close(*socket);
                     *socket =  -1;
+                    serial2_setDCD(fdSerial, FALSE);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     misc_swrite(fdSerial, tmp);
@@ -665,6 +668,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 if(MODEMSOUND)
                     sleep(1);
+                serial2_setDCD(fdSerial, FALSE);
                 socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
             }
             if(socket_out > 0)
@@ -677,6 +681,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 sleep(1);
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
+                serial2_setDCD(fdSerial, TRUE);
                 return TRUE;
             }
         }
@@ -685,14 +690,14 @@ int handle_at_command(char * lineBuf)
     {
         char * baud = &lineBuf[6];
         int iBaud   = strtol(baud, &endPtr, 10);
-        int iTemp   = setbaud_baud_at_index(iBaud);
+        int iTemp   = serial2_baud_at_index(iBaud);
         iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;
-        if (setbaud_is_valid_rate (iBaud))
+        if (serial2_is_valid_rate (iBaud))
         {
             int sec = 10;
             misc_swrite(fdSerial, "\r\nSetting BAUD to %d in %d seconds...", iBaud, sec);
             sleep(sec);
-            setbaud_set_baud(serialDevice, fdSerial, iBaud);
+            serial2_set_baud(serialDevice, fdSerial, iBaud);
             baudRate = iBaud;
             misc_swrite(fdSerial, "\r\nBAUD has been set to %d", iBaud);
         }
@@ -700,7 +705,7 @@ int handle_at_command(char * lineBuf)
         {
             if(baud[0] != 0x00)
                 misc_swrite(fdSerial, "\r\nBAUD rate '%s' is not valid.", baud);
-            setbaud_show_menu(fdSerial);
+            serial2_show_menu(fdSerial);
         }
     }
     else if (memcmp(lineBuf, "ATIP", 4) == 0)
@@ -1366,7 +1371,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    setbaud_set_baud(serialDevice, fdSerial, baudRate);
+    serial_set_flow_control(fdSerial, 0);
+    serial2_set_baud(serialDevice, fdSerial, baudRate);
     serial_do_tcdrain(fdSerial);
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
@@ -1447,6 +1453,7 @@ int main(int argc, char *argv[])
     {
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
+        serial2_setDCD(fdSerial, FALSE);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
         {

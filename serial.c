@@ -118,3 +118,4 @@ void serial_do_tcdrain(int fdSerial)
     tcdrain(fdSerial);
 }
 
+
