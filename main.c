@@ -319,12 +319,12 @@ void * tcplst_thread_function (void * x)
             misc_print(1, "CONNECT --> %s\n", buf);
             if(socket_out == -1)
             {
-                misc_swrite_no_trans(fdSerial, "\r\nRING");
+                //misc_swrite_no_trans(fdSerial, "\r\nRING");
                 if(MODEMSOUND)
                     set_pcm_volume(modemVolume);
                 play_ring_sound(buf);
                 play_connect_sound(buf);
-                misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                //misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 serial2_setDCD(fdSerial, TRUE);
                 do
                 {
@@ -449,7 +449,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                     serial2_setDCD(fdSerial, FALSE);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
-                    misc_swrite(fdSerial, tmp);
+                    //misc_swrite(fdSerial, tmp);
                     sleep(1);
                     misc_swrite_no_trans(fdSerial, "OK\r\n");
                 }
@@ -1374,6 +1374,7 @@ int main(int argc, char *argv[])
     serial_set_flow_control(fdSerial, 0);
     serial2_set_baud(serialDevice, fdSerial, baudRate);
     serial_do_tcdrain(fdSerial);
+    serial2_setDCD(fdSerial, (mode == ModeTCP)?FALSE:TRUE);
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
@@ -1453,7 +1454,8 @@ int main(int argc, char *argv[])
     {
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
-        serial2_setDCD(fdSerial, FALSE);
+        //serial2_setDCD(fdSerial, FALSE);
+        serial_set_timeout(fdSerial, 1);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
         {
@@ -1572,6 +1574,19 @@ int main(int argc, char *argv[])
             }
             else if (mode == ModeTCP && socket_in == -1)
                 do_modem_emulation(buf, rdLen);
+        }
+        else if (mode == ModeTCP && rdLen == 0 && serial2_getDSR(fdSerial) == FALSE)
+        {   // deal with client hangup via DTR
+            if(socket_out != -1)
+            {
+                close(socket_out);
+                socket_out = -1;
+            }
+            if (socket_in != -1)
+            {
+                close(socket_in);
+                socket_in = -1;
+            }
         }
         else if (rdLen < 0)
             misc_print(1, "ERROR: from read: %d: %s\n", rdLen, strerror(errno));

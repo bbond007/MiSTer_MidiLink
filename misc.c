@@ -671,7 +671,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 prompt[0] = (char) 0x00;
                 do
                 {
-                    read(fdSerial, &c, 1);
+                    while (read(fdSerial, &c, 1) == 0) {};
                     c = toupper(c);
                     switch(c)
                     {

@@ -115,7 +115,7 @@ int serial2_show_menu(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int carrier_getDSR(int fd)
+// int serial2_getDSR(int fd)
 // 
 int serial2_getDSR(int fd)
 {
@@ -133,10 +133,7 @@ int serial2_setDTR(int fd, int on)
 {
     int controlbits = TIOCM_DTR;
     /* Set terminal status line: Data Set Ready */
-    if(on)
-      return ioctl(fd, TIOCMBIC, &controlbits);
-    else
-      return ioctl(fd, TIOCMBIS, &controlbits);
+    return ioctl(fd, on?TIOCMBIS:TIOCMBIC, &controlbits);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -146,7 +143,7 @@ int serial2_setDTR(int fd, int on)
 int serial2_setDCD(int fd, int on)
 {
     int result;
-    result = on?serial2_setDTR(fd, FALSE):serial2_setDTR(fd, TRUE);
-    misc_print(0, "carrier_setDCD(%s) --> %d\n",on?"TRUE":"FALSE", result);
+    result = serial2_setDTR(fd, on);
+    misc_print(1, "Setting DCD --> %s\n",on?"TRUE":"FALSE");
     return result; 
 }
