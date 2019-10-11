@@ -115,35 +115,35 @@ int serial2_show_menu(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int serial2_getDSR(int fd)
+// int serial2_get_DSR(int fdSerial)
 // 
-int serial2_getDSR(int fd)
+int serial2_get_DSR(int fdSerial)
 {
     int s;
     /* Read terminal status line: Data Set Ready */
-    ioctl(fd, TIOCMGET, &s);
+    ioctl(fdSerial, TIOCMGET, &s);
     return (s & TIOCM_DSR) != 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int serial2_setDTR(int fd, int on)
+// int serial2_set_DTR(int fdSerial, int on)
 // 
-int serial2_setDTR(int fd, int on)
+int serial2_set_DTR(int fdSerial, int on)
 {
     int controlbits = TIOCM_DTR;
     /* Set terminal status line: Data Set Ready */
-    return ioctl(fd, on?TIOCMBIS:TIOCMBIC, &controlbits);
+    return ioctl(fdSerial, on?TIOCMBIS:TIOCMBIC, &controlbits);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int serial2_setDCD(int fd, int on)
+// int serial2_set_DCD(int fdSerial, int on)
 // 
-int serial2_setDCD(int fd, int on)
+int serial2_set_DCD(int fdSerial, int on)
 {
     int result;
-    result = serial2_setDTR(fd, on);
+    result = serial2_set_DTR(fdSerial, on);
     misc_print(1, "Setting DCD --> %s\n",on?"TRUE":"FALSE");
     return result; 
 }

@@ -325,7 +325,7 @@ void * tcplst_thread_function (void * x)
                 play_ring_sound(buf);
                 play_connect_sound(buf);
                 //misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
-                serial2_setDCD(fdSerial, TRUE);
+                serial2_set_DCD(fdSerial, TRUE);
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -343,7 +343,7 @@ void * tcplst_thread_function (void * x)
                     }
                 } while (socket_in != -1);
                 misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
-                serial2_setDCD(fdSerial, FALSE);
+                serial2_set_DCD(fdSerial, FALSE);
             }
             else
             {
@@ -446,7 +446,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                 {
                     tcpsock_close(*socket);
                     *socket =  -1;
-                    serial2_setDCD(fdSerial, FALSE);
+                    serial2_set_DCD(fdSerial, FALSE);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     //misc_swrite(fdSerial, tmp);
@@ -668,7 +668,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 if(MODEMSOUND)
                     sleep(1);
-                serial2_setDCD(fdSerial, FALSE);
+                serial2_set_DCD(fdSerial, FALSE);
                 socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
             }
             if(socket_out > 0)
@@ -681,7 +681,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 sleep(1);
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
-                serial2_setDCD(fdSerial, TRUE);
+                serial2_set_DCD(fdSerial, TRUE);
                 return TRUE;
             }
         }
@@ -1374,7 +1374,7 @@ int main(int argc, char *argv[])
     serial_set_flow_control(fdSerial, 0);
     serial2_set_baud(serialDevice, fdSerial, baudRate);
     serial_do_tcdrain(fdSerial);
-    serial2_setDCD(fdSerial, (mode == ModeTCP)?FALSE:TRUE);
+    serial2_set_DCD(fdSerial, (mode == ModeTCP)?FALSE:TRUE);
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
@@ -1454,7 +1454,7 @@ int main(int argc, char *argv[])
     {
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
-        //serial2_setDCD(fdSerial, FALSE);
+        //serial2_set_DCD(fdSerial, FALSE);
         serial_set_timeout(fdSerial, 1);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
@@ -1575,7 +1575,7 @@ int main(int argc, char *argv[])
             else if (mode == ModeTCP && socket_in == -1)
                 do_modem_emulation(buf, rdLen);
         }
-        else if (mode == ModeTCP && rdLen == 0 && serial2_getDSR(fdSerial) == FALSE)
+        else if (mode == ModeTCP && rdLen == 0 && serial2_get_DSR(fdSerial) == FALSE)
         {   // deal with client hangup via DTR
             if(socket_out != -1)
             {

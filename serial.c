@@ -127,8 +127,8 @@ void serial_set_timeout(int fdSerial, int timeout)
     struct termios termios;
     misc_print(0, "serial_set_timeout --> %d\n",timeout * 10);
     tcgetattr(fdSerial, &termios);
-    termios.c_lflag &= ~ICANON; /* Set non-canonical mode */
-    termios.c_cc[VTIME] = timeout * 10; /* Set timeout seconds */
+    termios.c_lflag &= ~ICANON;         // Set non-canonical mode 
+    termios.c_cc[VTIME] = timeout * 10; // Set timeout seconds
     termios.c_cc[VMIN] = 0;
     tcsetattr(fdSerial, TCSANOW, &termios);
 }

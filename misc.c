@@ -788,7 +788,7 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
         if (CR)
             misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
-        read(fdSerial, c, 1);
+        while (read(fdSerial, &c, 1) == 0) {};
         if(pauseDel[0] != 0x08)
             memset(pauseDel, 0x08, sizeof(pauseDel));
         misc_swrite(fdSerial, pauseDel);
