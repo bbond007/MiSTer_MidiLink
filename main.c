@@ -69,6 +69,7 @@ int                     TCPBaudRate            = -1;
 int 			MIDIBaudRate           = -1;
 enum ASCIITRANS         TCPAsciiTrans          = AsciiNoTrans;
 int                     TCPFlow                = -1;
+int                     TCPDTR                 =  1;
 int                     UDPFlow                = -1;
 int                     MODEMSOUND             = TRUE;
 int 			TCPATHDelay            = 900;
@@ -126,12 +127,12 @@ int start_munt()
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
-        {
-            misc_print(0, "Starting --> mt32d");
-            if (CPUMASK != MUNTCPUMask)
-                misc_print(0, " : CPUMASK = %d", MUNTCPUMask);
-            misc_print(0, "\n");
-        }
+    {
+        misc_print(0, "Starting --> mt32d");
+        if (CPUMASK != MUNTCPUMask)
+            misc_print(0, " : CPUMASK = %d", MUNTCPUMask);
+        misc_print(0, "\n");
+    }
     sprintf(buf, "taskset %d mt32d %s -f %s &", MUNTCPUMask, MUNTOptions, MUNTRomPath);
     system(buf);
     int loop = 0;
@@ -239,7 +240,7 @@ void play_connect_sound(char * tmp)
         killall_mpg123(0);
         killall_aplay(0);
         if(strlen(modemConnectSndWAV) > 0 && misc_check_file(modemConnectSndWAV))
-        {    
+        {
             misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
             sprintf(tmp, "aplay %s", modemConnectSndWAV);
             system(tmp);
@@ -306,7 +307,7 @@ void * tcplst_thread_function (void * x)
 {
     unsigned char buf[100];
     int rdLen;
-    
+
     do
     {
         socket_in = tcpsock_accept(socket_lst);
@@ -336,7 +337,7 @@ void * tcplst_thread_function (void * x)
                     }
                     else if (rdLen == 0)
                     {
-                        if(socket_in != -1) 
+                        if(socket_in != -1)
                             close(socket_in);
                         socket_in = -1;
                         misc_print(1, "tcplst_thread_function() --> Connection Closed.\n");
@@ -438,7 +439,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
             plusCount++;
             NEEDSTOP = TRUE;
             break;
-        case 0x0d:// [RETURN]
+        case 0x0D:// [RETURN]
             if(plusCount >= 3 && iLineBuf >= 3 && memcmp(lineBuf, "ATH", 3) == 0)
             {
                 int delay = misc_get_timeval_diff(&start, &stop);
@@ -902,11 +903,10 @@ int handle_at_command(char * lineBuf)
             else
                 misc_swrite(fdSerial, validOptions);
         }
-        else
-            if(lineBuf[7] != (char) 0x00)
-                misc_swrite(fdSerial, validOptions);
-        misc_swrite(fdSerial, "\r\nASCII translation --> %s", 
-            misc_trans_to_str(TCPAsciiTrans));  
+        else if(lineBuf[7] != (char) 0x00)
+            misc_swrite(fdSerial, validOptions);
+        misc_swrite(fdSerial, "\r\nASCII translation --> %s",
+                    misc_trans_to_str(TCPAsciiTrans));
     }
     else if (memcmp(lineBuf, "ATM", 3) == 0)
     {
@@ -965,11 +965,29 @@ int handle_at_command(char * lineBuf)
     else if (memcmp(lineBuf, "ATUARTTEST", 6) == 0)
     {
         if (lineBuf[10] == '!')
-             TCPTermRows  = 0;           
+            TCPTermRows  = 0;
         while (TRUE)
         {
             misc_show_at_commands(fdSerial, TCPTermRows);
             misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
+        }
+    }
+    else if (memcmp(lineBuf, "ATD", 3) == 0)
+    {
+        switch(lineBuf[3])
+        {
+        case '0' :
+        case '1' :
+            TCPDTR = 1;
+            misc_print(1, "Setting DTR mode --> Normal\n");
+            break;
+        case '2' :
+            TCPDTR = 2;
+            misc_print(1, "Setting DTR mode --> Hangup\n");
+            break;
+        default:
+            misc_swrite(fdSerial,"\r\nUnsupported DTR option --> '%s'", &lineBuf[3]);
+            break;
         }
     }
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
@@ -979,10 +997,11 @@ int handle_at_command(char * lineBuf)
     else if (memcmp(lineBuf, "AT", 2) == 0)
     {
         if (lineBuf[2] != (char) 0x00)
-        { 
+        {
             misc_swrite(fdSerial, "\r\nUnknown Command '%s'", &lineBuf[2]);
         }
     }
+
     return FALSE;
 }
 
@@ -996,7 +1015,7 @@ void do_modem_emulation(char * buf, int bufLen)
     static char lineBuf[150]    = "";
     static char iLineBuf        = 0;
     char * lbp;
-    
+
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
@@ -1018,11 +1037,11 @@ void do_modem_emulation(char * buf, int bufLen)
             lbp = lineBuf;
             int CONNECT = FALSE;
             if(iLineBuf > 1 && lineBuf[0] == 'A' && lineBuf[1] == 'T')
-            { 
+            {
                 while (lbp && !CONNECT)
                 {
                     char * amp = strchr(lbp, '&');
-                    if(amp) 
+                    if(amp)
                         *amp = 0x00;
                     CONNECT = handle_at_command(lbp);
                     if(amp)
@@ -1575,11 +1594,12 @@ int main(int argc, char *argv[])
             else if (mode == ModeTCP && socket_in == -1)
                 do_modem_emulation(buf, rdLen);
         }
-        else if (mode == ModeTCP && rdLen == 0 && serial2_get_DSR(fdSerial) == FALSE)
+        else if (TCPDTR == 2 && mode == ModeTCP && 
+                 rdLen == 0 && serial2_get_DSR(fdSerial) == FALSE)
         {   // deal with client hangup via DTR
             if(socket_out != -1)
             {
-                close(socket_out);
+                tcpsock_close(socket_out);
                 socket_out = -1;
             }
             if (socket_in != -1)

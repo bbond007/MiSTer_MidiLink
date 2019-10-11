@@ -24,6 +24,7 @@ extern int             UDPBaudRate;
 extern int             TCPBaudRate;
 extern int             MIDIBaudRate;
 extern int             TCPFlow;
+extern int             TCPDTR;
 extern int             UDPFlow;
 extern unsigned int    UDPServerFilterIP;
 extern unsigned int    DELAYSYSEX;
@@ -201,6 +202,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, MIDIPath, sizeof(MIDIPath));
     }
+    else if (strcmp("TCP_DTR", key) == 0)
+    {
+        ini_int(value, &TCPDTR);
+    }
     else if (strcmp("TCP_FLOW", key) == 0)
     {
         ini_int(value, &TCPFlow);
@@ -310,6 +315,7 @@ void ini_print_settings()
         misc_print(0, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
     else
         misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
+    misc_print(0, "  - TCP_DTR            --> (%d) %s\n", TCPDTR, serial_hayes_DTR_to_str(TCPDTR));
     if(TCPFlow != -1)
         misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
     else

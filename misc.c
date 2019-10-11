@@ -40,12 +40,8 @@ static char * athelp[] =
     "ATDIR    - Show dialing MidiLink.DIR",
     "ATDT     - Dial 'ATDT192.168.1.131:23'",
     "ATHELP   - Show valid AT Comamnds",
-    "+++ATH   - Hang-up.",
     "ATINI    - Show MidiLink.INI",
     "ATIP     - Show IP address",
-    "AT&K0    - Disable  flow control",
-    "AT&K3    - RTS/CTS  flow control",
-    "AT&K4    - XON/XOFF flow control",
     "ATMID1   - Switch synth to FluidSynth",
     "ATMID2   - Switch synth to MUNT",
     "ATMID    - Play MIDI file",
@@ -65,6 +61,12 @@ static char * athelp[] =
     "ATTRANS# - Set ASCII translation",
     "ATVER    - Show MidiLink version",
     "ATZ      - Reset modem",
+    "AT&D1    - DTR mode normal",
+    "AT&D2    - DTR drop causes hangup",
+    "AT&K0    - Disable  flow control",
+    "AT&K3    - RTS/CTS  flow control",
+    "AT&K4    - XON/XOFF flow control",
+    "+++ATH   - Hang-up.",
     NULL
 };
 

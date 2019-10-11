@@ -132,7 +132,7 @@ The MidiLink.INI file:
                                             this for serial connection
                                             for gaming (Populous)). This 
                                             overrides arg '38400' (UDP only) 
-
+      
       UDP_FLOW           = 0            --> This sets the default Flow
                                             Control for UDP option
                                             0 = none 3 = CTS/RTS 
@@ -177,6 +177,10 @@ The MidiLink.INI file:
 
       MIDI_BAUD          = 38400        --> Set MIDI baud to 38400 
                                             this is for [A0486] 
+
+      TCP_DTR            = 1            --> This sets the DTR behavior
+                                            1 = Normal
+                                            2 = DTR drop cause hangup 
 
       TCP_FLOW           = 0            --> This sets the default Flow
                                             Control for TCP option
