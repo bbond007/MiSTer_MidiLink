@@ -319,12 +319,12 @@ void * tcplst_thread_function (void * x)
             misc_print(1, "CONNECT --> %s\n", buf);
             if(socket_out == -1)
             {
-                //misc_swrite_no_trans(fdSerial, "\r\nRING");
+                misc_swrite_no_trans(fdSerial, "\r\nRING");
                 if(MODEMSOUND)
                     set_pcm_volume(modemVolume);
                 play_ring_sound(buf);
                 play_connect_sound(buf);
-                //misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 serial2_set_DCD(fdSerial, TRUE);
                 do
                 {
@@ -449,7 +449,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                     serial2_set_DCD(fdSerial, FALSE);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
-                    //misc_swrite(fdSerial, tmp);
+                    misc_swrite(fdSerial, tmp);
                     sleep(1);
                     misc_swrite_no_trans(fdSerial, "OK\r\n");
                 }
