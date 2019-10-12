@@ -215,12 +215,8 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATBAUD   - Show baud rate menu.
       ATDIR    - Show dialing Directory (/media/fat/linux/MidiLink.DIR)
       ATDT     - Dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
-      +++ATH   - Hang-up 
       ATINI    - Show MidiLink.INI (/media/fat/linux/MidiLink.INI)
       ATIP     - Show IP address --> ATIP
-      AT&K0    - Disable local flow control
-      AT&K3    - RTS/CTS bidirectional hardware flow control
-      AT&K4    - XON/XOFF bidirectional software flow control
       ATMID1   - Switch soft-synth to FluidSynth
       ATMID2   - Switch soft-synth to MUNT
       ATMID    - Play MIDI file (see file picker)
@@ -238,8 +234,16 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATTEL0   - Disable basic telnet negotiation 
       ATTEL1   - Enable basic telnet negotiation (default)
       ATTRANS# - Set ASCII translation (0-NONE, 1-PETSKII, 2-ATASCII)
+      ATQ0     - Verbose result codes (defualt)
+      ATQ1     - Suppress result codes
       ATVER    - Show MidiLink version
       ATZ      - Reset modem 
+      AT&D0    - DTR Mode normal (default)
+      AT&D2    - DTR drop causes modem to hangup
+      AT&K0    - Disable local flow control
+      AT&K3    - RTS/CTS bidirectional hardware flow control
+      AT&K4    - XON/XOFF bidirectional software flow control
+      +++ATH   - Hang-up 
 
 Navigation within the file picker - ATSZ, ATMIDI and ATMP3
 

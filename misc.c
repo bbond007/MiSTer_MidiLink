@@ -59,14 +59,16 @@ static char * athelp[] =
     "ATTEL0   - Disable telnet negotiation",
     "ATTEL1   - Enable telnet negotiation",
     "ATTRANS# - Set ASCII translation",
+    "ATQ0     - Verbose result codes",
+    "ATQ1     - Suppress result codes",
     "ATVER    - Show MidiLink version",
     "ATZ      - Reset modem",
-    "AT&D1    - DTR mode normal",
+    "AT&D0    - DTR mode normal",
     "AT&D2    - DTR drop causes hangup",
     "AT&K0    - Disable  flow control",
     "AT&K3    - RTS/CTS  flow control",
     "AT&K4    - XON/XOFF flow control",
-    "+++ATH   - Hang-up.",
+    "+++ATH   - Hang-up",
     NULL
 };
 
@@ -188,6 +190,7 @@ void misc_swrite(int fdSerial, const char* format, ... )
 //  void misc_swrite_no_trans(int priority, const char* format, ... )
 //  PETSKII translation seems to screw uo Quantup-link because its looking for "connect" vs "CONNECT"
 //
+
 void misc_swrite_no_trans(int fdSerial, const char* format, ... )
 {
     char buf[512];
@@ -886,4 +889,54 @@ int misc_get_core_name(char * buf, int maxBuf)
         misc_print(0, "ERROR: misc_get_core_name() : Unable to open --> '%s'\n", fileName);
         return FALSE;
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// char * misc_hayes_flow_to_str(int flow) 
+//
+char * misc_hayes_flow_to_str(int flow)
+{
+    switch(flow)
+    {
+        case 0: return "Diasble Flow-control";
+        case 3: return "RTS/CTS";
+        case 4: return "XON/XOFF";
+        default: 
+            return "UNKNOWN";
+    }
+    
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// char * misc_hayes_DTR_to_str(int dtr) 
+//
+char * misc_hayes_DTR_to_str(int dtr)
+{
+    switch(dtr)
+    {
+        case 1: return "Normal";
+        case 2: return "Hangup";
+        default: 
+            return "UNKNOWN";
+    }
+    
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// char * misc_hayes_ATQ_to_str(int dtr) 
+//
+char * misc_hayes_ATQ_to_str(int dtr)
+{
+    switch(dtr)
+    {
+        case 0: return "Normal";
+        case 1: return "Quite - no result codes";
+        default: 
+            return "UNKNOWN";
+    }
+    
 }

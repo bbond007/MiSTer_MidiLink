@@ -35,6 +35,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "directory.h"
 #include "modem_snd.h"
 
+#define DEFAULT_MODEMSOUND     TRUE
+#define DEFAULT_modemVolume   -1
+#define DEFAULT_TCPAsciiTrans  AsciiNoTrans
+#define DEFAULT_TCPTermRows    22
+#define DEFAULT_TCPFlow       -1
+#define DEFAULT_TCPDTR         1
+#define DEFAULT_TCPQuiet       0
+
 enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
 int                     MIDI_DEBUG	       = TRUE;
@@ -62,20 +70,22 @@ char 			MUNTOptions[30]        = "";
 int                     MP3Volume              = -1;
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
-int                     modemVolume            = -1;
-int 			midilinkPriority       = 0;
+int                     modemVolume            = DEFAULT_modemVolume;
+int 			midilinkPriority       =  0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
 int 			MIDIBaudRate           = -1;
-enum ASCIITRANS         TCPAsciiTrans          = AsciiNoTrans;
-int                     TCPFlow                = -1;
-int                     TCPDTR                 =  1;
+enum ASCIITRANS         TCPAsciiTrans          = DEFAULT_TCPAsciiTrans;
+int                     TCPFlow                = DEFAULT_TCPFlow;
+int                     TCPDTR                 = DEFAULT_TCPDTR;
 int                     UDPFlow                = -1;
-int                     MODEMSOUND             = TRUE;
+int                     MODEMSOUND             = DEFAULT_MODEMSOUND;
+int                     TCPQuiet               = DEFAULT_TCPQuiet;
+
 int 			TCPATHDelay            = 900;
 int                     MUNTCPUMask            = 1;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
-unsigned int 		TCPTermRows            = 22;
+unsigned int 		TCPTermRows            = DEFAULT_TCPTermRows;
 unsigned int            DELAYSYSEX	       = FALSE;
 unsigned int 		UDPServerPort          = 1999;
 unsigned int 		TCPServerPort          = 23;
@@ -320,12 +330,14 @@ void * tcplst_thread_function (void * x)
             misc_print(1, "CONNECT --> %s\n", buf);
             if(socket_out == -1)
             {
-                misc_swrite_no_trans(fdSerial, "\r\nRING");
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nRING");
                 if(MODEMSOUND)
                     set_pcm_volume(modemVolume);
                 play_ring_sound(buf);
                 play_connect_sound(buf);
-                misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 serial2_set_DCD(fdSerial, TRUE);
                 do
                 {
@@ -343,7 +355,8 @@ void * tcplst_thread_function (void * x)
                         misc_print(1, "tcplst_thread_function() --> Connection Closed.\n");
                     }
                 } while (socket_in != -1);
-                misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
                 serial2_set_DCD(fdSerial, FALSE);
             }
             else
@@ -389,7 +402,8 @@ void * tcpsock_thread_function (void * x)
     socket_out = -1;
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
-    misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
+    if(TCPQuiet == 0)
+        misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
     pthread_exit(NULL);
 }
 
@@ -452,7 +466,8 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     misc_swrite(fdSerial, tmp);
                     sleep(1);
-                    misc_swrite_no_trans(fdSerial, "OK\r\n");
+                    if(TCPQuiet == 0)
+                        misc_swrite_no_trans(fdSerial, "OK\r\n");
                 }
                 else
                     misc_print(1, "HANG-UP Rejected --> %d\n", delay);
@@ -678,7 +693,8 @@ int handle_at_command(char * lineBuf)
                     do_telnet_negotiate();
                 play_ring_sound(tmp);
                 play_connect_sound(tmp);
-                misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 serial_do_tcdrain(fdSerial);
                 sleep(1);
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
@@ -870,7 +886,6 @@ int handle_at_command(char * lineBuf)
         {
             for (int i = 50; i > 0; i--)
                 misc_swrite(fdSerial, "\r\n%2d", i);
-            misc_swrite(fdSerial, "\r\n");
         }
         else
         {
@@ -990,9 +1005,37 @@ int handle_at_command(char * lineBuf)
             break;
         }
     }
+    else if (memcmp(lineBuf, "ATQ", 3) == 0)
+    {
+        switch(lineBuf[3])
+        {
+        case '0' :
+            TCPQuiet = 0;
+            misc_print(1, "Setting result code mode --> Verbose\n");
+            break;
+        case '1' :
+            TCPQuiet = 1;
+            misc_print(1, "Setting result code mode --> Quiet\n");
+            break;
+        default:
+            misc_swrite(fdSerial,"\r\nUnsupported result code mode --> '%s'", &lineBuf[3]);
+            break;
+        }
+    }
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
-        //todo reset stuff...
+        misc_print(1, "Resetting TCP defaults...\n");
+        MODEMSOUND    = DEFAULT_MODEMSOUND;
+        modemVolume   = DEFAULT_modemVolume;
+        TCPAsciiTrans = DEFAULT_TCPAsciiTrans;
+        TCPTermRows   = DEFAULT_TCPTermRows;
+        TCPFlow       = DEFAULT_TCPFlow;
+        TCPDTR        = DEFAULT_TCPDTR;
+        TCPQuiet      = DEFAULT_TCPQuiet;
+        misc_print(1, "Reloading INI defaults...\n");
+        misc_get_core_name(tmp, sizeof(tmp));
+        if(misc_check_file(midiLinkINI))
+            ini_read_ini(midiLinkINI, tmp, 1);
     }
     else if (memcmp(lineBuf, "AT", 2) == 0)
     {
@@ -1053,7 +1096,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     else
                         lbp = NULL;
                 }
-                if (!CONNECT)
+                if (!CONNECT && TCPQuiet == 0)
                     misc_swrite_no_trans(fdSerial, "\r\nOK\r\n");
             }
             else
@@ -1289,7 +1332,7 @@ int main(int argc, char *argv[])
     misc_print(0, "CORE --> '%s'\n", coreName);
 
     if(misc_check_file(midiLinkINI))
-        ini_read_ini(midiLinkINI, coreName);
+        ini_read_ini(midiLinkINI, coreName, 0);
 
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;

@@ -44,22 +44,6 @@ int serial_set_interface_attribs(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * serial_hayes_flow_to_str(int flow) 
-//
-char * serial_hayes_flow_to_str(int flow)
-{
-    switch(flow)
-    {
-        case 0: return "Diasble Flow-control";
-        case 3: return "RTS/CTS";
-        case 4: return "XON/XOFF";
-        default: 
-            return "UNKNOWN";
-    }
-    
-}
-///////////////////////////////////////////////////////////////////////////////////////
-//
 // int serial_set_flow_control(int fdSerial, int hayesMode) 
 //
 int serial_set_flow_control(int fdSerial, int hayesMode)
@@ -116,22 +100,6 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
 void serial_do_tcdrain(int fdSerial)
 {
     tcdrain(fdSerial);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// char * serial_hayes_DTR_to_str(int dtr) 
-//
-char * serial_hayes_DTR_to_str(int dtr)
-{
-    switch(dtr)
-    {
-        case 1: return "Normal";
-        case 2: return "Hangup";
-        default: 
-            return "UNKNOWN";
-    }
-    
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
