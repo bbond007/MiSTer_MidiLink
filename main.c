@@ -1025,13 +1025,14 @@ int handle_at_command(char * lineBuf)
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
         misc_print(1, "Resetting TCP defaults...\n");
-        MODEMSOUND    = DEFAULT_MODEMSOUND;
-        modemVolume   = DEFAULT_modemVolume;
-        TCPAsciiTrans = DEFAULT_TCPAsciiTrans;
-        TCPTermRows   = DEFAULT_TCPTermRows;
-        TCPFlow       = DEFAULT_TCPFlow;
-        TCPDTR        = DEFAULT_TCPDTR;
-        TCPQuiet      = DEFAULT_TCPQuiet;
+        MODEMSOUND       = DEFAULT_MODEMSOUND;
+        modemVolume      = DEFAULT_modemVolume;
+        TCPAsciiTrans    = DEFAULT_TCPAsciiTrans;
+        TCPTermRows      = DEFAULT_TCPTermRows;
+        TCPFlow          = DEFAULT_TCPFlow;
+        TCPDTR           = DEFAULT_TCPDTR;
+        TCPQuiet         = DEFAULT_TCPQuiet;
+        TELNET_NEGOTIATE = TRUE;
         misc_print(1, "Reloading INI defaults...\n");
         misc_get_core_name(tmp, sizeof(tmp));
         if(misc_check_file(midiLinkINI))
@@ -1040,8 +1041,9 @@ int handle_at_command(char * lineBuf)
     else if (memcmp(lineBuf, "AT", 2) == 0)
     {
         if (lineBuf[2] != (char) 0x00)
-        {
+        {	
             misc_swrite(fdSerial, "\r\nUnknown Command '%s'", &lineBuf[2]);
+            misc_print(1, "ERROR : Unknown AT command --> '%s'\n", &lineBuf[2]);
         }
     }
 

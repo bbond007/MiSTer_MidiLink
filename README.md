@@ -234,8 +234,8 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATTEL0   - Disable basic telnet negotiation 
       ATTEL1   - Enable basic telnet negotiation (default)
       ATTRANS# - Set ASCII translation (0-NONE, 1-PETSKII, 2-ATASCII)
-      ATQ0     - Verbose result codes (defualt)
-      ATQ1     - Suppress result codes
+      ATQ0     - Verbose result codes (default)
+      ATQ1     - Suppress result codes (such as RING/CONNECT/OK)
       ATVER    - Show MidiLink version
       ATZ      - Reset modem 
       AT&D0    - DTR Mode normal (default)
