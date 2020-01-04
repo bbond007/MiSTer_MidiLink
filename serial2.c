@@ -23,9 +23,9 @@ char * baudStr[4] = {" 0-110   1-300    2-600    3-1200",
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
+// int serial2_set_baud(char * serialDevice, int fdSerial, int baud)
 //
-int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
+int serial2_set_baud(char * serialDevice, int fdSerial, int baud)
 {
     struct termios2 tio;
     misc_print(0, "Setting %s to %d baud.\n",serialDevice, baud);
@@ -40,10 +40,10 @@ int setbaud_set_baud(char * serialDevice, int fdSerial, int baud)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int setbaud_set_baud_31250(char * serialDevice)
+// int serial2_set_baud_31250(char * serialDevice)
 // This changes the UART clock divisor to make 38400 BPS into 31250 BPS
 // I'm not using this anymore but it does seem to work :)
-int setbaud_set_baud_31250(char * serialDevice)
+int serial2_set_baud_31250(char * serialDevice)
 {
     char temp[100];
     sprintf(temp, "/bin/setserial -v %s spd_cust divisor 200", serialDevice);
@@ -53,10 +53,10 @@ int setbaud_set_baud_31250(char * serialDevice)
                          
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-//  int setbaud_indexof(int baud)
+//  int serial2_indexof(int baud)
 // 
 
-int setbaud_indexof(int baud)
+int serial2_indexof(int baud)
 {
     for(int index = 0; index < 13; index++)
         if (baudRates[index] == baud) return index;
@@ -65,10 +65,10 @@ int setbaud_indexof(int baud)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int setbaud_baud_at_index(int index)
+// int serial2_baud_at_index(int index)
 // 
 
-int setbaud_baud_at_index(int index)
+int serial2_baud_at_index(int index)
 {
     if (index >= 0 && index <= 12)
         return baudRates[index];
@@ -78,12 +78,12 @@ int setbaud_baud_at_index(int index)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int setbaud_is_valid_rate (int baud)
+// int serial2_is_valid_rate (int baud)
 // 
-int setbaud_is_valid_rate (int baud)
+int serial2_is_valid_rate (int baud)
 {
     /*
-    if (setbaud_indexof(baud) != -1) 
+    if (serial2_indexof(baud) != -1) 
         return TRUE;
     else
         return FALSE;
@@ -97,9 +97,9 @@ int setbaud_is_valid_rate (int baud)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// setbaud_show_menu(int fdSerial)
+// serial2_show_menu(int fdSerial)
 // 
-int setbaud_show_menu(int fdSerial)
+int serial2_show_menu(int fdSerial)
 {
     char line[] = "\r\n----------------------------------";
     misc_swrite(fdSerial, line);
@@ -115,12 +115,35 @@ int setbaud_show_menu(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// setbaud_show_menu(int fdSerial)
+// int serial2_get_DSR(int fdSerial)
 // 
-int setbaud_getDSR(int fd)
+int serial2_get_DSR(int fdSerial)
 {
     int s;
     /* Read terminal status line: Data Set Ready */
-    ioctl(fd, TIOCMGET, &s);
+    ioctl(fdSerial, TIOCMGET, &s);
     return (s & TIOCM_DSR) != 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int serial2_set_DTR(int fdSerial, int on)
+// 
+int serial2_set_DTR(int fdSerial, int on)
+{
+    int controlbits = TIOCM_DTR;
+    /* Set terminal status line: Data Set Ready */
+    return ioctl(fdSerial, on?TIOCMBIS:TIOCMBIC, &controlbits);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int serial2_set_DCD(int fdSerial, int on)
+// 
+int serial2_set_DCD(int fdSerial, int on)
+{
+    int result;
+    result = serial2_set_DTR(fdSerial, on);
+    misc_print(1, "Setting DCD --> %s\n",on?"TRUE":"FALSE");
+    return result; 
 }

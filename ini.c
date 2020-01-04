@@ -24,6 +24,8 @@ extern int             UDPBaudRate;
 extern int             TCPBaudRate;
 extern int             MIDIBaudRate;
 extern int             TCPFlow;
+extern int             TCPDTR;
+extern int             TCPQuiet;
 extern int             UDPFlow;
 extern unsigned int    UDPServerFilterIP;
 extern unsigned int    DELAYSYSEX;
@@ -40,6 +42,7 @@ extern char            modemRingSndWAV[50];
 extern int             TCPATHDelay;
 extern enum ASCIITRANS TCPAsciiTrans;
 extern enum SOFTSYNTH  TCPSoftSynth;
+extern int             MUNTCPUMask;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -117,6 +120,10 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("MUNT_ROM_PATH", key) == 0)
     {
         ini_str(key, value, MUNTRomPath, sizeof(MUNTRomPath));
+    }
+    else if (strcmp("MUNT_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &MUNTCPUMask);
     }
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
@@ -196,9 +203,17 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, MIDIPath, sizeof(MIDIPath));
     }
+    else if (strcmp("TCP_DTR", key) == 0)
+    {
+        ini_int(value, &TCPDTR);
+    }
     else if (strcmp("TCP_FLOW", key) == 0)
     {
         ini_int(value, &TCPFlow);
+    }
+    else if (strcmp("TCP_QUIET", key) == 0)
+    {
+        ini_int(value, &TCPQuiet);
     }
     else if(strcmp("TCP_SOUND", key) == 0)
     {
@@ -255,84 +270,87 @@ char ini_process_key_value_pair(char * key, char * value)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void ini_print_settings()
+// void ini_print_settings(int priority)
 //
-void ini_print_settings()
+void ini_print_settings(int p)
 {
-    misc_print(0, "Settings:\n");
+    misc_print(p, "Settings:\n");
     if(midilinkPriority != 0)
-        misc_print(0, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
+        misc_print(p, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
-        misc_print(0, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");
-    misc_print(0, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
-    misc_print(0, "  - MUNT_ROM_PATH      --> '%s'\n", MUNTRomPath);
+        misc_print(p, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");
+    misc_print(p, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
+    misc_print(p, "  - MUNT_ROM_PATH      --> '%s'\n", MUNTRomPath);
     if(MP3Volume != -1)
-        misc_print(0, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
+        misc_print(p, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
     else
-        misc_print(0, "  - MP3_VOLUME         --> Default (don't set)\n");
+        misc_print(p, "  - MP3_VOLUME         --> Default (don't set)\n");
     if(muntVolume != -1)
-        misc_print(0, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
+        misc_print(p, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
-        misc_print(0, "  - MUNT_VOLUME        --> Default (don't set)\n");
+        misc_print(p, "  - MUNT_VOLUME        --> Default (don't set)\n");
+    misc_print(p, "  - MUNT_CPU_MASK      --> %d\n",MUNTCPUMask);
     if(fsynthVolume != -1)
-        misc_print(0, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
+        misc_print(p, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
-        misc_print(0, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
+        misc_print(p, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
     if(fsynthVolume != -1)
-        misc_print(0, "  - MODEM_VOLUME       --> %d%c\n", modemVolume, '%');
+        misc_print(p, "  - MODEM_VOLUME       --> %d%c\n", modemVolume, '%');
     else
-        misc_print(0, "  - MODEM_VOLUME       --> Default (don't set)\n");
-    misc_print(0, "  - MIXER_CONTROL      --> %s\n", mixerControl);
-    misc_print(0, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
-    misc_print(0, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
+        misc_print(p, "  - MODEM_VOLUME       --> Default (don't set)\n");
+    misc_print(p, "  - MIXER_CONTROL      --> %s\n", mixerControl);
+    misc_print(p, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
+    misc_print(p, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
                misc_ipaddr_is_multicast(UDPServer)?" MULTICAST":"");
-    misc_print(0, "  - UDP_SERVER_PORT    --> %d\n",     UDPServerPort);
+    misc_print(p, "  - UDP_SERVER_PORT    --> %d\n",     UDPServerPort);
     if(UDPBaudRate > 0)
-        misc_print(0, "  - UDP_BAUD           --> %d\n", UDPBaudRate);
+        misc_print(p, "  - UDP_BAUD           --> %d\n", UDPBaudRate);
     else
-        misc_print(0, "  - UDP_BAUD           --> Default (don't change)\n");
+        misc_print(p, "  - UDP_BAUD           --> Default (don't change)\n");
     if(UDPBaudRate > 0)
-        misc_print(0, "  - MIDI_BAUD          --> %d\n", MIDIBaudRate);
+        misc_print(p, "  - MIDI_BAUD          --> %d\n", MIDIBaudRate);
     else
-        misc_print(0, "  - MIDI_BAUD          --> Default (don't change)\n");    
-    misc_print(0, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
+        misc_print(p, "  - MIDI_BAUD          --> Default (don't change)\n");    
+    misc_print(p, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
     if(UDPFlow != -1)
-        misc_print(0, "  - UDP_FLOW           --> (%d) %s\n", UDPFlow, serial_hayes_flow_to_str(UDPFlow));
+        misc_print(p, "  - UDP_FLOW           --> (%d) %s\n", UDPFlow, misc_hayes_flow_to_str(UDPFlow));
     else
-        misc_print(0, "  - UDP_FLOW           --> Default (don't change)\n");
+        misc_print(p, "  - UDP_FLOW           --> Default (don't change)\n");
     if(TCPBaudRate > 0)
-        misc_print(0, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
+        misc_print(p, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
     else
-        misc_print(0, "  - TCP_BAUD           --> Default (don't change)\n");
+        misc_print(p, "  - TCP_BAUD           --> Default (don't change)\n");
+    misc_print(p, "  - TCP_DTR            --> (%d) %s\n", TCPDTR, misc_hayes_DTR_to_str(TCPDTR));
+    misc_print(p, "  - TCP_QUIET          --> (%d) %s\n", TCPQuiet, misc_hayes_ATQ_to_str(TCPQuiet));
     if(TCPFlow != -1)
-        misc_print(0, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, serial_hayes_flow_to_str(TCPFlow));
+        misc_print(p, "  - TCP_FLOW           --> (%d) %s\n", TCPFlow, misc_hayes_flow_to_str(TCPFlow));
     else
-        misc_print(0, "  - TCP_FLOW           --> Default (don't change)\n");
-    misc_print(0, "  - TCP_ATH_DELAY      --> %d\n",    TCPATHDelay);
-    misc_print(0, "  - TCP_SERVER_PORT    --> %d\n",    TCPServerPort);
-    misc_print(0, "  - TCP_TERM_ROWS      --> %d\n",    TCPTermRows);
-    misc_print(0, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
-    misc_print(0, "  - TCP_TERM_DOWNLOAD  --> '%s'\n",  downloadPath);
-    misc_print(0, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
-    misc_print(0, "  - TCP_TERM_MIDI      --> '%s'\n",    MIDIPath);
-    misc_print(0, "  - TCP_TERM_SYNTH     --> %s\n",   (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
-    misc_print(0, "  - TCP_TERM_TRANS     --> %s\n",    misc_trans_to_str(TCPAsciiTrans));
-    misc_print(0, "  - TCP_SOUND          --> %s\n",    MODEMSOUND?"TRUE":"FALSE");
+        misc_print(p, "  - TCP_FLOW           --> Default (don't change)\n");
+    misc_print(p, "  - TCP_ATH_DELAY      --> %d\n",    TCPATHDelay);
+    misc_print(p, "  - TCP_SERVER_PORT    --> %d\n",    TCPServerPort);
+    misc_print(p, "  - TCP_TERM_ROWS      --> %d\n",    TCPTermRows);
+    misc_print(p, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
+    misc_print(p, "  - TCP_TERM_DOWNLOAD  --> '%s'\n",  downloadPath);
+    misc_print(p, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
+    misc_print(p, "  - TCP_TERM_MIDI      --> '%s'\n",    MIDIPath);
+    misc_print(p, "  - TCP_TERM_SYNTH     --> %s\n",   (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
+    misc_print(p, "  - TCP_TERM_TRANS     --> %s\n",    misc_trans_to_str(TCPAsciiTrans));
+    misc_print(p, "  - TCP_SOUND          --> %s\n",    MODEMSOUND?"TRUE":"FALSE");
     if (strlen(modemDialSndWAV) > 0)
-        misc_print(0, "  - TCP_SOUND_DIAL     --> '%s'\n",  modemDialSndWAV);
+        misc_print(p, "  - TCP_SOUND_DIAL     --> '%s'\n",  modemDialSndWAV);
     else
-        misc_print(0, "  - TCP_SOUND_DIAL     --> Software\n");
+        misc_print(p, "  - TCP_SOUND_DIAL     --> Software\n");
     if (strlen(modemRingSndWAV) > 0)
-        misc_print(0, "  - TCP_SOUND_RING     --> '%s'\n",  modemRingSndWAV);
+        misc_print(p, "  - TCP_SOUND_RING     --> '%s'\n",  modemRingSndWAV);
     else
-        misc_print(0, "  - TCP_SOUND_RING     --> Software\n");
+        misc_print(p, "  - TCP_SOUND_RING     --> Software\n");
     if (strlen(modemConnectSndWAV) > 0)
-        misc_print(0, "  - TCP_SOUND_CONNECT  --> '%s'\n",  modemConnectSndWAV);
+        misc_print(p, "  - TCP_SOUND_CONNECT  --> '%s'\n",  modemConnectSndWAV);
     else
-        misc_print(0, "  - TCP_SOUND_CONNECT  --> Software\n");
-    misc_print(0, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
-    misc_print(0, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
-    misc_print(0, "\n");
+        misc_print(p, "  - TCP_SOUND_CONNECT  --> Software\n");
+    misc_print(p, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
+    misc_print(p, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
+    misc_print(p, "\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -348,7 +366,7 @@ char ini_first_char(char * str, int len)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_parse_line(char * str, int len, char * key, int keyMax, char * value, int valMax)
+// int ini_parse_line(char * str, int len, char * key, int keyMax, char * val, int valMax, char * sec, int secMax)
 //
 int ini_parse_line(char * str, int len, char * key, int keyMax, char * val, int valMax, char * sec, int secMax)
 {
@@ -427,9 +445,11 @@ int ini_parse_line(char * str, int len, char * key, int keyMax, char * val, int 
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int ini_read_loop (char * fileName, char * key, int keyMax, char * value, int valMax)
+// int ini_read_loop (char * fileName, char * section, int priority, char * key,  
+//                    int keyMax, char * val, int valMax, char * sec, int secMax)
 //
-int ini_read_loop (char * fileName, char * section, char * key, int keyMax, char * val, int valMax, char * sec, int secMax)
+int ini_read_loop (char * fileName, char * section, int priority, char * key, 
+                   int keyMax, char * val, int valMax, char * sec, int secMax)
 {
     int count;
     char str[1024];
@@ -447,7 +467,7 @@ int ini_read_loop (char * fileName, char * section, char * key, int keyMax, char
                         ini_process_key_value_pair(key, val);
         }
         fclose(file);
-        ini_print_settings();
+        ini_print_settings(priority);
         return TRUE;
     }
     else
@@ -461,10 +481,10 @@ int ini_read_loop (char * fileName, char * section, char * key, int keyMax, char
 //
 // int ini_read_ini(char * fileName, char * section)
 //
-int ini_read_ini(char * fileName, char * section)
+int ini_read_ini(char * fileName, char * section, int priority)
 {
     char key[30];
     char val[150];
     char sec[30];
-    ini_read_loop(fileName, section, key, sizeof(key), val, sizeof(val), sec, sizeof(sec));
+    ini_read_loop(fileName, section, priority, key, sizeof(key), val, sizeof(val), sec, sizeof(sec));
 }

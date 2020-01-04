@@ -44,22 +44,6 @@ int serial_set_interface_attribs(int fdSerial)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * serial_hayes_flow_to_str(int hayesModem) 
-//
-char * serial_hayes_flow_to_str(int hayesModem)
-{
-    switch(hayesModem)
-    {
-        case 0: return "Diasble Flow-control";
-        case 3: return "RTS/CTS";
-        case 4: return "XON/XOFF";
-        default: 
-            return "UNKNOWN";
-    }
-    
-}
-///////////////////////////////////////////////////////////////////////////////////////
-//
 // int serial_set_flow_control(int fdSerial, int hayesMode) 
 //
 int serial_set_flow_control(int fdSerial, int hayesMode)
@@ -116,5 +100,20 @@ int serial_set_flow_control(int fdSerial, int hayesMode)
 void serial_do_tcdrain(int fdSerial)
 {
     tcdrain(fdSerial);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//void serial_set_timeout(int fdSerial, int timeout)
+//
+void serial_set_timeout(int fdSerial, int timeout)
+{
+    struct termios termios;
+    //misc_print(0, "Serial set timeout --> %d\n",timeout);
+    tcgetattr(fdSerial, &termios);
+    termios.c_lflag &= ~ICANON;         // Set non-canonical mode 
+    termios.c_cc[VTIME] = timeout * 10; // Set timeout seconds
+    termios.c_cc[VMIN] = 0;
+    tcsetattr(fdSerial, TCSANOW, &termios);
 }
 

@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <linux/soundcard.h>
 #include <ctype.h>
 #include <sys/time.h>
-#include "setbaud.h"
 #include "serial.h"
+#include "serial2.h"
 #include "config.h"
 #include "misc.h"
 #include "udpsock.h"
@@ -34,6 +34,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ini.h"
 #include "directory.h"
 #include "modem_snd.h"
+
+#define DEFAULT_MODEMSOUND     TRUE
+#define DEFAULT_modemVolume   -1
+#define DEFAULT_TCPAsciiTrans  AsciiNoTrans
+#define DEFAULT_TCPTermRows    22
+#define DEFAULT_TCPFlow       -1
+#define DEFAULT_TCPDTR         1
+#define DEFAULT_TCPQuiet       0
 
 enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
@@ -62,18 +70,22 @@ char 			MUNTOptions[30]        = "";
 int                     MP3Volume              = -1;
 int 			muntVolume             = -1;
 int 			fsynthVolume           = -1;
-int                     modemVolume            = -1;
-int 			midilinkPriority       = 0;
+int                     modemVolume            = DEFAULT_modemVolume;
+int 			midilinkPriority       =  0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
 int 			MIDIBaudRate           = -1;
-enum ASCIITRANS         TCPAsciiTrans          = AsciiNoTrans;
-int                     TCPFlow                = -1;
+enum ASCIITRANS         TCPAsciiTrans          = DEFAULT_TCPAsciiTrans;
+int                     TCPFlow                = DEFAULT_TCPFlow;
+int                     TCPDTR                 = DEFAULT_TCPDTR;
 int                     UDPFlow                = -1;
-int                     MODEMSOUND             = TRUE;
+int                     MODEMSOUND             = DEFAULT_MODEMSOUND;
+int                     TCPQuiet               = DEFAULT_TCPQuiet;
+
 int 			TCPATHDelay            = 900;
+int                     MUNTCPUMask            = 1;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
-unsigned int 		TCPTermRows            = 22;
+unsigned int 		TCPTermRows            = DEFAULT_TCPTermRows;
 unsigned int            DELAYSYSEX	       = FALSE;
 unsigned int 		UDPServerPort          = 1999;
 unsigned int 		TCPServerPort          = 23;
@@ -125,8 +137,13 @@ int start_munt()
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
         misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
     else
-        misc_print(0, "Starting --> mt32d\n");
-    sprintf(buf, "taskset %d mt32d %s -f %s &", CPUMASK, MUNTOptions, MUNTRomPath);
+    {
+        misc_print(0, "Starting --> mt32d");
+        if (CPUMASK != MUNTCPUMask)
+            misc_print(0, " : CPUMASK = %d", MUNTCPUMask);
+        misc_print(0, "\n");
+    }
+    sprintf(buf, "taskset %d mt32d %s -f %s &", MUNTCPUMask, MUNTOptions, MUNTRomPath);
     system(buf);
     int loop = 0;
     do
@@ -233,7 +250,7 @@ void play_connect_sound(char * tmp)
         killall_mpg123(0);
         killall_aplay(0);
         if(strlen(modemConnectSndWAV) > 0 && misc_check_file(modemConnectSndWAV))
-        {    
+        {
             misc_print(1, "Playing WAV --> '%s'\n", modemConnectSndWAV);
             sprintf(tmp, "aplay %s", modemConnectSndWAV);
             system(tmp);
@@ -300,7 +317,7 @@ void * tcplst_thread_function (void * x)
 {
     unsigned char buf[100];
     int rdLen;
-    
+
     do
     {
         socket_in = tcpsock_accept(socket_lst);
@@ -313,12 +330,15 @@ void * tcplst_thread_function (void * x)
             misc_print(1, "CONNECT --> %s\n", buf);
             if(socket_out == -1)
             {
-                misc_swrite_no_trans(fdSerial, "\r\nRING");
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nRING");
                 if(MODEMSOUND)
                     set_pcm_volume(modemVolume);
                 play_ring_sound(buf);
                 play_connect_sound(buf);
-                misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                serial2_set_DCD(fdSerial, TRUE);
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -329,13 +349,15 @@ void * tcplst_thread_function (void * x)
                     }
                     else if (rdLen == 0)
                     {
-                        if(socket_in != -1) 
+                        if(socket_in != -1)
                             close(socket_in);
                         socket_in = -1;
                         misc_print(1, "tcplst_thread_function() --> Connection Closed.\n");
                     }
                 } while (socket_in != -1);
-                misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
+                serial2_set_DCD(fdSerial, FALSE);
             }
             else
             {
@@ -380,7 +402,8 @@ void * tcpsock_thread_function (void * x)
     socket_out = -1;
     if(MIDI_DEBUG)
         misc_print(1, "TCPSOCK Thread fuction exiting.\n", socket_out);
-    misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
+    if(TCPQuiet == 0)
+        misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
     pthread_exit(NULL);
 }
 
@@ -430,7 +453,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
             plusCount++;
             NEEDSTOP = TRUE;
             break;
-        case 0x0d:// [RETURN]
+        case 0x0D:// [RETURN]
             if(plusCount >= 3 && iLineBuf >= 3 && memcmp(lineBuf, "ATH", 3) == 0)
             {
                 int delay = misc_get_timeval_diff(&start, &stop);
@@ -438,11 +461,13 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                 {
                     tcpsock_close(*socket);
                     *socket =  -1;
+                    serial2_set_DCD(fdSerial, FALSE);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     misc_swrite(fdSerial, tmp);
                     sleep(1);
-                    misc_swrite_no_trans(fdSerial, "OK\r\n");
+                    if(TCPQuiet == 0)
+                        misc_swrite_no_trans(fdSerial, "OK\r\n");
                 }
                 else
                     misc_print(1, "HANG-UP Rejected --> %d\n", delay);
@@ -659,6 +684,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 if(MODEMSOUND)
                     sleep(1);
+                serial2_set_DCD(fdSerial, FALSE);
                 socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
             }
             if(socket_out > 0)
@@ -667,10 +693,12 @@ int handle_at_command(char * lineBuf)
                     do_telnet_negotiate();
                 play_ring_sound(tmp);
                 play_connect_sound(tmp);
-                misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
+                if(TCPQuiet == 0)
+                    misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
                 serial_do_tcdrain(fdSerial);
                 sleep(1);
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
+                serial2_set_DCD(fdSerial, TRUE);
                 return TRUE;
             }
         }
@@ -679,14 +707,14 @@ int handle_at_command(char * lineBuf)
     {
         char * baud = &lineBuf[6];
         int iBaud   = strtol(baud, &endPtr, 10);
-        int iTemp   = setbaud_baud_at_index(iBaud);
+        int iTemp   = serial2_baud_at_index(iBaud);
         iBaud = (misc_is_number(baud) && iTemp > 0)?iTemp:iBaud;
-        if (setbaud_is_valid_rate (iBaud))
+        if (serial2_is_valid_rate (iBaud))
         {
             int sec = 10;
             misc_swrite(fdSerial, "\r\nSetting BAUD to %d in %d seconds...", iBaud, sec);
             sleep(sec);
-            setbaud_set_baud(serialDevice, fdSerial, iBaud);
+            serial2_set_baud(serialDevice, fdSerial, iBaud);
             baudRate = iBaud;
             misc_swrite(fdSerial, "\r\nBAUD has been set to %d", iBaud);
         }
@@ -694,7 +722,7 @@ int handle_at_command(char * lineBuf)
         {
             if(baud[0] != 0x00)
                 misc_swrite(fdSerial, "\r\nBAUD rate '%s' is not valid.", baud);
-            setbaud_show_menu(fdSerial);
+            serial2_show_menu(fdSerial);
         }
     }
     else if (memcmp(lineBuf, "ATIP", 4) == 0)
@@ -858,7 +886,6 @@ int handle_at_command(char * lineBuf)
         {
             for (int i = 50; i > 0; i--)
                 misc_swrite(fdSerial, "\r\n%2d", i);
-            misc_swrite(fdSerial, "\r\n");
         }
         else
         {
@@ -891,11 +918,10 @@ int handle_at_command(char * lineBuf)
             else
                 misc_swrite(fdSerial, validOptions);
         }
-        else
-            if(lineBuf[7] != (char) 0x00)
-                misc_swrite(fdSerial, validOptions);
-        misc_swrite(fdSerial, "\r\nASCII translation --> %s", 
-            misc_trans_to_str(TCPAsciiTrans));  
+        else if(lineBuf[7] != (char) 0x00)
+            misc_swrite(fdSerial, validOptions);
+        misc_swrite(fdSerial, "\r\nASCII translation --> %s",
+                    misc_trans_to_str(TCPAsciiTrans));
     }
     else if (memcmp(lineBuf, "ATM", 3) == 0)
     {
@@ -951,17 +977,76 @@ int handle_at_command(char * lineBuf)
     {
         misc_show_at_commands(fdSerial, TCPTermRows);
     }
+    else if (memcmp(lineBuf, "ATUARTTEST", 6) == 0)
+    {
+        if (lineBuf[10] == '!')
+            TCPTermRows  = 0;
+        while (TRUE)
+        {
+            misc_show_at_commands(fdSerial, TCPTermRows);
+            misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
+        }
+    }
+    else if (memcmp(lineBuf, "ATD", 3) == 0)
+    {
+        switch(lineBuf[3])
+        {
+        case '0' :
+        case '1' :
+            TCPDTR = 1;
+            misc_print(1, "Setting DTR mode --> Normal\n");
+            break;
+        case '2' :
+            TCPDTR = 2;
+            misc_print(1, "Setting DTR mode --> Hangup\n");
+            break;
+        default:
+            misc_swrite(fdSerial,"\r\nUnsupported DTR option --> '%s'", &lineBuf[3]);
+            break;
+        }
+    }
+    else if (memcmp(lineBuf, "ATQ", 3) == 0)
+    {
+        switch(lineBuf[3])
+        {
+        case '0' :
+            TCPQuiet = 0;
+            misc_print(1, "Setting result code mode --> Verbose\n");
+            break;
+        case '1' :
+            TCPQuiet = 1;
+            misc_print(1, "Setting result code mode --> Quiet\n");
+            break;
+        default:
+            misc_swrite(fdSerial,"\r\nUnsupported result code mode --> '%s'", &lineBuf[3]);
+            break;
+        }
+    }
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
-        //todo reset stuff...
+        misc_print(1, "Resetting TCP defaults...\n");
+        MODEMSOUND       = DEFAULT_MODEMSOUND;
+        modemVolume      = DEFAULT_modemVolume;
+        TCPAsciiTrans    = DEFAULT_TCPAsciiTrans;
+        TCPTermRows      = DEFAULT_TCPTermRows;
+        TCPFlow          = DEFAULT_TCPFlow;
+        TCPDTR           = DEFAULT_TCPDTR;
+        TCPQuiet         = DEFAULT_TCPQuiet;
+        TELNET_NEGOTIATE = TRUE;
+        misc_print(1, "Reloading INI defaults...\n");
+        misc_get_core_name(tmp, sizeof(tmp));
+        if(misc_check_file(midiLinkINI))
+            ini_read_ini(midiLinkINI, tmp, 1);
     }
     else if (memcmp(lineBuf, "AT", 2) == 0)
     {
         if (lineBuf[2] != (char) 0x00)
-        { 
+        {	
             misc_swrite(fdSerial, "\r\nUnknown Command '%s'", &lineBuf[2]);
+            misc_print(1, "ERROR : Unknown AT command --> '%s'\n", &lineBuf[2]);
         }
     }
+
     return FALSE;
 }
 
@@ -975,7 +1060,7 @@ void do_modem_emulation(char * buf, int bufLen)
     static char lineBuf[150]    = "";
     static char iLineBuf        = 0;
     char * lbp;
-    
+
     show_debug_buf("SER OUT  ", buf, bufLen);
     for (char * p = buf; bufLen-- > 0; p++)
     {
@@ -997,11 +1082,11 @@ void do_modem_emulation(char * buf, int bufLen)
             lbp = lineBuf;
             int CONNECT = FALSE;
             if(iLineBuf > 1 && lineBuf[0] == 'A' && lineBuf[1] == 'T')
-            { 
+            {
                 while (lbp && !CONNECT)
                 {
                     char * amp = strchr(lbp, '&');
-                    if(amp) 
+                    if(amp)
                         *amp = 0x00;
                     CONNECT = handle_at_command(lbp);
                     if(amp)
@@ -1013,7 +1098,7 @@ void do_modem_emulation(char * buf, int bufLen)
                     else
                         lbp = NULL;
                 }
-                if (!CONNECT)
+                if (!CONNECT && TCPQuiet == 0)
                     misc_swrite_no_trans(fdSerial, "\r\nOK\r\n");
             }
             else
@@ -1238,7 +1323,7 @@ int main(int argc, char *argv[])
     int status;
     int midiPort;
     char coreName[30] = "";
-
+    MUNTCPUMask = CPUMASK;
     unsigned char buf[256];
     //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
@@ -1249,7 +1334,7 @@ int main(int argc, char *argv[])
     misc_print(0, "CORE --> '%s'\n", coreName);
 
     if(misc_check_file(midiLinkINI))
-        ini_read_ini(midiLinkINI, coreName);
+        ini_read_ini(midiLinkINI, coreName, 0);
 
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
@@ -1350,8 +1435,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    setbaud_set_baud(serialDevice, fdSerial, baudRate);
+    serial_set_flow_control(fdSerial, 0);
+    serial2_set_baud(serialDevice, fdSerial, baudRate);
     serial_do_tcdrain(fdSerial);
+    serial2_set_DCD(fdSerial, (mode == ModeTCP)?FALSE:TRUE);
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
@@ -1431,6 +1518,8 @@ int main(int argc, char *argv[])
     {
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
+        //serial2_set_DCD(fdSerial, FALSE);
+        serial_set_timeout(fdSerial, 1);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
         {
@@ -1549,6 +1638,20 @@ int main(int argc, char *argv[])
             }
             else if (mode == ModeTCP && socket_in == -1)
                 do_modem_emulation(buf, rdLen);
+        }
+        else if (TCPDTR == 2 && mode == ModeTCP && 
+                 rdLen == 0 && serial2_get_DSR(fdSerial) == FALSE)
+        {   // deal with client hangup via DTR
+            if(socket_out != -1)
+            {
+                tcpsock_close(socket_out);
+                socket_out = -1;
+            }
+            if (socket_in != -1)
+            {
+                close(socket_in);
+                socket_in = -1;
+            }
         }
         else if (rdLen < 0)
             misc_print(1, "ERROR: from read: %d: %s\n", rdLen, strerror(errno));
