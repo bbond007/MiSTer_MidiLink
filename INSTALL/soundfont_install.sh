@@ -9,7 +9,8 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-SF_FILEID="1hO88em6bmTklHWo_WwEFnOgSFhlMEhws"
+#SF_FILEID="1hO88em6bmTklHWo_WwEFnOgSFhlMEhws"
+SF_FILEID="1G53wKnIBMONgOVx0gCOWrBlJaXsyaKml"
 SOUNDFONT_DIR="/media/fat/linux/soundfonts/"
 SF_FILENAME="$SOUNDFONT_DIR/SC-55.sf2"
 GD_COOKIE="/tmp/google_drive_cookie"

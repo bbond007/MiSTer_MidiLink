@@ -688,6 +688,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                             prompt[strlen(prompt) -1] = (char) 0x00;
                             write(fdSerial, &c, 1);
                         }
+                        break;
                     case '-':
                         sprintf(fileName, "..");
                         result = TRUE;
