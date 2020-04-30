@@ -1615,7 +1615,6 @@ int main(int argc, char *argv[])
             misc_print(1, "Sending MT-32 LCD --> '%s'\n", MT32LCDMsg);
             write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
         }
-
         //This main loop handles USB MIDI
         do
         {
