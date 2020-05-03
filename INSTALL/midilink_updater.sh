@@ -67,7 +67,19 @@ else
   echo "Unzipping CM-32 ROMS"
   unzip -o $MT32_ROM_ZIP CM32L* -d $MT32_ROM_DIR
 fi
-echo "Done in:"
+echo "Remounting Linux Filesystem"
+/bin/mount -o remount,rw /
+echo "Setting uartmode 0"
+uartmode 0
+sleep 2
+if [ -f "$MIDILINK_BIN" ]; then
+  echo "Removing old MidiLink"
+else
+  echo "Old MidiLink not found"
+fi
+echo "Downloading MidiLink"
+curl -kL "https://github.com/bbond007/MiSTer_MidiLink/blob/master/midilink?raw=true" -o $MIDILINK_BIN
+echo "Rebooting in:"
 sleep 1
 echo "3"
 sleep 1 
@@ -75,3 +87,4 @@ echo "2"
 sleep 1 
 echo "1"
 sleep 1
+reboot

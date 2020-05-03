@@ -43,10 +43,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DEFAULT_TCPDTR         1
 #define DEFAULT_TCPQuiet       0
 
-enum MODE {ModeNULL, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
+enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
 int                     MIDI_DEBUG	       = TRUE;
-static enum MODE        mode                   = ModeNULL;
+static enum MODE        mode                   = ModeUSBMIDI;
 static int		fdSerial	       = -1;
 static int		fdMidi		       = -1;
 static int		fdMidiIN	       = -1;
@@ -1041,7 +1041,7 @@ int handle_at_command(char * lineBuf)
     else if (memcmp(lineBuf, "AT", 2) == 0)
     {
         if (lineBuf[2] != (char) 0x00)
-        {	
+        {
             misc_swrite(fdSerial, "\r\nUnknown Command '%s'", &lineBuf[2]);
             misc_print(1, "ERROR : Unknown AT command --> '%s'\n", &lineBuf[2]);
         }
@@ -1149,7 +1149,7 @@ void * midi_thread_function (void * x)
 void write_midi_packet(char * buf, int bufLen)
 {
     static int SYSEX = FALSE;
-    if (DELAYSYSEX) // This is for MT-32 Rev0 -
+    if (DELAYSYSEX && (SYSEX || memchr(buf, 0xF0, bufLen))) // This is for MT-32 Rev0 -
     {   // spoon-feed the SYSEX data and delay after
         misc_print(2, "MIDI OUT [%02d] -->", bufLen);
         for (unsigned char * byte = buf; bufLen-- > 0; byte++)
@@ -1170,7 +1170,10 @@ void write_midi_packet(char * buf, int bufLen)
                 break;
             default:
                 misc_print(2, " %02x", *byte);
-                write(fdMidi, byte, 1);
+                while(!write(fdMidi, byte, 1))
+                {
+                    misc_print(0, "ERROR : write_midi_packet() --> result = 0\n");
+                }
                 if (SYSEX) usleep(1000);
                 break;
             }
@@ -1230,6 +1233,7 @@ void * midiINin_thread_function (void * x)
 // write_socket_packet()
 // this is for TCP/IP
 //
+
 void write_socket_packet(int sock, char * buf, int bufLen)
 {
     if (mode == ModeTCP)
@@ -1353,6 +1357,7 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_FSYNTH") && !MIDI)   mode   = ModeFSYNTH;
         if (misc_check_file("/tmp/ML_UDP"))               mode   = ModeUDP;
         if (misc_check_file("/tmp/ML_TCP"))               mode   = ModeTCP;
+        if (misc_check_file("/tmp/ML_USBMIDI"))           mode   = ModeUSBMIDI;
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
         {
@@ -1362,11 +1367,12 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if(misc_check_args_option(argc, argv, "MUNT"))   mode = ModeMUNT;
-        if(misc_check_args_option(argc, argv, "MUNTGM")) mode = ModeMUNTGM;
-        if(misc_check_args_option(argc, argv, "FSYNTH")) mode = ModeFSYNTH;
-        if(misc_check_args_option(argc, argv, "UDP"))    mode = ModeUDP;
-        if(misc_check_args_option(argc, argv, "TCP"))    mode = ModeTCP;
+        if(misc_check_args_option(argc, argv, "MUNT"))    mode = ModeMUNT;
+        if(misc_check_args_option(argc, argv, "MUNTGM"))  mode = ModeMUNTGM;
+        if(misc_check_args_option(argc, argv, "FSYNTH"))  mode = ModeFSYNTH;
+        if(misc_check_args_option(argc, argv, "UDP"))     mode = ModeUDP;
+        if(misc_check_args_option(argc, argv, "TCP"))     mode = ModeTCP;
+        if(misc_check_args_option(argc, argv, "USBMIDI")) mode = ModeUSBMIDI;
     }
 
     killall_mpg123(0);
@@ -1468,7 +1474,9 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (mode == ModeUDP)
+    switch(mode)
+    {
+    case ModeUDP:
     {
         if(UDPFlow > 0)
             serial_set_flow_control(fdSerial, UDPFlow);
@@ -1514,7 +1522,8 @@ int main(int argc, char *argv[])
             return -9;
         }
     }
-    else if (mode == ModeTCP)
+    break;
+    case ModeTCP:
     {
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
@@ -1539,7 +1548,8 @@ int main(int argc, char *argv[])
             return -11;
         }
     }
-    else
+    break;
+    case ModeUSBMIDI:
     {
         fdMidi = open(midiDevice, O_RDWR);
         if (fdMidi < 0)
@@ -1590,11 +1600,14 @@ int main(int argc, char *argv[])
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
     }
+    break;
+    }
 
     show_line();
-    //send all-notes-off to real MIDI device
-    if(fdMidi != -1)
+
+    switch(mode)
     {
+    case ModeUSBMIDI:
         misc_print(1, "Sending MIDI --> all-notes-off\n");
         write_midi_packet(all_notes_off, sizeof(all_notes_off));
         if(strlen(MT32LCDMsg) > 0)
@@ -1602,61 +1615,82 @@ int main(int argc, char *argv[])
             misc_print(1, "Sending MT-32 LCD --> '%s'\n", MT32LCDMsg);
             write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
         }
-    }
-    //only send all-notes-off if UDP is being used with MIDI and not game
-    if (mode == ModeUDP && socket_out != -1 && baudRate == 31250)
-    {
-        misc_print(1, "Sending UDP --> all-notes-off\n");
-        write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
-        if(strlen(MT32LCDMsg) > 0)
+        //This main loop handles USB MIDI
+        do
         {
-            misc_print(1, "Sending UDP MT-32 LCD --> '%s'\n", MT32LCDMsg);
-            write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
-        }
-    }
-
-    //This main loop handles USB MIDI, UDP & TCP
-    do
-    {
-        int rdLen = read(fdSerial, buf, sizeof(buf));
-        if (rdLen > 0)
-        {
-            if(fdMidi != -1)
+            int rdLen = read(fdSerial, buf, sizeof(buf));
+            if (rdLen > 0)
                 write_midi_packet(buf, rdLen);
-            if(mode == ModeTCP && socket_in != -1)
+            else if (rdLen < 0)
+                misc_print(1, "ERROR: (USB) from read: %d: %s\n", rdLen, strerror(errno));
+        } while (TRUE);
+        break;
+    case ModeUDP:
+        //only send all-notes-off if UDP is being used with MIDI and not game
+        if (socket_out != -1 && baudRate == 31250)
+        {
+            misc_print(1, "Sending UDP --> all-notes-off\n");
+            write_socket_packet(socket_out, all_notes_off, sizeof(all_notes_off));
+            if(strlen(MT32LCDMsg) > 0)
             {
-                do_check_modem_hangup(&socket_in, buf, rdLen);
-                if(socket_in != -1)
-                    write_socket_packet(socket_in, buf, rdLen);
+                misc_print(1, "Sending UDP MT-32 LCD --> '%s'\n", MT32LCDMsg);
+                write_socket_packet(socket_out, buf, misc_MT32_LCD(MT32LCDMsg, buf));
             }
-            if(socket_out != -1)
+        }
+        //This main loop handles UDP
+        do
+        {
+            int rdLen = read(fdSerial, buf, sizeof(buf));
+            if (rdLen > 0)
             {
-                if (mode == ModeTCP)
-                    do_check_modem_hangup(&socket_out, buf, rdLen);
                 if(socket_out != -1)
                     write_socket_packet(socket_out, buf, rdLen);
             }
-            else if (mode == ModeTCP && socket_in == -1)
-                do_modem_emulation(buf, rdLen);
-        }
-        else if (TCPDTR == 2 && mode == ModeTCP && 
-                 rdLen == 0 && serial2_get_DSR(fdSerial) == FALSE)
-        {   // deal with client hangup via DTR
-            if(socket_out != -1)
+            else if (rdLen < 0)
+                misc_print(1, "ERROR: (UDP) from read: %d: %s\n", rdLen, strerror(errno));
+        } while (TRUE);
+        break;
+    case ModeTCP :
+        //This main loop handles TCP
+        do
+        {
+            int rdLen = read(fdSerial, buf, sizeof(buf));
+            if (rdLen > 0)
             {
-                tcpsock_close(socket_out);
-                socket_out = -1;
+                if(socket_in != -1)
+                {
+                    do_check_modem_hangup(&socket_in, buf, rdLen);
+                    if(socket_in != -1)
+                        write_socket_packet(socket_in, buf, rdLen);
+                }
+                if(socket_out != -1)
+                {
+                    do_check_modem_hangup(&socket_out, buf, rdLen);
+                    if(socket_out != -1)
+                        write_socket_packet(socket_out, buf, rdLen);
+                }
+                else if (socket_in == -1)
+                    do_modem_emulation(buf, rdLen);
             }
-            if (socket_in != -1)
-            {
-                close(socket_in);
-                socket_in = -1;
+            else if (TCPDTR == 2 && rdLen == 0 &&
+                     serial2_get_DSR(fdSerial) == FALSE)
+            {   // deal with client hangup via DTR
+                if(socket_out != -1)
+                {
+                    tcpsock_close(socket_out);
+                    socket_out = -1;
+                }
+                if (socket_in != -1)
+                {
+                    close(socket_in);
+                    socket_in = -1;
+                }
             }
-        }
-        else if (rdLen < 0)
-            misc_print(1, "ERROR: from read: %d: %s\n", rdLen, strerror(errno));
-    } while (TRUE);
-
+            else if (rdLen < 0)
+                misc_print(1, "ERROR: (TCP) from read: %d: %s\n", rdLen, strerror(errno));
+        } while (TRUE);
+        break;
+    }
     close_fd();
     return 0;
 }
