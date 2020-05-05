@@ -317,6 +317,10 @@ void ini_print_settings(int p)
         misc_print(p, "  - UDP_BAUD           --> %d\n", UDPBaudRate);
     else
         misc_print(p, "  - UDP_BAUD           --> Default (don't change)\n");
+    if(UDPBaudRate_alt > 0)
+        misc_print(p, "  - UDP_BAUD_ALT       --> %d\n", UDPBaudRate);
+    else
+        misc_print(p, "  - UDP_BAUD_ALT       --> Undefined\n");
     if(UDPBaudRate > 0)
         misc_print(p, "  - MIDI_BAUD          --> %d\n", MIDIBaudRate);
     else
@@ -330,6 +334,27 @@ void ini_print_settings(int p)
         misc_print(p, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
     else
         misc_print(p, "  - TCP_BAUD           --> Default (don't change)\n");
+    if(TCPBaudRate_alt > 0)
+        misc_print(p, "  - TCP_BAUD_ALT       --> %d\n",   TCPBaudRate_alt);
+    else
+        misc_print(p, "  - TCP_BAUD_ALT       --> Default (don't change)\n");
+    if(UDPBaudRate > 0)
+        misc_print(p, "  - MIDI_BAUD          --> %d\n", MIDIBaudRate);
+    else
+        misc_print(p, "  - MIDI_BAUD          --> Default (don't change)\n");    
+    misc_print(p, "  - UDP_SERVER_FILTER  --> %s\n",   UDPServerFilterIP?"TRUE":"FALSE");
+    if(UDPFlow != -1)
+        misc_print(p, "  - UDP_FLOW           --> (%d) %s\n", UDPFlow, misc_hayes_flow_to_str(UDPFlow));
+    else
+        misc_print(p, "  - UDP_FLOW           --> Default (don't change)\n");
+    if(TCPBaudRate > 0)
+        misc_print(p, "  - TCP_BAUD           --> %d\n",   TCPBaudRate);
+    else
+        misc_print(p, "  - TCP_BAUD           --> Default (don't change)\n");
+    if(TCPBaudRate_alt > 0)
+        misc_print(p, "  - TCP_BAUD_ALT       --> %d\n",   TCPBaudRate_alt);
+    else
+        misc_print(p, "  - TCP_BAUD_ALT       --> Default (don't change)\n");
     misc_print(p, "  - TCP_DTR            --> (%d) %s\n", TCPDTR, misc_hayes_DTR_to_str(TCPDTR));
     misc_print(p, "  - TCP_QUIET          --> (%d) %s\n", TCPQuiet, misc_hayes_ATQ_to_str(TCPQuiet));
     if(TCPFlow != -1)
