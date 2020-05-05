@@ -1358,10 +1358,10 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
         if (misc_check_file("/tmp/ML_MUNTGM") && !MIDI)   mode   = ModeMUNTGM;
         if (misc_check_file("/tmp/ML_FSYNTH") && !MIDI)   mode   = ModeFSYNTH;
-        if (misc_check_file("/tmp/ML_UDP"))              {mode   = ModeUDP; altBaud  = 0; }
-        if (misc_check_file("/tmp/ML_TCP"))              {mode   = ModeTCP; altBaud = 0; }
-        if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; altBaud = 1; }
-        if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; altBaud = 1; }
+        if (misc_check_file("/tmp/ML_UDP"))              {mode   = ModeUDP; altBaud = FALSE;}
+        if (misc_check_file("/tmp/ML_TCP"))              {mode   = ModeTCP; altBaud = FALSE;}
+        if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; altBaud = TRUE; }
+        if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; altBaud = TRUE; }
         if (misc_check_file("/tmp/ML_USBMIDI"))           mode   = ModeUSBMIDI;
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
@@ -1375,8 +1375,10 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "MUNT"))    mode = ModeMUNT;
         if(misc_check_args_option(argc, argv, "MUNTGM"))  mode = ModeMUNTGM;
         if(misc_check_args_option(argc, argv, "FSYNTH"))  mode = ModeFSYNTH;
-        if(misc_check_args_option(argc, argv, "UDP"))     mode = ModeUDP;
-        if(misc_check_args_option(argc, argv, "TCP"))     mode = ModeTCP;
+        if(misc_check_args_option(argc, argv, "UDP"))    {mode = ModeUDP; altBaud = FALSE;}
+        if(misc_check_args_option(argc, argv, "TCP"))    {mode = ModeTCP; altBaud = FALSE;}
+        if(misc_check_args_option(argc, argv, "UDPALT")) {mode = ModeUDP; altBaud = TRUE; }
+        if(misc_check_args_option(argc, argv, "TCPALT")) {mode = ModeTCP; altBaud = TRUE; }
         if(misc_check_args_option(argc, argv, "USBMIDI")) mode = ModeUSBMIDI;
     }
 
