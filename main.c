@@ -45,6 +45,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
+int alt = 0;
+
 int                     MIDI_DEBUG	       = TRUE;
 static enum MODE        mode                   = ModeUSBMIDI;
 static int		fdSerial	       = -1;
@@ -74,6 +76,8 @@ int                     modemVolume            = DEFAULT_modemVolume;
 int 			midilinkPriority       =  0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
+int                     UDPBaudRate_alt            = -1;
+int                     TCPBaudRate_alt            = -1;
 int 			MIDIBaudRate           = -1;
 enum ASCIITRANS         TCPAsciiTrans          = DEFAULT_TCPAsciiTrans;
 int                     TCPFlow                = DEFAULT_TCPFlow;
@@ -1355,8 +1359,10 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
         if (misc_check_file("/tmp/ML_MUNTGM") && !MIDI)   mode   = ModeMUNTGM;
         if (misc_check_file("/tmp/ML_FSYNTH") && !MIDI)   mode   = ModeFSYNTH;
-        if (misc_check_file("/tmp/ML_UDP"))               mode   = ModeUDP;
-        if (misc_check_file("/tmp/ML_TCP"))               mode   = ModeTCP;
+        if (misc_check_file("/tmp/ML_UDP"))              {mode   = ModeUDP; alt = 0; }
+        if (misc_check_file("/tmp/ML_TCP"))              {mode   = ModeTCP; alt = 0; }
+        if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; alt = 1; }
+        if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; alt = 1; }
         if (misc_check_file("/tmp/ML_USBMIDI"))           mode   = ModeUSBMIDI;
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
@@ -1417,12 +1423,18 @@ int main(int argc, char *argv[])
         return -4;
     }
     serial_set_interface_attribs(fdSerial);
-    if (mode == ModeUDP && UDPBaudRate != -1)
+    if (alt && mode == ModeUDP && UDPBaudRate_alt != -1)
+    {
+        baudRate = UDPBaudRate_alt;
+    }
+    else if (mode == ModeUDP && UDPBaudRate != -1)
     {
         baudRate = UDPBaudRate;
     }
     else if (mode == ModeTCP)
     {
+		if(alt && TCPBaudRate_alt != -1)
+			baudRate = TCPBaudRate_alt;
         if(TCPBaudRate != -1)
             baudRate = TCPBaudRate;
         else

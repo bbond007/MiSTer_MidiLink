@@ -22,6 +22,8 @@ extern unsigned int    TCPServerPort;
 extern unsigned int    TCPTermRows;
 extern int             UDPBaudRate;
 extern int             TCPBaudRate;
+extern int             UDPBaudRate_alt;
+extern int             TCPBaudRate_alt;
 extern int             MIDIBaudRate;
 extern int             TCPFlow;
 extern int             TCPDTR;
@@ -174,6 +176,14 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("TCP_BAUD", key) == 0)
     {
         ini_int(value, &TCPBaudRate);
+    }
+    else if (strcmp("UDP_BAUD_ALT", key) == 0)
+    {
+        ini_int(value, &UDPBaudRate_alt);
+    }
+    else if (strcmp("TCP_BAUD_ALT", key) == 0)
+    {
+        ini_int(value, &TCPBaudRate_alt);
     }
     else if (strcmp("TCP_ATH_DELAY", key) == 0)
     {
