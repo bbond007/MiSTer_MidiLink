@@ -45,8 +45,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
-int alt = 0;
-
 int                     MIDI_DEBUG	       = TRUE;
 static enum MODE        mode                   = ModeUSBMIDI;
 static int		fdSerial	       = -1;
@@ -1330,6 +1328,7 @@ int main(int argc, char *argv[])
 {
     int status;
     int midiPort;
+    int altBaud = FALSE;
     char coreName[30] = "";
     MUNTCPUMask = CPUMASK;
     unsigned char buf[256];
@@ -1359,10 +1358,10 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
         if (misc_check_file("/tmp/ML_MUNTGM") && !MIDI)   mode   = ModeMUNTGM;
         if (misc_check_file("/tmp/ML_FSYNTH") && !MIDI)   mode   = ModeFSYNTH;
-        if (misc_check_file("/tmp/ML_UDP"))              {mode   = ModeUDP; alt = 0; }
-        if (misc_check_file("/tmp/ML_TCP"))              {mode   = ModeTCP; alt = 0; }
-        if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; alt = 1; }
-        if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; alt = 1; }
+        if (misc_check_file("/tmp/ML_UDP"))              {mode   = ModeUDP; altBaud = FALSE;}
+        if (misc_check_file("/tmp/ML_TCP"))              {mode   = ModeTCP; altBaud = FALSE;}
+        if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; altBaud = TRUE; }
+        if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; altBaud = TRUE; }
         if (misc_check_file("/tmp/ML_USBMIDI"))           mode   = ModeUSBMIDI;
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
@@ -1376,8 +1375,10 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "MUNT"))    mode = ModeMUNT;
         if(misc_check_args_option(argc, argv, "MUNTGM"))  mode = ModeMUNTGM;
         if(misc_check_args_option(argc, argv, "FSYNTH"))  mode = ModeFSYNTH;
-        if(misc_check_args_option(argc, argv, "UDP"))     mode = ModeUDP;
-        if(misc_check_args_option(argc, argv, "TCP"))     mode = ModeTCP;
+        if(misc_check_args_option(argc, argv, "UDP"))    {mode = ModeUDP; altBaud = FALSE;}
+        if(misc_check_args_option(argc, argv, "TCP"))    {mode = ModeTCP; altBaud = FALSE;}
+        if(misc_check_args_option(argc, argv, "UDPALT")) {mode = ModeUDP; altBaud = TRUE; }
+        if(misc_check_args_option(argc, argv, "TCPALT")) {mode = ModeTCP; altBaud = TRUE; }
         if(misc_check_args_option(argc, argv, "USBMIDI")) mode = ModeUSBMIDI;
     }
 
@@ -1423,7 +1424,7 @@ int main(int argc, char *argv[])
         return -4;
     }
     serial_set_interface_attribs(fdSerial);
-    if (alt && mode == ModeUDP && UDPBaudRate_alt != -1)
+    if (altBaud && mode == ModeUDP && UDPBaudRate_alt != -1)
     {
         baudRate = UDPBaudRate_alt;
     }
@@ -1433,9 +1434,9 @@ int main(int argc, char *argv[])
     }
     else if (mode == ModeTCP)
     {
-		if(alt && TCPBaudRate_alt != -1)
-			baudRate = TCPBaudRate_alt;
-        if(TCPBaudRate != -1)
+        if(altBaud && TCPBaudRate_alt != -1)
+            baudRate = TCPBaudRate_alt;
+        else if(TCPBaudRate != -1)
             baudRate = TCPBaudRate;
         else
             baudRate = 115200;
