@@ -26,6 +26,7 @@ int                     socket_out             = -1;
 //
 int main(int argc, char *argv[])
 {
+    int bShowInfo = TRUE;
     int result = misc_check_args_option(argc, argv, "BAUD");
 
     if(result && (result + 1 < argc))
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
         }
         serial2_set_baud(serialDevice, fdSerial, baud);
         close(fdSerial);
+        bShowInfo = FALSE;
     }
 
     result = misc_check_args_option(argc, argv, "FSSFONT");
@@ -81,11 +83,13 @@ int main(int argc, char *argv[])
                         }
                     } 
                 }
+                printf("Sending --> RESET\n");
+                tcpsock_write(socket_out, "reset\n", 6);
                 char sLoadSF[250];
-                sprintf(sLoadSF, "load %s\n", argv[result + 1]);
+                sprintf(sLoadSF, "load \"%s\"\n", argv[result + 1]);
                 printf("Loading SoundFont --> '%s'\n", argv[result + 1]);
                 tcpsock_write(socket_out, sLoadSF, strlen(sLoadSF));
-                sleep(1);
+                //sleep(1);
                 close(socket_out);
             }
             else
@@ -93,6 +97,7 @@ int main(int argc, char *argv[])
                 printf("ERROR --> unable to connect to FluidSynth:9800\n");
                 return -4;
             }
+            bShowInfo = FALSE;
         }
         else
         {
@@ -100,5 +105,7 @@ int main(int argc, char *argv[])
             return -3;
         }
     }
+    if (bShowInfo)
+        printf("%s\nUsage:\n - #mlinkutil BAUD [rate]\n - #mlinkutil FSSFONT [fileaname]\n",helloStr);
     return 0;
 }
