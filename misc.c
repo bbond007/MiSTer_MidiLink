@@ -215,11 +215,11 @@ int misc_check_args_option (int argc, char *argv[], char * option)
     if(argc > 1)
         for (int i = 1; i< argc; i++)
         {
-            char * arg = strdup(argv[i]);
-            misc_str_to_upper(arg);
-            if (strcmp(arg, option) == 0)
-                result = TRUE;
-            free(arg);
+            if (strcasecmp(argv[i], option) == 0)
+            {
+                result = i;
+                break;
+            }
         }
     free(OPTION);
     return result;

@@ -138,12 +138,12 @@ int serial2_set_DTR(int fdSerial, int on)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int serial2_set_DCD(int fdSerial, int on)
+// int serial2_set_DCD(char * serialDevice, int fdSerial, int on)
 // 
-int serial2_set_DCD(int fdSerial, int on)
+int serial2_set_DCD(char * serialDevice, int fdSerial, int on)
 {
     int result;
     result = serial2_set_DTR(fdSerial, on);
-    misc_print(1, "Setting DCD --> %s\n",on?"TRUE":"FALSE");
+    misc_print(1, "Setting DCD (%s) --> %s\n", serialDevice, on?"TRUE":"FALSE");
     return result; 
 }

@@ -344,7 +344,7 @@ void * tcplst_thread_function (void * x)
                 play_connect_sound(buf);
                 if(TCPQuiet == 0)
                     misc_swrite_no_trans(fdSerial, "\r\nCONNECT %d\r\n", baudRate);
-                serial2_set_DCD(fdSerial, TRUE);
+                serial2_set_DCD(serialDevice, fdSerial, TRUE);
                 do
                 {
                     rdLen = read(socket_in, buf, sizeof(buf));
@@ -363,7 +363,7 @@ void * tcplst_thread_function (void * x)
                 } while (socket_in != -1);
                 if(TCPQuiet == 0)
                     misc_swrite_no_trans(fdSerial, "\r\nNO CARRIER\r\n");
-                serial2_set_DCD(fdSerial, FALSE);
+                serial2_set_DCD(serialDevice, fdSerial, FALSE);
             }
             else
             {
@@ -467,7 +467,7 @@ void do_check_modem_hangup(int * socket, char * buf, int bufLen)
                 {
                     tcpsock_close(*socket);
                     *socket =  -1;
-                    serial2_set_DCD(fdSerial, FALSE);
+                    serial2_set_DCD(serialDevice, fdSerial, FALSE);
                     sprintf(tmp, "\r\nHANG-UP DETECTED\r\n");
                     misc_print(1, "HANG-UP Detected --> %d\n", delay);
                     misc_swrite(fdSerial, tmp);
@@ -690,7 +690,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 if(MODEMSOUND)
                     sleep(1);
-                serial2_set_DCD(fdSerial, FALSE);
+                serial2_set_DCD(serialDevice, fdSerial, FALSE);
                 socket_out = tcpsock_client_connect(ipAddr, iPort, fdSerial);
             }
             if(socket_out > 0)
@@ -704,7 +704,7 @@ int handle_at_command(char * lineBuf)
                 serial_do_tcdrain(fdSerial);
                 sleep(1);
                 int status = pthread_create(&socketInThread, NULL, tcpsock_thread_function, NULL);
-                serial2_set_DCD(fdSerial, TRUE);
+                serial2_set_DCD(serialDevice, fdSerial, TRUE);
                 return TRUE;
             }
         }
@@ -1455,7 +1455,19 @@ int main(int argc, char *argv[])
         return -4;
     }
     serial_set_interface_attribs(fdSerial);
-    if (altBaud && mode == ModeUDP && UDPBaudRate_alt != -1)
+
+    int result = misc_check_args_option(argc, argv, "BAUD");
+    if(result && (result + 1 < argc))
+    {
+        char * ptr;
+        baudRate = strtol(argv[result + 1], &ptr, 10);
+        if (!serial2_is_valid_rate (baudRate))
+        {
+            misc_print(0, "ERROR : BAUD not valid --> %s\n", argv[result + 1]);
+            return -5;
+        }
+    }
+    else if (altBaud && mode == ModeUDP && UDPBaudRate_alt != -1)
     {
         baudRate = UDPBaudRate_alt;
     }
@@ -1495,7 +1507,7 @@ int main(int argc, char *argv[])
     serial_set_flow_control(fdSerial, 0);
     serial2_set_baud(serialDevice, fdSerial, baudRate);
     serial_do_tcdrain(fdSerial);
-    serial2_set_DCD(fdSerial, (mode == ModeTCP)?FALSE:TRUE);
+    serial2_set_DCD(serialDevice, fdSerial, (mode == ModeTCP)?FALSE:TRUE);
 
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
@@ -1519,7 +1531,7 @@ int main(int argc, char *argv[])
         else
         {
             close_fd();
-            return -4;
+            return -6;
         }
         close_fd();
         return 0;
@@ -1548,7 +1560,7 @@ int main(int argc, char *argv[])
                     {
                         misc_print(0, "ERROR: unable to create socket input thread.\n");
                         close_fd();
-                        return -6;
+                        return -7;
                     }
                     misc_print(0, "Socket input thread created.\n");
                 }
@@ -1556,21 +1568,21 @@ int main(int argc, char *argv[])
                 {
                     misc_print(0, "ERROR: unable to create UDP listener --> '%s'\n", strerror(errno));
                     close_fd();
-                    return -7;
+                    return -8;
                 }
             }
             else
             {
                 misc_print(0, "ERROR: unable to open UDP port --> '%s'\n", strerror(errno));
                 close_fd();
-                return -8;
+                return -9;
             }
         }
         else
         {
             misc_print(0, "ERROR: in INI File (UDP_SERVER) --> %s\n", midiLinkINI);
             close_fd();
-            return -9;
+            return -10;
         }
     }
     break;
@@ -1578,7 +1590,7 @@ int main(int argc, char *argv[])
     {
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
-        //serial2_set_DCD(fdSerial, FALSE);
+        //serial2_set_DCD(sericlDevice, fdSerial, FALSE);
         serial_set_timeout(fdSerial, 1);
         socket_lst = tcpsock_server_open(TCPServerPort);
         if(socket_lst != -1)
@@ -1588,7 +1600,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create socket listener thread.\n");
                 close_fd();
-                return -10;
+                return -11;
             }
             misc_print(0, "Socket listener thread created.\n");
         }
@@ -1596,7 +1608,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create socket listener --> '%s'\n", strerror(errno));
             close_fd();
-            return -11;
+            return -12;
         }
     }
     break;
@@ -1607,7 +1619,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
-            return -12;
+            return -13;
         }
 
         if (misc_check_device(midiINDevice))
@@ -1617,7 +1629,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: cannot open %s: %s\n", midiINDevice, strerror(errno));
                 close_fd();
-                return -13;
+                return -14;
             }
         }
 
@@ -1635,7 +1647,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
-                return -14;
+                return -15;
             }
             misc_print(0, "MIDI1 input thread created.\n");
             misc_print(0, "CONNECT : %s --> %s & %s\n", midiINDevice, serialDevice, midiDevice);
@@ -1646,7 +1658,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create MIDI input thread.\n");
             close_fd();
-            return -14;
+            return -16;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
@@ -1665,7 +1677,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: You have no '%s' device! --> maybe set 'USB_SERIAL_MODULE = ' in '%s'?\n", serialDeviceUSB, midiLinkINI);
                 close_fd();
-                return -15;
+                return -17;
             }
             system(buf);
         }
@@ -1675,21 +1687,21 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", serialDeviceUSB, strerror(errno));
             close_fd();
-            return -16;
+            return -18;
         }
 
         serial_set_flow_control(fdSerial, 3);    //CTS/RTS
         serial_set_flow_control(fdSerialUSB, 3); 
         serial2_set_baud(serialDeviceUSB, fdSerialUSB, baudRate);
         serial_do_tcdrain(fdSerialUSB);
-        serial2_set_DCD(fdSerialUSB, TRUE);
+        serial2_set_DCD(serialDeviceUSB, fdSerialUSB, TRUE);
 
         status = pthread_create(&serialInThread, NULL, serial_thread_function, NULL);
         if (status == -1)
         {
             misc_print(0, "ERROR: unable to create serial input thread.\n");
             close_fd();
-            return -16;
+            return -19;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, serialDeviceUSB);
