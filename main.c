@@ -1166,7 +1166,7 @@ void * serial_thread_function (void * x)
         }
         else
         {
-            misc_print(1, "ERROR: serial_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
+            misc_print(1, "ERROR: serial_thread_function() reading %s --> %d : %s \n", serialDeviceUSB, rdLen, strerror(errno));
         }
     } while (TRUE);
 }
