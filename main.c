@@ -43,11 +43,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DEFAULT_TCPDTR         1
 #define DEFAULT_TCPQuiet       0
 
-enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
+enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
 
 int                     MIDI_DEBUG	       = TRUE;
 static enum MODE        mode                   = ModeUSBMIDI;
 static int		fdSerial	       = -1;
+static int              fdSerialUSB            = -1;
 static int		fdMidi		       = -1;
 static int		fdMidiIN	       = -1;
 static int 		socket_in	       = -1;
@@ -74,9 +75,11 @@ int                     modemVolume            = DEFAULT_modemVolume;
 int 			midilinkPriority       =  0;
 int                     UDPBaudRate            = -1;
 int                     TCPBaudRate            = -1;
-int                     UDPBaudRate_alt            = -1;
-int                     TCPBaudRate_alt            = -1;
+int                     UDPBaudRate_alt        = -1;
+int                     TCPBaudRate_alt        = -1;
 int 			MIDIBaudRate           = -1;
+int                     USBSerBaudRate         = -1;
+char                    USBSerModule[100]      = "";
 enum ASCIITRANS         TCPAsciiTrans          = DEFAULT_TCPAsciiTrans;
 int                     TCPFlow                = DEFAULT_TCPFlow;
 int                     TCPDTR                 = DEFAULT_TCPDTR;
@@ -96,6 +99,7 @@ static pthread_t	midiInThread;
 static pthread_t	midiINInThread;
 static pthread_t	socketInThread;
 static pthread_t        socketLstThread;
+static pthread_t	serialInThread;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1145,6 +1149,30 @@ void * midi_thread_function (void * x)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// void * serial_thread_function(void * x)
+// Thread function for /dev/ttyUSB input
+//
+void * serial_thread_function (void * x)
+{
+    unsigned char buf [100];
+    int rdLen;
+    do
+    {
+        rdLen = read(fdSerialUSB, &buf, sizeof(buf));
+        if (rdLen > 0)
+        {
+            write(fdSerial, buf, rdLen);
+            show_debug_buf("SERIAL IN  ", buf, rdLen);
+        }
+        else
+        {
+            misc_print(1, "ERROR: serial_thread_function() reading %s --> %d : %s \n", midiDevice, rdLen, strerror(errno));
+        }
+    } while (TRUE);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // write_midi_packet()
 // this is for /dev/midi
 //
@@ -1286,6 +1314,7 @@ void show_line()
 void close_fd()
 {
     if (fdSerial   > 0) close (fdSerial);
+    if (fdSerial   > 0) close (fdSerialUSB);
     if (fdMidi     > 0) close (fdMidi);
     if (fdMidiIN   > 0) close (fdMidiIN);
     if (socket_in  > 0) tcpsock_close(socket_in);
@@ -1363,6 +1392,7 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; altBaud = TRUE; }
         if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; altBaud = TRUE; }
         if (misc_check_file("/tmp/ML_USBMIDI"))           mode   = ModeUSBMIDI;
+        if (misc_check_file("/tmp/ML_USBSER"))            mode   = ModeUSBSER;
         if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
                 mode != ModeTCP && mode != ModeUDP)
         {
@@ -1380,6 +1410,7 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "UDPALT")) {mode = ModeUDP; altBaud = TRUE; }
         if(misc_check_args_option(argc, argv, "TCPALT")) {mode = ModeTCP; altBaud = TRUE; }
         if(misc_check_args_option(argc, argv, "USBMIDI")) mode = ModeUSBMIDI;
+        if(misc_check_args_option(argc, argv, "USBSER"))  mode  = ModeUSBSER;
     }
 
     killall_mpg123(0);
@@ -1397,7 +1428,7 @@ int main(int argc, char *argv[])
 
         if (!misc_check_device(PCMDevice))
         {
-            //misc_print(0, "ERROR: You have no PCM device loading --> snd-dummy module\n");
+            //misc_print(0, "WARNING: You have no PCM device loading --> snd-dummy module\n");
             //system ("modprobe snd-dummy");
             misc_print(0, "ERROR: You have no PCM device --> %s\n", PCMDevice);
             close_fd();
@@ -1438,6 +1469,13 @@ int main(int argc, char *argv[])
             baudRate = TCPBaudRate_alt;
         else if(TCPBaudRate != -1)
             baudRate = TCPBaudRate;
+        else
+            baudRate = 115200;
+    }
+    else if (mode == ModeUSBSER)
+    {
+        if(USBSerBaudRate != -1)
+            baudRate = USBSerBaudRate;
         else
             baudRate = 115200;
     }
@@ -1614,6 +1652,49 @@ int main(int argc, char *argv[])
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
     }
     break;
+    case ModeUSBSER:
+    {
+        if (!misc_check_device(serialDeviceUSB))
+        {
+            if(strlen(USBSerModule) > 0)
+            {
+                misc_print(0, "WARNING: You have no '%s' device - loading --> %s\n", serialDeviceUSB, USBSerModule);
+                sprintf(buf, "insmod %s", USBSerModule);
+            }
+            else
+            {
+                misc_print(0, "ERROR: You have no '%s' device! --> maybe set 'USB_SERIAL_MODULE = ' in '%s'?\n", serialDeviceUSB, midiLinkINI);
+                close_fd();
+                return -15;
+            }
+            system(buf);
+        }
+ 
+        fdSerialUSB = open(serialDeviceUSB, O_RDWR);
+        if (fdSerialUSB < 0)
+        {
+            misc_print(0, "ERROR: cannot open %s: %s\n", serialDeviceUSB, strerror(errno));
+            close_fd();
+            return -16;
+        }
+
+        serial_set_flow_control(fdSerial, 3);    //CTS/RTS
+        serial_set_flow_control(fdSerialUSB, 3); 
+        serial2_set_baud(serialDeviceUSB, fdSerialUSB, baudRate);
+        serial_do_tcdrain(fdSerialUSB);
+        serial2_set_DCD(fdSerialUSB, TRUE);
+
+        status = pthread_create(&serialInThread, NULL, serial_thread_function, NULL);
+        if (status == -1)
+        {
+            misc_print(0, "ERROR: unable to create serial input thread.\n");
+            close_fd();
+            return -16;
+        }
+        misc_print(0, "MIDI input thread created.\n");
+        misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, serialDeviceUSB);
+    }
+    break;
     }
 
     show_line();
@@ -1635,7 +1716,21 @@ int main(int argc, char *argv[])
             if (rdLen > 0)
                 write_midi_packet(buf, rdLen);
             else if (rdLen < 0)
-                misc_print(1, "ERROR: (USB) from read: %d: %s\n", rdLen, strerror(errno));
+                misc_print(1, "ERROR: (USBMIDI) from read: %d: %s\n", rdLen, strerror(errno));
+        } while (TRUE);
+        break;
+    case ModeUSBSER:
+        //This main loop handles USB serial
+        do
+        {
+            int rdLen = read(fdSerial, buf, sizeof(buf));
+            if (rdLen > 0)
+            {	
+                show_debug_buf("SERIAL OUT ", buf, rdLen);
+                write(fdSerialUSB, buf, rdLen);
+            } 
+            else if (rdLen < 0)
+                misc_print(1, "ERROR: (USBSER) from read: %d: %s\n", rdLen, strerror(errno));
         } while (TRUE);
         break;
     case ModeUDP:

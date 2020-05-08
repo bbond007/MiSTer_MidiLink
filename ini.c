@@ -25,6 +25,8 @@ extern int             TCPBaudRate;
 extern int             UDPBaudRate_alt;
 extern int             TCPBaudRate_alt;
 extern int             MIDIBaudRate;
+extern int             USBSerBaudRate;
+extern char            USBSerModule[100];
 extern int             TCPFlow;
 extern int             TCPDTR;
 extern int             TCPQuiet;
@@ -192,6 +194,14 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("MIDI_BAUD", key) == 0)
     {
         ini_int(value, &MIDIBaudRate);
+    }
+    else if (strcmp("USB_SERIAL_BAUD", key) == 0)
+    {
+        ini_int(value, &USBSerBaudRate);
+    }
+    else if (strcmp("USB_SERIAL_MODULE", key) == 0)
+    {
+        ini_str(key, value, USBSerModule, sizeof(USBSerModule));
     }
     else if (strcmp("TCP_TERM_ROWS", key) == 0)
     {
@@ -383,6 +393,11 @@ void ini_print_settings(int p)
         misc_print(p, "  - TCP_SOUND_CONNECT  --> '%s'\n",  modemConnectSndWAV);
     else
         misc_print(p, "  - TCP_SOUND_CONNECT  --> Software\n");
+    if(USBSerBaudRate > 0)
+        misc_print(p, "  - USB_SERIAL_BAUD    --> %d\n", USBSerBaudRate);
+    else
+        misc_print(p, "  - USB_SERIAL_BAUD    --> Default (don't change)\n");    
+    misc_print(p, "  - USB_SERIAL_MODULE  --> '%s'\n", USBSerModule);
     misc_print(p, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
     misc_print(p, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
     misc_print(p, "\n");

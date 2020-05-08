@@ -92,9 +92,11 @@ The 'midilink' daemon currently supports following switches / options:
       TCP      - Works like a modem with AT commands: 
                  (ATDT, ATBAUD, ATIPADDR, +++ATH)
 
+      USBSER   - Connect to USB serial converter
+
       MENU     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
-                 /tmp/ML_FSYNTH, /tmp/ML_TCP used with MiSTer
-                 Menu to set mode of operation. 
+                 /tmp/ML_FSYNTH, /tmp/ML_TCP /tmp/ML_USBSER
+                 used with MiSTer Menu to set mode of operation. 
 
 The MidiLink.INI file:
 
@@ -199,6 +201,8 @@ The MidiLink.INI file:
 
       #TCP_SOUND_CONNECT =              --> optional WAV file for TCP modem 
                                             connect
+
+      USB_SERIAL_BAUD    = 9600         --> Set USB serial baud to 9600
 
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
                                             error on Roland MT-32 Rev0.
