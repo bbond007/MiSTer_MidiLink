@@ -1690,8 +1690,9 @@ int main(int argc, char *argv[])
             return -18;
         }
 
-        serial_set_flow_control(fdSerial, 3);    //CTS/RTS
+        serial_set_flow_control(fdSerial, 3);    //RTS/CTS
         serial_set_flow_control(fdSerialUSB, 3); 
+        serial_set_interface_attribs(fdSerialUSB);
         serial2_set_baud(serialDeviceUSB, fdSerialUSB, baudRate);
         serial_do_tcdrain(fdSerialUSB);
         serial2_set_DCD(serialDeviceUSB, fdSerialUSB, TRUE);
