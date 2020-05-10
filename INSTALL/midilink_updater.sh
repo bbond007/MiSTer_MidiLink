@@ -19,6 +19,8 @@ MT32_ROM_ZIP="$MT32_ROM_DIR/mt32_roms.zip"
 MP3_DIR="/media/fat/MP3"
 MIDI_DIR="/media/fat/MIDI"
 MIDILINK_BIN="/sbin/midilink"
+MLINKUTIL_BIN="/sbin/mlinkutil"
+BIN_REPO="https://github.com/bbond007/MiSTer_MidiLink/blob/master/"
 echo "Checking Internet..."
 if ! ping -q -w1 -c1 google.com &>/dev/null
 then
@@ -78,7 +80,9 @@ else
   echo "Old MidiLink not found"
 fi
 echo "Downloading MidiLink"
-curl -kL "https://github.com/bbond007/MiSTer_MidiLink/blob/master/midilink?raw=true" -o $MIDILINK_BIN
+curl -kL $BIN_REPO"midilink?raw=true" -o $MIDILINK_BIN
+echo "Downloading MLinkUTIL"
+curl -kL $BIN_REPO"mlinkutil?raw=true" -o $MLINKUTIL_BIN
 echo "Rebooting in:"
 sleep 1
 echo "3"
