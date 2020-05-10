@@ -809,20 +809,20 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
     (*rowcount)++;
     if (*rowcount == rows)
     {
-        if(pauseDel[0] != ' ')
-            memset(pauseSpc, ' ', sizeof(pauseSpc)); 
+        memset(pauseSpc, ' ', sizeof(pauseSpc)-1); 
+        pauseSpc[sizeof(pauseSpc)-1] = 0x00;
         misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
         while (read(fdSerial, c, 1) == 0) {};
         switch(TCPAsciiTrans)
         {
         case AsciiToPetskii:
-            if(pauseDel[0] != 0x14)
-                memset(pauseDel, 0x14, sizeof(pauseDel)); //C64
+                memset(pauseDel, 0x14, sizeof(pauseDel)-1); //C64
+                pauseDel[sizeof(pauseDel)-1] = 0x00;
             break;
         default:
-            if(pauseDel[0] != 0x08)
-                memset(pauseDel, 0x08, sizeof(pauseDel));
+                memset(pauseDel, 0x08, sizeof(pauseDel)-1);
+                pauseDel[sizeof(pauseDel)-1] = 0x00;
             break;
         }
         misc_swrite(fdSerial, pauseDel);
