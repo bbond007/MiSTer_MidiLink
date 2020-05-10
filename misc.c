@@ -401,7 +401,6 @@ long misc_get_timeval_diff(struct timeval * start, struct timeval * stop)
     return ((secs) * 1000 + usecs/1000.0);
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int misc_check_module_loaded (char * modName)
@@ -849,11 +848,9 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
         {
             misc_swrite(fdSerial, "\r");
             if(rowcount != 0 || index == 0)
-                misc_swrite(fdSerial, "\n");
-            char * lf = strchr(str, '\n');
-            if (lf) *lf = 0x00;        
-            char * cr = strchr(str, '\r');
-            if (cr) *cr = 0x00;
+                misc_swrite(fdSerial, "\n");                
+            misc_replace_char(str, strlen(str), '\n', 0x00);
+            misc_replace_char(str, strlen(str), '\r', 0x00);
             misc_swrite(fdSerial, str);
             index++;
             misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
