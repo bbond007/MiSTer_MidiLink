@@ -26,8 +26,8 @@
 //
 //
 static char            pauseStr[] = "[PAUSE]";
-static char            pauseDel[sizeof(pauseStr)];
-static char            pauseSpc[sizeof(pauseStr)];
+static char            pauseDel[sizeof(pauseStr)] = "";
+static char            pauseSpc[sizeof(pauseStr)] = "";
 
 static pthread_mutex_t print_lock;
 static pthread_mutex_t swrite_lock;
@@ -620,11 +620,11 @@ char * misc_get_clrScr()
 {
     switch(TCPAsciiTrans)
     {
-        case AsciiToPetskii:
-            return "\x93";
+    case AsciiToPetskii:
+        return "\x93";
         break;
-        default:
-            return "\e[2J\e[H";
+    default:
+        return "\e[2J\e[H";
         break;
     }
 }
@@ -651,7 +651,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     char strType[4]   = "";
     int  result       = FALSE;
 
-       
+
     fileName[0] = (char) 0x00;
     sprintf(strRows, "%d", rows);
     char * path2   = malloc(strlen(path) + 3);
@@ -809,20 +809,29 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
     (*rowcount)++;
     if (*rowcount == rows)
     {
-        memset(pauseSpc, ' ', sizeof(pauseSpc)-1); 
-        pauseSpc[sizeof(pauseSpc)-1] = 0x00;
+        if(pauseSpc[0] != ' ')
+        {
+            memset(pauseSpc, ' ', strlen(pauseStr));
+            pauseSpc[sizeof(pauseSpc)-1] = 0x00;
+        }
         misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
         while (read(fdSerial, c, 1) == 0) {};
         switch(TCPAsciiTrans)
         {
         case AsciiToPetskii:
-                memset(pauseDel, 0x14, sizeof(pauseDel)-1); //C64
+            if(pauseDel[0] != 0x14)
+            {
+                memset(pauseDel, 0x14, strlen(pauseStr)); //C64
                 pauseDel[sizeof(pauseDel)-1] = 0x00;
+            }
             break;
         default:
-                memset(pauseDel, 0x08, sizeof(pauseDel)-1);
+            if(pauseDel[0] != 0x08)
+            {
+                memset(pauseDel, 0x08, strlen(pauseStr));
                 pauseDel[sizeof(pauseDel)-1] = 0x00;
+            }
             break;
         }
         misc_swrite(fdSerial, pauseDel);
