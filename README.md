@@ -78,6 +78,8 @@ The 'midilink' daemon currently supports following switches / options:
       TESTMIDI - this option sends a middle 'c' note to the MIDI device 
                  once the daemon is started. 
 
+      BAUD     - Specify BAUD rate...
+
       QUIET    - this option suppresses MIDI debug output.  
 
       MUNT     - Use MUNT SoftSynth (no USB MIDI adapter 

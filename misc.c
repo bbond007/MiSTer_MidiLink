@@ -26,7 +26,9 @@
 //
 //
 static char            pauseStr[] = "[PAUSE]";
-static char            pauseDel[sizeof(pauseStr)];
+//static char            pauseDel[sizeof(pauseStr)];
+static char            pauseSpc[sizeof(pauseStr)];
+
 static pthread_mutex_t print_lock;
 static pthread_mutex_t swrite_lock;
 extern int             MIDI_DEBUG;
@@ -784,20 +786,24 @@ int misc_MT32_LCD(char * MT32Message, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+// void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
 //
-void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
 {
     (*rowcount)++;
     if (*rowcount == rows)
     {
-        if (CR)
-            misc_swrite(fdSerial, "\r\n");
+        //if(pauseDel[0] != 0x08)
+            //memset(pauseDel, 0x08, sizeof(pauseDel));
+        if(pauseSpc[0] != ' ')
+            memset(pauseSpc, ' ', sizeof(pauseSpc));
+        misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
         while (read(fdSerial, c, 1) == 0) {};
-        if(pauseDel[0] != 0x08)
-            memset(pauseDel, 0x08, sizeof(pauseDel));
-        misc_swrite(fdSerial, pauseDel);
+        //misc_swrite(fdSerial, pauseDel);
+        misc_swrite(fdSerial, "\r");
+        misc_swrite(fdSerial, pauseSpc);
+        misc_swrite(fdSerial, "\r");
         *rowcount = 0;
         *c = toupper(*c);
     }
@@ -820,7 +826,7 @@ void misc_show_at_commands(int fdSerial, int rows)
             misc_swrite(fdSerial, "\n");
         misc_swrite(fdSerial, athelp[index]);
         index++;
-        misc_do_rowcheck(fdSerial, rows, &rowcount, &c, TRUE);
+        misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
     }
 }
 
@@ -832,17 +838,25 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
 {
     char str[1024];
     FILE * file;
+    int index = 0;
     int rowcount = 0;
     char c = (char) 0x00;
     file = fopen(fileName, "r");
     if (file)
     {
-        misc_swrite(fdSerial, "\r\n");
+        //misc_swrite(fdSerial, "\r\n");
         while (fgets(str, sizeof(str), file) != NULL && c != 'Q')
         {
-            misc_swrite(fdSerial, str);
             misc_swrite(fdSerial, "\r");
-            misc_do_rowcheck(fdSerial, rows, &rowcount, &c, FALSE);
+            if(rowcount != 0 || index == 0)
+                misc_swrite(fdSerial, "\n");
+            char * lf = strchr(str, '\n');
+            if (lf) *lf = 0x00;        
+            char * cr = strchr(str, '\r');
+            if (cr) *cr = 0x00;
+            misc_swrite(fdSerial, str);
+            index++;
+            misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
         }
         fclose(file);
         return TRUE;
