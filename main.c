@@ -890,7 +890,7 @@ int handle_at_command(char * lineBuf)
         char * strRows = &lineBuf[6];
         if(!misc_is_number(strRows))
         {
-            for (int i = 50; i > 0; i--)
+            for (int i = 50; i > 1; i--)
                 misc_swrite(fdSerial, "\r\n%2d", i);
         }
         else
