@@ -794,7 +794,7 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
         if (CR)
             misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
-        while (read(fdSerial, &c, 1) == 0) {};
+        while (read(fdSerial, c, 1) == 0) {};
         if(pauseDel[0] != 0x08)
             memset(pauseDel, 0x08, sizeof(pauseDel));
         misc_swrite(fdSerial, pauseDel);
@@ -830,7 +830,7 @@ void misc_show_at_commands(int fdSerial, int rows)
 //
 int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
 {
-    char str[1014];
+    char str[1024];
     FILE * file;
     int rowcount = 0;
     char c = (char) 0x00;
@@ -838,7 +838,7 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
     if (file)
     {
         misc_swrite(fdSerial, "\r\n");
-        while (fgets(str, sizeof(str), file)!= NULL)
+        while (fgets(str, sizeof(str), file) != NULL && c != 'Q')
         {
             misc_swrite(fdSerial, str);
             misc_swrite(fdSerial, "\r");
