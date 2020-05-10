@@ -79,6 +79,11 @@ if [ -f "$MIDILINK_BIN" ]; then
 else
   echo "Old MidiLink not found"
 fi
+if [ -f "$MLINKUTIL_BIN" ]; then
+  echo "Removing old MLinkUTIL"
+else
+  echo "Old MLinkUTIL not found"
+fi
 echo "Downloading MidiLink"
 curl -kL $BIN_REPO"midilink?raw=true" -o $MIDILINK_BIN
 echo "Downloading MLinkUTIL"
