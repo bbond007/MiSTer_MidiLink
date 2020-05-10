@@ -39,5 +39,7 @@ int  misc_do_pipe(int fdSerial,  char * path, char * command,
 char * misc_hayes_flow_to_str(int flow);
 char * misc_hayes_DTR_to_str(int dtr);
 char * misc_hayes_ATQ_to_str(int dtr);
+char * misc_get_clrScr();
+
 #define TRUE 1
 #define FALSE 0

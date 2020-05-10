@@ -614,6 +614,23 @@ void misc_d_type_to_str(unsigned char type, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+//char * misc_get_clrScr()
+//
+char * misc_get_clrScr()
+{
+    switch(TCPAsciiTrans)
+    {
+        case AsciiToPetskii:
+            return "\x93";
+        break;
+        default:
+            return "\e[2J\e[H";
+        break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
 //
 int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
@@ -629,12 +646,12 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     unsigned char c;
     char prompt[10]   = "";
     char strRows[10]  = "";
-    char clrScr[]     = "\e[2J\e[H";
     char promptEnd[]  = "END  #? --> ";
     char promptMore[] = "MORE #? --> ";
     char strType[4]   = "";
     int  result       = FALSE;
 
+       
     fileName[0] = (char) 0x00;
     sprintf(strRows, "%d", rows);
     char * path2   = malloc(strlen(path) + 3);
@@ -647,7 +664,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     }
     else
     {
-        misc_swrite(fdSerial, clrScr);
+        misc_swrite(fdSerial, misc_get_clrScr());
         while (index < max)
         {
             if(strlen(namelist[index]->d_name) > 0 &&
@@ -734,11 +751,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 else
                     page++;
                 count = 0;
-                misc_swrite(fdSerial, clrScr);
+                misc_swrite(fdSerial, misc_get_clrScr());
                 if (c == 'Q')
                     break;
                 //else if(index < max) //no clear on exit
-                //   misc_swrite(fdSerial,  clrScr);
+                //   misc_swrite(fdSerial,  misc_get_clrScr());
             }
         }
         for(index = 0; index < max; index++)
