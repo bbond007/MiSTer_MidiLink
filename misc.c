@@ -26,7 +26,7 @@
 //
 //
 static char            pauseStr[] = "[PAUSE]";
-//static char            pauseDel[sizeof(pauseStr)];
+static char            pauseDel[sizeof(pauseStr)];
 static char            pauseSpc[sizeof(pauseStr)];
 
 static pthread_mutex_t print_lock;
@@ -792,17 +792,25 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
     (*rowcount)++;
     if (*rowcount == rows)
     {
-        //if(pauseDel[0] != 0x08)
-            //memset(pauseDel, 0x08, sizeof(pauseDel));
-        if(pauseSpc[0] != ' ')
-            memset(pauseSpc, ' ', sizeof(pauseSpc));
+        if(pauseDel[0] != ' ')
+            memset(pauseSpc, ' ', sizeof(pauseSpc)); 
         misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
         while (read(fdSerial, c, 1) == 0) {};
-        //misc_swrite(fdSerial, pauseDel);
-        misc_swrite(fdSerial, "\r");
+        switch(TCPAsciiTrans)
+        {
+        case AsciiToPetskii:
+            if(pauseDel[0] != 0x14)
+                memset(pauseDel, 0x14, sizeof(pauseDel)); //C64
+            break;
+        default:
+            if(pauseDel[0] != 0x08)
+                memset(pauseDel, 0x08, sizeof(pauseDel));
+            break;
+        }
+        misc_swrite(fdSerial, pauseDel);
         misc_swrite(fdSerial, pauseSpc);
-        misc_swrite(fdSerial, "\r");
+        misc_swrite(fdSerial, pauseDel);
         *rowcount = 0;
         *c = toupper(*c);
     }
@@ -848,7 +856,7 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
         {
             misc_swrite(fdSerial, "\r");
             if(rowcount != 0 || index == 0)
-                misc_swrite(fdSerial, "\n");                
+                misc_swrite(fdSerial, "\n");
             misc_replace_char(str, strlen(str), '\n', 0x00);
             misc_replace_char(str, strlen(str), '\r', 0x00);
             misc_swrite(fdSerial, str);
@@ -906,49 +914,56 @@ int misc_get_core_name(char * buf, int maxBuf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * misc_hayes_flow_to_str(int flow) 
+// char * misc_hayes_flow_to_str(int flow)
 //
 char * misc_hayes_flow_to_str(int flow)
 {
     switch(flow)
     {
-        case 0: return "Diasble Flow-control";
-        case 3: return "RTS/CTS";
-        case 4: return "XON/XOFF";
-        default: 
-            return "UNKNOWN";
+    case 0:
+        return "Diasble Flow-control";
+    case 3:
+        return "RTS/CTS";
+    case 4:
+        return "XON/XOFF";
+    default:
+        return "UNKNOWN";
     }
-    
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * misc_hayes_DTR_to_str(int dtr) 
+// char * misc_hayes_DTR_to_str(int dtr)
 //
 char * misc_hayes_DTR_to_str(int dtr)
 {
     switch(dtr)
     {
-        case 1: return "Normal";
-        case 2: return "Hangup";
-        default: 
-            return "UNKNOWN";
+    case 1:
+        return "Normal";
+    case 2:
+        return "Hangup";
+    default:
+        return "UNKNOWN";
     }
-    
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * misc_hayes_ATQ_to_str(int dtr) 
+// char * misc_hayes_ATQ_to_str(int dtr)
 //
 char * misc_hayes_ATQ_to_str(int dtr)
 {
     switch(dtr)
     {
-        case 0: return "Normal";
-        case 1: return "Quite - no result codes";
-        default: 
-            return "UNKNOWN";
+    case 0:
+        return "Normal";
+    case 1:
+        return "Quite - no result codes";
+    default:
+        return "UNKNOWN";
     }
-    
+
 }
