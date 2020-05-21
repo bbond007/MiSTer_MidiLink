@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
@@ -43,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DEFAULT_TCPDTR         1
 #define DEFAULT_TCPQuiet       0
 
-enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH};
+enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeUDPMUNT, ModeUDPMUNTGM, ModeUDPFSYNTH};
 
 int                     MIDI_DEBUG	       = TRUE;
 static enum MODE        mode                   = ModeUSBMIDI;
@@ -86,9 +87,9 @@ int                     TCPDTR                 = DEFAULT_TCPDTR;
 int                     UDPFlow                = -1;
 int                     MODEMSOUND             = DEFAULT_MODEMSOUND;
 int                     TCPQuiet               = DEFAULT_TCPQuiet;
-
 int 			TCPATHDelay            = 900;
-int                     MUNTCPUMask            = 1;
+int                     MUNTCPUMask            = -1;
+int                     FSYNTHCPUMask          = -1;
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 unsigned int 		TCPTermRows            = DEFAULT_TCPTermRows;
 unsigned int            DELAYSYSEX	       = FALSE;
@@ -108,8 +109,6 @@ void set_pcm_volume(int value)
 {
     if(value != -1)
     {
-        //if(misc_check_module_loaded("snd_dummy"))
-        //    strcpy(mixerControl, "Master");
         char buf[30];
         sprintf(buf, "amixer set %s %d%c",     mixerControl, value, '%');
         misc_print(0, "Setting '%s' to %d%\n", mixerControl, value);
@@ -141,24 +140,23 @@ int start_munt()
     int midiPort = -1;
     set_pcm_volume(muntVolume);
     if(strlen(MUNTOptions) > misc_count_str_chr(MUNTOptions, ' '))
-        misc_print(0, "Starting --> mt32d : Options --> '%s'\n", MUNTOptions);
+        misc_print(0, "Starting --> mt32d : Options --> '%s' ", MUNTOptions);
     else
-    {
         misc_print(0, "Starting --> mt32d");
-        if (CPUMASK != MUNTCPUMask)
+    if (CPUMASK != MUNTCPUMask)
             misc_print(0, " : CPUMASK = %d", MUNTCPUMask);
-        misc_print(0, "\n");
-    }
+    misc_print(0, "\n");
     sprintf(buf, "taskset %d mt32d %s -f %s &", MUNTCPUMask, MUNTOptions, MUNTRomPath);
     system(buf);
     int loop = 0;
     do
     {
+        if (loop > 0)
+            misc_print(0, "Looking for MUNT port (%d / 2)\n", loop);
         sleep(2);
         midiPort = alsa_get_midi_port("MT-32");
         loop++;
-    }
-    while(midiPort < 0 && loop < 3);
+    } while (midiPort < 0 && loop < 3);
     return midiPort;
 }
 
@@ -171,17 +169,21 @@ int start_fsynth()
     char buf[256];
     int midiPort = -1;
     set_pcm_volume(fsynthVolume);
-    misc_print(0, "Starting --> fluidsynth\n");
-    sprintf(buf, "taskset %d fluidsynth -is -a alsa -m alsa_seq %s &", CPUMASK, fsynthSoundFont);
+    misc_print(0, "Starting --> fluidsynth");
+    if (CPUMASK != FSYNTHCPUMask)
+            misc_print(0, " : CPUMASK = %d", FSYNTHCPUMask);
+    misc_print(0, "\n"); 
+    sprintf(buf, "taskset %d fluidsynth -is -a alsa -m alsa_seq %s &", FSYNTHCPUMask, fsynthSoundFont);
     system(buf);
     int loop = 0;
     do
     {
-        sleep(2);
+        if(loop > 0)
+            misc_print(0, "Looking for FluidSynth port (%d / 13)\n", loop);
+        sleep(3);
         midiPort = alsa_get_midi_port("FLUID Synth");
         loop++;
-    }
-    while(midiPort < 0 && loop < 5);
+    } while (midiPort < 0 && loop < 14);
     return midiPort;
 }
 
@@ -316,6 +318,17 @@ void play_dial_sound(char * tmp, char * ipAddr)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// write_[sequencer]_packet()
+// this is for ALSA sequencer interface
+//
+void write_alsa_packet(char * buf, int bufLen)
+{
+    alsa_send_midi_raw(buf, bufLen);
+    show_debug_buf("SEQU OUT ", buf, bufLen);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // void * tcplst_thread_function(void * x)
 // Thread function for TCP Listener input
 //
@@ -429,6 +442,27 @@ void * udpsock_thread_function (void * x)
         {
             write(fdSerial, buf, rdLen);
             show_debug_buf("USOCK IN ", buf, rdLen);
+        }
+    } while (TRUE);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void * udpsock_thread_function2(void * x)
+// Thread function for UDP input for external device like Raspberry Pi
+//
+void * udpsock_thread_function2 (void * x)
+{
+    unsigned char buf[100];
+    int rdLen;
+    do
+    {
+        rdLen = udpsock_read(socket_in,  (char *) buf, sizeof(buf));
+        if (rdLen > 0)
+        {
+            write_alsa_packet(buf, rdLen);
+            //show_debug_buf("USOCK2 IN", buf, rdLen);
         }
     } while (TRUE);
 }
@@ -1263,7 +1297,6 @@ void * midiINin_thread_function (void * x)
 // write_socket_packet()
 // this is for TCP/IP
 //
-
 void write_socket_packet(int sock, char * buf, int bufLen)
 {
     if (mode == ModeTCP)
@@ -1279,17 +1312,6 @@ void write_socket_packet(int sock, char * buf, int bufLen)
         udpsock_write(sock, buf, bufLen);
 
     show_debug_buf("SOCK OUT ", buf, bufLen);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// write_[sequencer]_packet()
-// this is for ALSA sequencer interface
-//
-void write_alsa_packet(char * buf, int bufLen)
-{
-    alsa_send_midi_raw(buf, bufLen);
-    show_debug_buf("SEQU OUT ", buf, bufLen);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -1360,6 +1382,8 @@ int main(int argc, char *argv[])
     int altBaud = FALSE;
     char coreName[30] = "";
     MUNTCPUMask = CPUMASK;
+    FSYNTHCPUMask = CPUMASK;
+    
     unsigned char buf[256];
     //catch_signal(SIGTERM);
     misc_print(0, "\e[2J\e[H");
@@ -1371,6 +1395,12 @@ int main(int argc, char *argv[])
 
     if(misc_check_file(midiLinkINI))
         ini_read_ini(midiLinkINI, coreName, 0);
+    else 
+    {
+        midiLinkINI = basename(midiLinkINI);
+        if(misc_check_file(midiLinkINI))
+            ini_read_ini(midiLinkINI, coreName, 0);
+    }
 
     if (misc_check_args_option(argc, argv, "QUIET"))
         MIDI_DEBUG = FALSE;
@@ -1380,21 +1410,18 @@ int main(int argc, char *argv[])
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
 
-    int MIDI = misc_check_device(midiDevice);
-
-    if (misc_check_args_option(argc, argv, "MENU") && !MIDI)
+    if (!misc_check_device(midiDevice) && misc_check_args_option(argc, argv, "MENU"))
     {
-        if (misc_check_file("/tmp/ML_MUNT")   && !MIDI)   mode   = ModeMUNT;
-        if (misc_check_file("/tmp/ML_MUNTGM") && !MIDI)   mode   = ModeMUNTGM;
-        if (misc_check_file("/tmp/ML_FSYNTH") && !MIDI)   mode   = ModeFSYNTH;
-        if (misc_check_file("/tmp/ML_UDP"))              {mode   = ModeUDP; altBaud = FALSE;}
-        if (misc_check_file("/tmp/ML_TCP"))              {mode   = ModeTCP; altBaud = FALSE;}
-        if (misc_check_file("/tmp/ML_UDP_ALT"))          {mode   = ModeUDP; altBaud = TRUE; }
-        if (misc_check_file("/tmp/ML_TCP_ALT"))          {mode   = ModeTCP; altBaud = TRUE; }
-        if (misc_check_file("/tmp/ML_USBMIDI"))           mode   = ModeUSBMIDI;
-        if (misc_check_file("/tmp/ML_USBSER"))            mode   = ModeUSBSER;
-        if (mode != ModeMUNT && mode != ModeMUNTGM && mode != ModeFSYNTH &&
-                mode != ModeTCP && mode != ModeUDP)
+        if (misc_check_file("/tmp/ML_MUNT"))                mode = ModeMUNT;
+        if (misc_check_file("/tmp/ML_MUNTGM"))              mode = ModeMUNTGM;
+        if (misc_check_file("/tmp/ML_FSYNTH"))              mode = ModeFSYNTH;
+        if (misc_check_file("/tmp/ML_UDP"))               { mode = ModeUDP; altBaud = FALSE; }
+        if (misc_check_file("/tmp/ML_TCP"))               { mode = ModeTCP; altBaud = FALSE; }
+        if (misc_check_file("/tmp/ML_UDP_ALT"))           { mode = ModeUDP; altBaud = TRUE;  }
+        if (misc_check_file("/tmp/ML_TCP_ALT"))           { mode = ModeTCP; altBaud = TRUE;  }
+        if (misc_check_file("/tmp/ML_USBMIDI"))             mode = ModeUSBMIDI;
+        if (misc_check_file("/tmp/ML_USBSER"))              mode = ModeUSBSER;
+        if (mode == ModeUSBMIDI) // no USB MIDI 
         {
             misc_print(0, "MENU --> FSYNTH\n");
             mode = ModeFSYNTH;
@@ -1402,43 +1429,56 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if(misc_check_args_option(argc, argv, "MUNT"))    mode = ModeMUNT;
-        if(misc_check_args_option(argc, argv, "MUNTGM"))  mode = ModeMUNTGM;
-        if(misc_check_args_option(argc, argv, "FSYNTH"))  mode = ModeFSYNTH;
-        if(misc_check_args_option(argc, argv, "UDP"))    {mode = ModeUDP; altBaud = FALSE;}
-        if(misc_check_args_option(argc, argv, "TCP"))    {mode = ModeTCP; altBaud = FALSE;}
-        if(misc_check_args_option(argc, argv, "UDPALT")) {mode = ModeUDP; altBaud = TRUE; }
-        if(misc_check_args_option(argc, argv, "TCPALT")) {mode = ModeTCP; altBaud = TRUE; }
-        if(misc_check_args_option(argc, argv, "USBMIDI")) mode = ModeUSBMIDI;
-        if(misc_check_args_option(argc, argv, "USBSER"))  mode  = ModeUSBSER;
+        if(misc_check_args_option(argc, argv, "MUNT"))      mode = ModeMUNT;
+        if(misc_check_args_option(argc, argv, "MUNTGM"))    mode = ModeMUNTGM;
+        if(misc_check_args_option(argc, argv, "FSYNTH"))    mode = ModeFSYNTH;
+        if(misc_check_args_option(argc, argv, "UDP"))     { mode = ModeUDP; altBaud = FALSE; }
+        if(misc_check_args_option(argc, argv, "TCP"))     { mode = ModeTCP; altBaud = FALSE; }
+        if(misc_check_args_option(argc, argv, "UDPALT"))  { mode = ModeUDP; altBaud = TRUE;  }
+        if(misc_check_args_option(argc, argv, "TCPALT"))  { mode = ModeTCP; altBaud = TRUE;  }
+        if(misc_check_args_option(argc, argv, "USBMIDI"))   mode = ModeUSBMIDI;
+        if(misc_check_args_option(argc, argv, "USBSER"))    mode = ModeUSBSER;
+        if(misc_check_args_option(argc, argv, "UDPMUNT"))   mode = ModeUDPMUNT;
+        if(misc_check_args_option(argc, argv, "UDPMUNTGM")) mode = ModeUDPMUNTGM;
+        if(misc_check_args_option(argc, argv, "UDPFSYNTH")) mode = ModeUDPFSYNTH;
     }
 
     killall_mpg123(0);
     killall_aplaymidi(0);
     killall_softsynth(3);
 
-    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
+    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH || 
+        mode == ModeUDPMUNT || mode == ModeUDPMUNTGM || mode == ModeUDPFSYNTH)
     {
+        /* Disable this so we can run UDPMUNT & UDPFSYNTH on RPi or other linux device. 
         if(!misc_check_device(MrAudioDevice)) // && misc_check_file("/etc/asound.conf"))
         {
             misc_print(0, "ERROR: You have no MrAudio device in kernel --> %s\n", MrAudioDevice);
             close_fd();
             return -1;
         }
-
+        */
+        
         if (!misc_check_device(PCMDevice))
         {
-            //misc_print(0, "WARNING: You have no PCM device loading --> snd-dummy module\n");
-            //system ("modprobe snd-dummy");
             misc_print(0, "ERROR: You have no PCM device --> %s\n", PCMDevice);
             close_fd();
             return -2;
         }
-
-        if (mode == ModeMUNT || mode == ModeMUNTGM)
-            midiPort = start_munt();
-        else if (mode == ModeFSYNTH)
-            midiPort = start_fsynth();
+        
+        switch(mode)
+        {
+            case ModeMUNT:
+            case ModeMUNTGM:
+            case ModeUDPMUNT:
+            case ModeUDPMUNTGM:
+                midiPort = start_munt();
+                break;
+            case ModeFSYNTH:
+            case ModeUDPFSYNTH:
+                midiPort = start_fsynth();
+                break;
+        }
 
         if (midiPort < 0)
         {
@@ -1447,68 +1487,73 @@ int main(int argc, char *argv[])
             return -3;
         }
     }
-    fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
-    if (fdSerial < 0)
-    {
-        misc_print(0, "ERROR: opening %s: %s\n", serialDevice, strerror(errno));
-        close_fd();
-        return -4;
-    }
-    serial_set_interface_attribs(fdSerial);
 
-    int result = misc_check_args_option(argc, argv, "BAUD");
-    if(result && (result + 1 < argc))
+    //these modes don't need serial port. all others do :)
+    if (mode != ModeUDPMUNT && mode != ModeUDPMUNTGM && mode != ModeUDPFSYNTH ) 
     {
-        char * ptr;
-        baudRate = strtol(argv[result + 1], &ptr, 10);
-        if (!serial2_is_valid_rate (baudRate))
+        fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
+        if (fdSerial < 0)
         {
-            misc_print(0, "ERROR : BAUD not valid --> %s\n", argv[result + 1]);
-            return -5;
+            misc_print(0, "ERROR: opening %s: %s\n", serialDevice, strerror(errno));
+            close_fd();
+            return -4;
         }
-    }
-    else if (altBaud && mode == ModeUDP && UDPBaudRate_alt != -1)
-    {
-        baudRate = UDPBaudRate_alt;
-    }
-    else if (mode == ModeUDP && UDPBaudRate != -1)
-    {
-        baudRate = UDPBaudRate;
-    }
-    else if (mode == ModeTCP)
-    {
-        if(altBaud && TCPBaudRate_alt != -1)
-            baudRate = TCPBaudRate_alt;
-        else if(TCPBaudRate != -1)
-            baudRate = TCPBaudRate;
-        else
-            baudRate = 115200;
-    }
-    else if (mode == ModeUSBSER)
-    {
-        if(USBSerBaudRate != -1)
-            baudRate = USBSerBaudRate;
-        else
-            baudRate = 115200;
-    }
-    else
-    {
-        if(MIDIBaudRate != -1)
-            baudRate = MIDIBaudRate;
-        else
+        serial_set_interface_attribs(fdSerial);
+
+        int result = misc_check_args_option(argc, argv, "BAUD");
+        if(result && (result + 1 < argc))
         {
-            if (strcmp(coreName, "AO486") == 0)
-                baudRate = 38400;
+            char * ptr;
+            baudRate = strtol(argv[result + 1], &ptr, 10);
+            if (!serial2_is_valid_rate (baudRate))
+            {
+                misc_print(0, "ERROR : BAUD not valid --> %s\n", argv[result + 1]);
+                return -5;
+            }
+        }
+        else if (altBaud && mode == ModeUDP && UDPBaudRate_alt != -1)
+        {
+            baudRate = UDPBaudRate_alt;
+        }
+        else if (mode == ModeUDP && UDPBaudRate != -1)
+        {
+            baudRate = UDPBaudRate;
+        }
+        else if (mode == ModeTCP)
+        {
+            if(altBaud && TCPBaudRate_alt != -1)
+                baudRate = TCPBaudRate_alt;
+            else if(TCPBaudRate != -1)
+                baudRate = TCPBaudRate;
             else
-                baudRate = 31250;
+                baudRate = 115200;
         }
+        else if (mode == ModeUSBSER)
+        {
+            if(USBSerBaudRate != -1)
+                baudRate = USBSerBaudRate;
+            else
+                baudRate = 115200;
+        }
+        else
+        {
+            if(MIDIBaudRate != -1)
+                baudRate = MIDIBaudRate;
+            else
+            {
+                if (strcmp(coreName, "AO486") == 0)
+                    baudRate = 38400;
+                else
+                    baudRate = 31250;
+            }
+        }
+
+        serial_set_flow_control(fdSerial, 0);
+        serial2_set_baud(serialDevice, fdSerial, baudRate);
+        serial_do_tcdrain(fdSerial);
+        serial2_set_DCD(serialDevice, fdSerial, (mode == ModeTCP)?FALSE:TRUE);
     }
-
-    serial_set_flow_control(fdSerial, 0);
-    serial2_set_baud(serialDevice, fdSerial, baudRate);
-    serial_do_tcdrain(fdSerial);
-    serial2_set_DCD(serialDevice, fdSerial, (mode == ModeTCP)?FALSE:TRUE);
-
+    
     if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH)
     {
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
@@ -1517,6 +1562,7 @@ int main(int argc, char *argv[])
             if(strlen(MT32LCDMsg) > 0)
                 write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
             //This loop handles softSynth MUNT/FluidSynth
+            misc_print(0, "Starting --> local MIDI loop :)\n");
             do
             {
                 int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1539,6 +1585,40 @@ int main(int argc, char *argv[])
 
     switch(mode)
     {
+    case ModeUDPMUNT:
+    case ModeUDPMUNTGM:
+    case ModeUDPFSYNTH:
+        if(alsa_open_seq(midiPort, (mode == ModeUDPMUNTGM)?1:0))
+        {
+            show_line();
+            if(strlen(MT32LCDMsg) > 0)
+                write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+            socket_in  = udpsock_server_open(UDPServerPort);
+            if(socket_in > 0)
+            {
+                misc_print(0, "Socket Listener created on port %d.\n", UDPServerPort);
+                status = pthread_create(&socketInThread, NULL, udpsock_thread_function2, NULL);       
+                if (status == -1)
+                {
+                    misc_print(0, "ERROR: unable to create UDP socket input thread.\n");
+                    close_fd();
+                    return -8;
+                }
+                misc_print(0, "UDP Socket input thread(2) created.\n");
+            }
+            else
+            {
+                misc_print(0, "ERROR: unable to create UDP listener --> '%s'\n", strerror(errno));
+                close_fd();
+                return -9;
+            }
+        }
+        else
+        {
+            close_fd();
+            return -10;
+        }
+        break;
     case ModeUDP:
     {
         if(UDPFlow > 0)
@@ -1555,34 +1635,34 @@ int main(int argc, char *argv[])
                 if(socket_in > 0)
                 {
                     misc_print(0, "Socket Listener created on port %d.\n", UDPServerPort);
-                    status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);
+                    status = pthread_create(&socketInThread, NULL, udpsock_thread_function, NULL);       
                     if (status == -1)
                     {
-                        misc_print(0, "ERROR: unable to create socket input thread.\n");
+                        misc_print(0, "ERROR: unable to create UDP socket input thread.\n");
                         close_fd();
-                        return -7;
+                        return -11;
                     }
-                    misc_print(0, "Socket input thread created.\n");
+                    misc_print(0, "UDP Socket input thread(1) created.\n");
                 }
                 else
                 {
                     misc_print(0, "ERROR: unable to create UDP listener --> '%s'\n", strerror(errno));
                     close_fd();
-                    return -8;
+                    return -12;
                 }
             }
             else
             {
                 misc_print(0, "ERROR: unable to open UDP port --> '%s'\n", strerror(errno));
                 close_fd();
-                return -9;
+                return -13;
             }
         }
         else
         {
             misc_print(0, "ERROR: in INI File (UDP_SERVER) --> %s\n", midiLinkINI);
             close_fd();
-            return -10;
+            return -14;
         }
     }
     break;
@@ -1600,7 +1680,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create socket listener thread.\n");
                 close_fd();
-                return -11;
+                return -15;
             }
             misc_print(0, "Socket listener thread created.\n");
         }
@@ -1608,7 +1688,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create socket listener --> '%s'\n", strerror(errno));
             close_fd();
-            return -12;
+            return -16;
         }
     }
     break;
@@ -1619,7 +1699,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", midiDevice, strerror(errno));
             close_fd();
-            return -13;
+            return -17;
         }
 
         if (misc_check_device(midiINDevice))
@@ -1629,7 +1709,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: cannot open %s: %s\n", midiINDevice, strerror(errno));
                 close_fd();
-                return -14;
+                return -18;
             }
         }
 
@@ -1647,7 +1727,7 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: unable to create *MIDI input thread.\n");
                 close_fd();
-                return -15;
+                return -19;
             }
             misc_print(0, "MIDI1 input thread created.\n");
             misc_print(0, "CONNECT : %s --> %s & %s\n", midiINDevice, serialDevice, midiDevice);
@@ -1658,7 +1738,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create MIDI input thread.\n");
             close_fd();
-            return -16;
+            return -20;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
@@ -1677,21 +1757,21 @@ int main(int argc, char *argv[])
             {
                 misc_print(0, "ERROR: You have no '%s' device! --> maybe set 'USB_SERIAL_MODULE = ' in '%s'?\n", serialDeviceUSB, midiLinkINI);
                 close_fd();
-                return -17;
+                return -21;
             }
             system(buf);
         }
- 
+
         fdSerialUSB = open(serialDeviceUSB, O_RDWR);
         if (fdSerialUSB < 0)
         {
             misc_print(0, "ERROR: cannot open %s: %s\n", serialDeviceUSB, strerror(errno));
             close_fd();
-            return -18;
+            return -22;
         }
 
         serial_set_flow_control(fdSerial, 3);    //RTS/CTS
-        serial_set_flow_control(fdSerialUSB, 3); 
+        serial_set_flow_control(fdSerialUSB, 3);
         serial_set_interface_attribs(fdSerialUSB);
         serial2_set_baud(serialDeviceUSB, fdSerialUSB, baudRate);
         serial_do_tcdrain(fdSerialUSB);
@@ -1702,7 +1782,7 @@ int main(int argc, char *argv[])
         {
             misc_print(0, "ERROR: unable to create serial input thread.\n");
             close_fd();
-            return -19;
+            return -23;
         }
         misc_print(0, "MIDI input thread created.\n");
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, serialDeviceUSB);
@@ -1723,6 +1803,7 @@ int main(int argc, char *argv[])
             write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
         }
         //This main loop handles USB MIDI
+        misc_print(0, "Starting --> USB MIDI loop :)\n");
         do
         {
             int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1734,16 +1815,26 @@ int main(int argc, char *argv[])
         break;
     case ModeUSBSER:
         //This main loop handles USB serial
+        misc_print(0, "Starting --> USB Serial loop :)\n");
         do
         {
             int rdLen = read(fdSerial, buf, sizeof(buf));
             if (rdLen > 0)
-            {	
+            {
                 show_debug_buf("SERIAL OUT ", buf, rdLen);
                 write(fdSerialUSB, buf, rdLen);
-            } 
+            }
             else if (rdLen < 0)
                 misc_print(1, "ERROR: (USBSER) from read: %d: %s\n", rdLen, strerror(errno));
+        } while (TRUE);
+        break;
+    case ModeUDPMUNT:
+    case ModeUDPMUNTGM:
+    case ModeUDPFSYNTH:
+        misc_print(0, "Starting --> UDP Synth loop :)\n");
+        do
+        {
+            sleep(1);
         } while (TRUE);
         break;
     case ModeUDP:
@@ -1759,6 +1850,7 @@ int main(int argc, char *argv[])
             }
         }
         //This main loop handles UDP
+        misc_print(0, "Starting --> UDP loop :)\n");
         do
         {
             int rdLen = read(fdSerial, buf, sizeof(buf));
@@ -1773,6 +1865,7 @@ int main(int argc, char *argv[])
         break;
     case ModeTCP :
         //This main loop handles TCP
+        misc_print(0, "Starting --> TCP loop :)\n");
         do
         {
             int rdLen = read(fdSerial, buf, sizeof(buf));
