@@ -47,6 +47,7 @@ extern int             TCPATHDelay;
 extern enum ASCIITRANS TCPAsciiTrans;
 extern enum SOFTSYNTH  TCPSoftSynth;
 extern int             MUNTCPUMask;
+extern int             FSYNTHCPUMask;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -129,10 +130,15 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &MUNTCPUMask);
     }
+   
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &fsynthVolume);
+    }
+    else if (strcmp("FSYNTH_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &FSYNTHCPUMask);
     }
     else if(strcmp("MODEM_VOLUME", key) == 0)
     {
@@ -310,6 +316,7 @@ void ini_print_settings(int p)
     else
         misc_print(p, "  - MUNT_VOLUME        --> Default (don't set)\n");
     misc_print(p, "  - MUNT_CPU_MASK      --> %d\n",MUNTCPUMask);
+    misc_print(p, "  - FSYNTH_CPU_MASK    --> %d\n",FSYNTHCPUMask);  
     if(fsynthVolume != -1)
         misc_print(p, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
