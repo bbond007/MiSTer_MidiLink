@@ -75,30 +75,36 @@ SoftMPU option ***
 
 The 'midilink' daemon currently supports following switches / options:
 
-      TESTMIDI - this option sends a middle 'c' note to the MIDI device 
+      TESTMIDI  - this option sends a middle 'c' note to the MIDI device 
                  once the daemon is started. 
 
-      BAUD     - Specify BAUD rate...
+      BAUD      - Specify BAUD rate...
 
-      QUIET    - this option suppresses MIDI debug output.  
+      QUIET     - this option suppresses MIDI debug output.  
 
-      MUNT     - Use MUNT SoftSynth (no USB MIDI adapter 
-                 required)
+      MUNT      - Use MUNT SoftSynth (no USB MIDI adapter 
+                  required)
 
-      FSYNTH   - Use FluidSynth SoftSynth (no USB MIDI adapter 
-                 required)
+      FSYNTH    - Use FluidSynth SoftSynth (no USB MIDI adapter 
+                  required)
 
-      UDP      - Send MIDI to UDP Port (INI setting MIDI_SERVER /
-                 MIDI_SERVER_PORT)
+      UDP       - Send MIDI to UDP Port (INI setting MIDI_SERVER /
+                  MIDI_SERVER_PORT)
 
-      TCP      - Works like a modem with AT commands: 
-                 (ATDT, ATBAUD, ATIPADDR, +++ATH)
+      UDPMUNT   - Listen on UDP port and send to MUNT 
 
-      USBSER   - Connect to USB serial converter
+      UDPMUNTGM - Listen on UDP port and send to MUNT (GM mapping)
+      
+      UDPFSYNTH - Listen on UDP port and send to FluidSynth
 
-      MENU     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
-                 /tmp/ML_FSYNTH, /tmp/ML_TCP /tmp/ML_USBSER
-                 used with MiSTer Menu to set mode of operation. 
+      TCP       - Works like a modem with AT commands: 
+                  (ATDT, ATBAUD, ATIPADDR, +++ATH)
+
+      USBSER    - Connect to USB serial converter
+
+      MENU      - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
+                  /tmp/ML_FSYNTH, /tmp/ML_TCP /tmp/ML_USBSER
+                  used with MiSTer Menu to set mode of operation. 
 
 The MidiLink.INI file:
 
