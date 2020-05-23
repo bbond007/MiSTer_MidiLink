@@ -88,6 +88,9 @@ echo "Downloading MidiLink"
 curl -kL $BIN_REPO"midilink?raw=true" -o $MIDILINK_BIN
 echo "Downloading MLinkUTIL"
 curl -kL $BIN_REPO"mlinkutil?raw=true" -o $MLINKUTIL_BIN
+echo "Setting permissions : $MIDILINK_BIN, $MLINKUTIL_BIN"
+chmod 755 $MIDILINK_BIN
+chmod 755 $MLINKUTIL_BIN
 echo "Rebooting in:"
 sleep 1
 echo "3"
