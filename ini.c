@@ -25,6 +25,8 @@ extern int             TCPBaudRate;
 extern int             UDPBaudRate_alt;
 extern int             TCPBaudRate_alt;
 extern int             MIDIBaudRate;
+extern int             USBSerBaudRate;
+extern char            USBSerModule[100];
 extern int             TCPFlow;
 extern int             TCPDTR;
 extern int             TCPQuiet;
@@ -45,6 +47,7 @@ extern int             TCPATHDelay;
 extern enum ASCIITRANS TCPAsciiTrans;
 extern enum SOFTSYNTH  TCPSoftSynth;
 extern int             MUNTCPUMask;
+extern int             FSYNTHCPUMask;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -127,10 +130,15 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &MUNTCPUMask);
     }
+   
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &fsynthVolume);
+    }
+    else if (strcmp("FSYNTH_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &FSYNTHCPUMask);
     }
     else if(strcmp("MODEM_VOLUME", key) == 0)
     {
@@ -192,6 +200,14 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("MIDI_BAUD", key) == 0)
     {
         ini_int(value, &MIDIBaudRate);
+    }
+    else if (strcmp("USB_SERIAL_BAUD", key) == 0)
+    {
+        ini_int(value, &USBSerBaudRate);
+    }
+    else if (strcmp("USB_SERIAL_MODULE", key) == 0)
+    {
+        ini_str(key, value, USBSerModule, sizeof(USBSerModule));
     }
     else if (strcmp("TCP_TERM_ROWS", key) == 0)
     {
@@ -300,6 +316,7 @@ void ini_print_settings(int p)
     else
         misc_print(p, "  - MUNT_VOLUME        --> Default (don't set)\n");
     misc_print(p, "  - MUNT_CPU_MASK      --> %d\n",MUNTCPUMask);
+    misc_print(p, "  - FSYNTH_CPU_MASK    --> %d\n",FSYNTHCPUMask);  
     if(fsynthVolume != -1)
         misc_print(p, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
@@ -383,6 +400,11 @@ void ini_print_settings(int p)
         misc_print(p, "  - TCP_SOUND_CONNECT  --> '%s'\n",  modemConnectSndWAV);
     else
         misc_print(p, "  - TCP_SOUND_CONNECT  --> Software\n");
+    if(USBSerBaudRate > 0)
+        misc_print(p, "  - USB_SERIAL_BAUD    --> %d\n", USBSerBaudRate);
+    else
+        misc_print(p, "  - USB_SERIAL_BAUD    --> Default (don't change)\n");    
+    misc_print(p, "  - USB_SERIAL_MODULE  --> '%s'\n", USBSerModule);
     misc_print(p, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
     misc_print(p, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
     misc_print(p, "\n");

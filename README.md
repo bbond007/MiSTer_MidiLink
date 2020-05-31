@@ -75,26 +75,36 @@ SoftMPU option ***
 
 The 'midilink' daemon currently supports following switches / options:
 
-      TESTMIDI - this option sends a middle 'c' note to the MIDI device 
+      TESTMIDI  - this option sends a middle 'c' note to the MIDI device 
                  once the daemon is started. 
 
-      QUIET    - this option suppresses MIDI debug output.  
+      BAUD      - Specify BAUD rate...
 
-      MUNT     - Use MUNT SoftSynth (no USB MIDI adapter 
-                 required)
+      QUIET     - this option suppresses MIDI debug output.  
 
-      FSYNTH   - Use FluidSynth SoftSynth (no USB MIDI adapter 
-                 required)
+      MUNT      - Use MUNT SoftSynth (no USB MIDI adapter 
+                  required)
 
-      UDP      - Send MIDI to UDP Port (INI setting MIDI_SERVER /
-                 MIDI_SERVER_PORT)
+      FSYNTH    - Use FluidSynth SoftSynth (no USB MIDI adapter 
+                  required)
 
-      TCP      - Works like a modem with AT commands: 
-                 (ATDT, ATBAUD, ATIPADDR, +++ATH)
+      UDP       - Send MIDI to UDP Port (INI setting MIDI_SERVER /
+                  MIDI_SERVER_PORT)
 
-      MENU     - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
-                 /tmp/ML_FSYNTH, /tmp/ML_TCP used with MiSTer
-                 Menu to set mode of operation. 
+      UDPMUNT   - Listen on UDP port and send to MUNT 
+
+      UDPMUNTGM - Listen on UDP port and send to MUNT (GM mapping)
+      
+      UDPFSYNTH - Listen on UDP port and send to FluidSynth
+
+      TCP       - Works like a modem with AT commands: 
+                  (ATDT, ATBAUD, ATIPADDR, +++ATH)
+
+      USBSER    - Connect to USB serial converter
+
+      MENU      - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
+                  /tmp/ML_FSYNTH, /tmp/ML_TCP /tmp/ML_USBSER
+                  used with MiSTer Menu to set mode of operation. 
 
 The MidiLink.INI file:
 
@@ -199,6 +209,8 @@ The MidiLink.INI file:
 
       #TCP_SOUND_CONNECT =              --> optional WAV file for TCP modem 
                                             connect
+
+      USB_SERIAL_BAUD    = 9600         --> Set USB serial baud to 9600
 
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
                                             error on Roland MT-32 Rev0.

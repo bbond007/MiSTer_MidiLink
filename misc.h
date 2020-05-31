@@ -27,7 +27,7 @@ int  misc_file_to_serial(int fdSerial,  char * fileName, int rows);
 int  misc_count_str_chr(char * str, char chr);
 int  misc_MT32_LCD(char * MT32Message, char * buf);
 void misc_show_at_commands(int fdSerial, int rows);
-void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR);
+void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c);
 int  misc_get_core_name(char * buf, int maxBuf);
 char misc_replace_char(char * str, int strLen, char old, char new);
 int  misc_do_pipe(int fdSerial,  char * path, char * command, 
@@ -39,5 +39,7 @@ int  misc_do_pipe(int fdSerial,  char * path, char * command,
 char * misc_hayes_flow_to_str(int flow);
 char * misc_hayes_DTR_to_str(int dtr);
 char * misc_hayes_ATQ_to_str(int dtr);
+char * misc_get_clrScr();
+
 #define TRUE 1
 #define FALSE 0

@@ -6,5 +6,5 @@ int  serial2_baud_at_index(int index);
 int  serial2_indexof(int baud);
 int  serial2_set_DTR(int fd, int on);
 int  serial2_get_DSR(int fd);
-int  serial2_set_DCD(int fd, int on);
+int  serial2_set_DCD(char * serialDevice, int fd, int on);
 

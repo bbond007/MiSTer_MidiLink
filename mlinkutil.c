@@ -47,6 +47,17 @@ int main(int argc, char *argv[])
         }
         serial2_set_baud(serialDevice, fdSerial, baud);
         close(fdSerial);
+        if(misc_check_device(serialDeviceUSB))// && misc_check_file("/tmp/ML_USBSER"))
+        {
+            fdSerial = open(serialDeviceUSB, O_RDWR | O_NOCTTY | O_SYNC);
+            if (fdSerial < 0)
+            {
+                misc_print(0, "ERROR: opening %s: %s\n", serialDeviceUSB, strerror(errno));
+                return -3;
+            }
+            serial2_set_baud(serialDeviceUSB, fdSerial, baud);
+            close(fdSerial);
+        }
         bShowInfo = FALSE;
     }
 
@@ -95,14 +106,14 @@ int main(int argc, char *argv[])
             else
             {	
                 printf("ERROR --> unable to connect to FluidSynth:9800\n");
-                return -4;
+                return -11;
             }
             bShowInfo = FALSE;
         }
         else
         {
             printf("ERROR --> unable to open file '%s'\n", argv[result+1]);
-            return -3;
+            return -10;
         }
     }
     if (bShowInfo)

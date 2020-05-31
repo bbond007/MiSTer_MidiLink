@@ -26,7 +26,9 @@
 //
 //
 static char            pauseStr[] = "[PAUSE]";
-static char            pauseDel[sizeof(pauseStr)];
+static char            pauseDel[sizeof(pauseStr)] = "";
+static char            pauseSpc[sizeof(pauseStr)] = "";
+
 static pthread_mutex_t print_lock;
 static pthread_mutex_t swrite_lock;
 extern int             MIDI_DEBUG;
@@ -215,11 +217,11 @@ int misc_check_args_option (int argc, char *argv[], char * option)
     if(argc > 1)
         for (int i = 1; i< argc; i++)
         {
-            char * arg = strdup(argv[i]);
-            misc_str_to_upper(arg);
-            if (strcmp(arg, option) == 0)
-                result = TRUE;
-            free(arg);
+            if (strcasecmp(argv[i], option) == 0)
+            {
+                result = i;
+                break;
+            }
         }
     free(OPTION);
     return result;
@@ -398,7 +400,6 @@ long misc_get_timeval_diff(struct timeval * start, struct timeval * stop)
     long usecs = stop->tv_usec - start->tv_usec;
     return ((secs) * 1000 + usecs/1000.0);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -613,6 +614,23 @@ void misc_d_type_to_str(unsigned char type, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+//char * misc_get_clrScr()
+//
+char * misc_get_clrScr()
+{
+    switch(TCPAsciiTrans)
+    {
+    case AsciiToPetskii:
+        return "\x93";
+        break;
+    default:
+        return "\e[2J\e[H";
+        break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
 //
 int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * DIR)
@@ -628,11 +646,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     unsigned char c;
     char prompt[10]   = "";
     char strRows[10]  = "";
-    char clrScr[]     = "\e[2J\e[H";
     char promptEnd[]  = "END  #? --> ";
     char promptMore[] = "MORE #? --> ";
     char strType[4]   = "";
     int  result       = FALSE;
+
 
     fileName[0] = (char) 0x00;
     sprintf(strRows, "%d", rows);
@@ -646,7 +664,7 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
     }
     else
     {
-        misc_swrite(fdSerial, clrScr);
+        misc_swrite(fdSerial, misc_get_clrScr());
         while (index < max)
         {
             if(strlen(namelist[index]->d_name) > 0 &&
@@ -733,11 +751,11 @@ int misc_list_files(char * path, int fdSerial, int rows, char * fileName, int * 
                 else
                     page++;
                 count = 0;
-                misc_swrite(fdSerial, clrScr);
+                misc_swrite(fdSerial, misc_get_clrScr());
                 if (c == 'Q')
                     break;
                 //else if(index < max) //no clear on exit
-                //   misc_swrite(fdSerial,  clrScr);
+                //   misc_swrite(fdSerial,  misc_get_clrScr());
             }
         }
         for(index = 0; index < max; index++)
@@ -784,19 +802,40 @@ int misc_MT32_LCD(char * MT32Message, char * buf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+// void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
 //
-void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c, int CR)
+void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
 {
     (*rowcount)++;
     if (*rowcount == rows)
     {
-        if (CR)
-            misc_swrite(fdSerial, "\r\n");
+        if(pauseSpc[0] != ' ')
+        {
+            memset(pauseSpc, ' ', strlen(pauseStr));
+            pauseSpc[sizeof(pauseSpc)-1] = 0x00;
+        }
+        misc_swrite(fdSerial, "\r\n");
         misc_swrite(fdSerial, pauseStr);
-        while (read(fdSerial, &c, 1) == 0) {};
-        if(pauseDel[0] != 0x08)
-            memset(pauseDel, 0x08, sizeof(pauseDel));
+        while (read(fdSerial, c, 1) == 0) {};
+        switch(TCPAsciiTrans)
+        {
+        case AsciiToPetskii:
+            if(pauseDel[0] != 0x14)
+            {
+                memset(pauseDel, 0x14, strlen(pauseStr)); //C64
+                pauseDel[sizeof(pauseDel)-1] = 0x00;
+            }
+            break;
+        default:
+            if(pauseDel[0] != 0x08)
+            {
+                memset(pauseDel, 0x08, strlen(pauseStr));
+                pauseDel[sizeof(pauseDel)-1] = 0x00;
+            }
+            break;
+        }
+        misc_swrite(fdSerial, pauseDel);
+        misc_swrite(fdSerial, pauseSpc);
         misc_swrite(fdSerial, pauseDel);
         *rowcount = 0;
         *c = toupper(*c);
@@ -820,7 +859,7 @@ void misc_show_at_commands(int fdSerial, int rows)
             misc_swrite(fdSerial, "\n");
         misc_swrite(fdSerial, athelp[index]);
         index++;
-        misc_do_rowcheck(fdSerial, rows, &rowcount, &c, TRUE);
+        misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
     }
 }
 
@@ -830,19 +869,25 @@ void misc_show_at_commands(int fdSerial, int rows)
 //
 int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
 {
-    char str[1014];
+    char str[1024];
     FILE * file;
+    int index = 0;
     int rowcount = 0;
     char c = (char) 0x00;
     file = fopen(fileName, "r");
     if (file)
     {
-        misc_swrite(fdSerial, "\r\n");
-        while (fgets(str, sizeof(str), file)!= NULL)
+        //misc_swrite(fdSerial, "\r\n");
+        while (fgets(str, sizeof(str), file) != NULL && c != 'Q')
         {
-            misc_swrite(fdSerial, str);
             misc_swrite(fdSerial, "\r");
-            misc_do_rowcheck(fdSerial, rows, &rowcount, &c, FALSE);
+            if(rowcount != 0 || index == 0)
+                misc_swrite(fdSerial, "\n");
+            misc_replace_char(str, strlen(str), '\n', 0x00);
+            misc_replace_char(str, strlen(str), '\r', 0x00);
+            misc_swrite(fdSerial, str);
+            index++;
+            misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
         }
         fclose(file);
         return TRUE;
@@ -895,49 +940,56 @@ int misc_get_core_name(char * buf, int maxBuf)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * misc_hayes_flow_to_str(int flow) 
+// char * misc_hayes_flow_to_str(int flow)
 //
 char * misc_hayes_flow_to_str(int flow)
 {
     switch(flow)
     {
-        case 0: return "Diasble Flow-control";
-        case 3: return "RTS/CTS";
-        case 4: return "XON/XOFF";
-        default: 
-            return "UNKNOWN";
+    case 0:
+        return "Diasble Flow-control";
+    case 3:
+        return "RTS/CTS";
+    case 4:
+        return "XON/XOFF";
+    default:
+        return "UNKNOWN";
     }
-    
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * misc_hayes_DTR_to_str(int dtr) 
+// char * misc_hayes_DTR_to_str(int dtr)
 //
 char * misc_hayes_DTR_to_str(int dtr)
 {
     switch(dtr)
     {
-        case 1: return "Normal";
-        case 2: return "Hangup";
-        default: 
-            return "UNKNOWN";
+    case 1:
+        return "Normal";
+    case 2:
+        return "Hangup";
+    default:
+        return "UNKNOWN";
     }
-    
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// char * misc_hayes_ATQ_to_str(int dtr) 
+// char * misc_hayes_ATQ_to_str(int dtr)
 //
 char * misc_hayes_ATQ_to_str(int dtr)
 {
     switch(dtr)
     {
-        case 0: return "Normal";
-        case 1: return "Quite - no result codes";
-        default: 
-            return "UNKNOWN";
+    case 0:
+        return "Normal";
+    case 1:
+        return "Quite - no result codes";
+    default:
+        return "UNKNOWN";
     }
-    
+
 }
