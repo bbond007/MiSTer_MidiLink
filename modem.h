@@ -13,6 +13,7 @@ void * modem_tcplst_thread_function (void * x);
 void * modem_tcpsock_thread_function (void * x);
 int    modem_get_softsynth_port(int softSynth);
 void   modem_set_defaults();
+void   modem_show_at_commands(int fdSerial, int rows);
 
 
 

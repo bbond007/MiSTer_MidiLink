@@ -69,6 +69,67 @@ void show_debug_buf(char * descr, char * buf, int bufLen);
 void killall_softsynth(int delay);
 void set_pcm_volume(int value);
 
+static char * athelp[] =
+{
+    "AT       - Attention",
+    "ATBAUD#  - Set baud rate",
+    "ATBAUD   - Show baud rate menu",
+    "ATDIR    - Show dialing MidiLink.DIR",
+    "ATDT     - Dial 'ATDT192.168.1.131:23'",
+    "ATHELP   - Show valid AT Comamnds",
+    "ATINI    - Show MidiLink.INI",
+    "ATIP     - Show IP address",
+    "ATMID1   - Switch synth to FluidSynth",
+    "ATMID2   - Switch synth to MUNT",
+    "ATMID    - Play MIDI file",
+    "ATMIDSF  - Select FluidSynth SoundFont",
+    "ATMID!   - Stop currently playing MIDI",
+    "ATM0     - Disable modem sounds",
+    "ATM1     - Enable modem sounds",
+    "ATM###%%  - Set modem volume [0-100%%]",
+    "ATMP3    - Play MP3 file",
+    "ATMP3!   - Stop playing MP3 File",
+    "ATROWS   - Do terminal row test",
+    "ATROWS## - Set number of terminal rows",
+    "ATRZ     - Receive a file using Zmodem",
+    "ATSZ     - Send a file via Zmodem",
+    "ATTEL0   - Disable telnet negotiation",
+    "ATTEL1   - Enable telnet negotiation",
+    "ATTRANS# - Set ASCII translation",
+    "ATQ0     - Verbose result codes",
+    "ATQ1     - Suppress result codes",
+    "ATVER    - Show MidiLink version",
+    "ATZ      - Reset modem",
+    "AT&D0    - DTR mode normal",
+    "AT&D2    - DTR drop causes hangup",
+    "AT&K0    - Disable  flow control",
+    "AT&K3    - RTS/CTS  flow control",
+    "AT&K4    - XON/XOFF flow control",
+    "+++ATH   - Hang-up",
+    NULL
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void modem_show_at_commands(int fdSerial, int rows)
+//
+void modem_show_at_commands(int fdSerial, int rows)
+{
+    int index = 0;
+    int rowcount = 0;
+    char c = (char) 0x00;
+
+    while(athelp[index] != NULL && c != 'Q')
+    {
+        misc_swrite(fdSerial, "\r");
+        if (rowcount != 0 || index == 0) //rowcount not reset
+            misc_swrite(fdSerial, "\n");
+        misc_swrite(fdSerial, athelp[index]);
+        index++;
+        misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void modem_killall_mpg123()
@@ -840,7 +901,7 @@ int modem_handle_at_command(char * lineBuf)
     }
     else if (memcmp(lineBuf, "ATHELP", 6) == 0)
     {
-        misc_show_at_commands(fdSerial, TCPTermRows);
+        modem_show_at_commands(fdSerial, TCPTermRows);
     }
     else if (memcmp(lineBuf, "ATUARTTEST", 6) == 0)
     {
@@ -848,7 +909,7 @@ int modem_handle_at_command(char * lineBuf)
             TCPTermRows  = 0;
         while (TRUE)
         {
-            misc_show_at_commands(fdSerial, TCPTermRows);
+            modem_show_at_commands(fdSerial, TCPTermRows);
             misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
         }
     }
@@ -975,3 +1036,4 @@ void modem_do_emulation(char * buf, int bufLen)
         }
     }
 }
+
