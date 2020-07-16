@@ -22,21 +22,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-#include <linux/soundcard.h>
 #include <ctype.h>
 #include <sys/time.h>
 #include "serial.h"
 #include "serial2.h"
-#include "config.h"
 #include "misc.h"
 #include "udpsock.h"
 #include "tcpsock.h"
 #include "alsa.h"
 #include "ini.h"
 #include "modem.h"
-
-#define DEFAULT_TCPFlow       -1
-#define DEFAULT_TCPDTR         1
+#include "config.h"
 
 enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeUDPMUNT, ModeUDPMUNTGM, ModeUDPFSYNTH};
 
@@ -46,18 +42,11 @@ static int              fdMidi                 = -1;
 static int              fdMidiIN               = -1;
 
 int                     MIDI_DEBUG             = TRUE;
-int                     socket_lst             = -1;
-int                     socket_out             = -1;
-int                     fdSerial               = -1;
 int                     socket_in              = -1;
+int                     socket_out             = -1;
+int                     socket_lst             = -1;
+int                     fdSerial               = -1;
 int                     baudRate               = -1;
-char                    MT32LCDMsg[21]         = "MiSTer MidiLink! BB7";
-char                    fsynthSoundFont [150]  = "/media/fat/linux/soundfonts/SC-55.sf2";
-char                    MUNTRomPath[150]       = "/media/fat/linux/mt32-rom-data";
-char                    UDPServer [100]        = "";
-char                    mixerControl[20]       = "Master";
-char                    MUNTOptions[30]        = "";
-char                    USBSerModule[100]      = "";
 int                     muntVolume             = -1;
 int                     fsynthVolume           = -1;
 int                     midilinkPriority       =  0;
@@ -67,8 +56,8 @@ int                     UDPBaudRate_alt        = -1;
 int                     TCPBaudRate_alt        = -1;
 int                     MIDIBaudRate           = -1;
 int                     USBSerBaudRate         = -1;
-int                     TCPFlow                = DEFAULT_TCPFlow;
-int                     TCPDTR                 = DEFAULT_TCPDTR;
+int                     TCPFlow                = -1;
+int                     TCPDTR                 =  1;
 int                     UDPFlow                = -1;
 int                     MUNTCPUMask            = -1;
 int                     FSYNTHCPUMask          = -1;
@@ -76,6 +65,13 @@ unsigned int            DELAYSYSEX             = FALSE;
 unsigned int            UDPServerPort          = 1999;
 unsigned int            TCPServerPort          = 23;
 unsigned int            UDPServerFilterIP      = FALSE;
+char                    MT32LCDMsg[21]         = "MiSTer MidiLink! BB7";
+char                    fsynthSoundFont [150]  = "/media/fat/linux/soundfonts/SC-55.sf2";
+char                    MUNTRomPath[150]       = "/media/fat/linux/mt32-rom-data";
+char                    UDPServer [100]        = "";
+char                    mixerControl[20]       = "Master";
+char                    MUNTOptions[30]        = "";
+char                    USBSerModule[100]      = "";
 
 static pthread_t        midiInThread;
 static pthread_t        midiINInThread;
@@ -246,7 +242,6 @@ void write_midi_packet(char * buf, int bufLen)
     }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // write_socket_packet()
@@ -268,7 +263,6 @@ void write_socket_packet(int sock, char * buf, int bufLen)
 
     show_debug_buf("SOCK OUT ", buf, bufLen);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -305,7 +299,6 @@ void * udpsock_thread_function_ext (void * x)
         if (rdLen > 0)
         {
             write_alsa_packet(buf, rdLen);
-            //show_debug_buf("USOCK2 IN", buf, rdLen);
         }
     } while (TRUE);
 }
@@ -387,33 +380,6 @@ void * serial_thread_function (void * x)
             misc_print(1, "ERROR: serial_thread_function() reading %s --> %d : %s \n", serialDeviceUSB, rdLen, strerror(errno));
         }
     } while (TRUE);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// int get_softsynth_port(int softSynth)
-//
-//
-int get_softsynth_port(int softSynth)
-{
-    int midiPort = alsa_get_midi_port("MT-32");
-    if (midiPort == -1)
-        midiPort = alsa_get_midi_port("FLUID Synth");
-    if (midiPort == -1)
-    {
-        switch(softSynth)
-        {
-        case MUNT:
-            midiPort = start_munt();
-            break;
-        case FluidSynth:
-            midiPort = start_fsynth();
-            break;
-        case -1: //do nothing.
-            break;
-        }
-    }
-    return midiPort;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -502,6 +468,7 @@ int main(int argc, char *argv[])
     misc_print(0, "\e[2J\e[H");
     misc_print(0, helloStr);
     misc_print(0, "\n");
+	
 
     misc_get_core_name(coreName, sizeof(coreName));
     misc_print(0, "CORE --> '%s'\n", coreName);
@@ -781,6 +748,7 @@ int main(int argc, char *argv[])
     break;
     case ModeTCP:
     {
+		modem_set_defaults();
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
         //serial2_set_DCD(sericlDevice, fdSerial, FALSE);

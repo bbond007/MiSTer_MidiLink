@@ -1,18 +1,3 @@
-/*--------------------------------------------------------------------
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
----------------------------------------------------------------------*/
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -39,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DEFAULT_TCPDTR         1
 #define DEFAULT_TCPQuiet       0
 
-
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 enum ASCIITRANS         TCPAsciiTrans          = DEFAULT_TCPAsciiTrans;
 char                    MP3Path[500]           = "/media/fat/MP3";
@@ -56,13 +40,13 @@ int                     modemVolume            = DEFAULT_modemVolume;
 int                     TCPQuiet               = DEFAULT_TCPQuiet;
 int                     MODEMSOUND             = DEFAULT_MODEMSOUND;
 
+extern int              MIDI_DEBUG;
 extern int              CPUMASK; 
 extern int              MODEMSOUND;
-extern int              fdSerial;
+extern int              socket_in;
 extern int              socket_out;
 extern int              socket_lst;
-extern int              socket_in;
-extern int              MIDI_DEBUG;
+extern int              fdSerial;
 extern int              baudRate;
 extern int              TCPQuiet; 
 extern int              modemVolume;
@@ -77,11 +61,12 @@ extern char           * serialDevice;
 extern char           * helloStr;
 extern char         	fsynthSoundFont[];
 
-static pthread_t	    socketInThread;
+static pthread_t        socketInThread;
 
+int  start_munt();
+int  start_fsynth();
 void show_debug_buf(char * descr, char * buf, int bufLen);
 void killall_softsynth(int delay);
-int  get_softsynth_port(int softSynth);
 void set_pcm_volume(int value);
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +103,33 @@ void modem_killall_aplay(int delay)
     system("killall -q aplay");
     if(delay)
         sleep(delay);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int modem_get_softsynth_port(int softSynth)
+//
+//
+int modem_get_softsynth_port(int softSynth)
+{
+    int midiPort = alsa_get_midi_port("MT-32");
+    if (midiPort == -1)
+        midiPort = alsa_get_midi_port("FLUID Synth");
+    if (midiPort == -1)
+    {
+        switch(softSynth)
+        {
+        case MUNT:
+            midiPort = start_munt();
+            break;
+        case FluidSynth:
+            midiPort = start_fsynth();
+            break;
+        case -1: //do nothing.
+            break;
+        }
+    }
+    return midiPort;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -291,6 +303,21 @@ void * modem_tcplst_thread_function (void * x)
     } while(TRUE);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void modem_set_defaults()
+//
+//
+void modem_set_defaults()
+{
+	MODEMSOUND       = DEFAULT_MODEMSOUND;
+    modemVolume      = DEFAULT_modemVolume;
+    TCPAsciiTrans    = DEFAULT_TCPAsciiTrans;
+    TCPTermRows      = DEFAULT_TCPTermRows;
+    TCPFlow          = DEFAULT_TCPFlow;
+    TCPDTR           = DEFAULT_TCPDTR;
+    TCPQuiet         = DEFAULT_TCPQuiet;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -465,7 +492,6 @@ int do_file_picker(char * pathBuf, char * fileNameBuf)
     return result;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // BOOL modem_handle_at_command(char * lineBuf)
@@ -627,7 +653,7 @@ int modem_handle_at_command(char * lineBuf)
                 modem_killall_aplaymidi(0);
                 misc_swrite(fdSerial, "\r\nMIDI --> OFF");
                 sleep(2);
-                int midiPort = get_softsynth_port(-1);
+                int midiPort = modem_get_softsynth_port(-1);
                 if(midiPort != -1)
                 {
                     alsa_open_seq(midiPort, 0);
@@ -642,7 +668,7 @@ int modem_handle_at_command(char * lineBuf)
                 misc_swrite(fdSerial, "\r\nLoading --> FluidSynth");
                 killall_softsynth(3);
                 TCPSoftSynth = FluidSynth;
-                get_softsynth_port(TCPSoftSynth);
+                modem_get_softsynth_port(TCPSoftSynth);
             }
             else if(lineBuf[5] == '2')
             {
@@ -651,7 +677,7 @@ int modem_handle_at_command(char * lineBuf)
                 misc_swrite(fdSerial, "\r\nLoading --> MUNT");
                 killall_softsynth(3);
                 TCPSoftSynth = MUNT;
-                get_softsynth_port(TCPSoftSynth);
+                modem_get_softsynth_port(TCPSoftSynth);
             }
             else if(lineBuf[5] == 'S' && lineBuf[6] == 'F')
             {
@@ -677,7 +703,7 @@ int modem_handle_at_command(char * lineBuf)
             {
                 KILL_MP3_SLEEP;
                 modem_killall_aplaymidi(0);
-                int midiPort = get_softsynth_port(TCPSoftSynth);
+                int midiPort = modem_get_softsynth_port(TCPSoftSynth);
                 chdir("/root");
                 sprintf(tmp, "taskset %d aplaymidi --port %d \"%s/%s\" 2> /tmp/aplaymidi & ", CPUMASK, midiPort, MIDIPath, fileName);;
                 misc_print(1, "Play MIDI --> %s\n", tmp);
@@ -864,13 +890,7 @@ int modem_handle_at_command(char * lineBuf)
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
         misc_print(1, "Resetting TCP defaults...\n");
-        MODEMSOUND       = DEFAULT_MODEMSOUND;
-        modemVolume      = DEFAULT_modemVolume;
-        TCPAsciiTrans    = DEFAULT_TCPAsciiTrans;
-        TCPTermRows      = DEFAULT_TCPTermRows;
-        TCPFlow          = DEFAULT_TCPFlow;
-        TCPDTR           = DEFAULT_TCPDTR;
-        TCPQuiet         = DEFAULT_TCPQuiet;
+        modem_set_defaults();
         TELNET_NEGOTIATE = TRUE;
         misc_print(1, "Reloading INI defaults...\n");
         misc_get_core_name(tmp, sizeof(tmp));

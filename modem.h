@@ -11,7 +11,8 @@ void   modem_killall_aplaymidi(int delay);
 void   modem_killall_mpg123(int delay);
 void * modem_tcplst_thread_function (void * x);
 void * modem_tcpsock_thread_function (void * x);
-
+int    modem_get_softsynth_port(int softSynth);
+void   modem_set_defaults();
 
 
 
