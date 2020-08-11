@@ -371,7 +371,7 @@ void * modem_tcplst_thread_function (void * x)
 //
 void modem_set_defaults()
 {
-	MODEMSOUND       = DEFAULT_MODEMSOUND;
+    MODEMSOUND       = DEFAULT_MODEMSOUND;
     modemVolume      = DEFAULT_modemVolume;
     TCPAsciiTrans    = DEFAULT_TCPAsciiTrans;
     TCPTermRows      = DEFAULT_TCPTermRows;
