@@ -321,7 +321,7 @@ void ini_print_settings(int p)
         misc_print(p, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
         misc_print(p, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
-    if(fsynthVolume != -1)
+    if(modemVolume != -1)
         misc_print(p, "  - MODEM_VOLUME       --> %d%c\n", modemVolume, '%');
     else
         misc_print(p, "  - MODEM_VOLUME       --> Default (don't set)\n");

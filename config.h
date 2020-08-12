@@ -9,21 +9,20 @@
 // Thanks to https://ccrma.stanford.edu/~craig/articles/linuxmidi/ for the 
 // excellent MIDI programming examples.
 // 
-// "/dev/sequencer" does not seem to work for input
 
-static char          * midiLinkINI      = "/media/fat/linux/MidiLink.INI";
-static char          * midiLinkDIR      = "/media/fat/linux/MidiLink.DIR";
-static char          * serialDevice     = "/dev/ttyS1";
-static char          * serialDeviceUSB  = "/dev/ttyUSB0";
-static char          * helloStr         = "MiSTer MidiLink 2.9d BB7";
+char                 * midiLinkINI      = "/media/fat/linux/MidiLink.INI"; 
+char                 * midiLinkDIR      = "/media/fat/linux/MidiLink.DIR";
+char                 * serialDevice     = "/dev/ttyS1";
+char                 * helloStr         = "MiSTer MidiLink 3.0 BB7";
+char                 * PCMDevice        = "/dev/snd/pcmC0D0p";
+int                    CPUMASK          = 1;
+static char          * MrAudioDevice    = "/dev/MrAudio";
 static unsigned char   test_note[3]     = {0x90, 60, 127};
 static char          * midiINDevice     = "/dev/midi2";
 static char          * midiDevice       = "/dev/midi1";
-static char 	     * PCMDevice        = "/dev/snd/pcmC0D0p";
-static char          * MrAudioDevice    = "/dev/MrAudio";
-static int             CPUMASK          = 1;
-       
-static char all_notes_off[] = 
+static char          * serialDeviceUSB  = "/dev/ttyUSB0";
+
+char all_notes_off[] = 
 {
     0xb0, 0x7b, 0x00, 0xb0, 0x40, 0x00, 0xb1, 0x7b, 0x00, 0xb1, 0x40, 0x00, 0xb2, 0x7b, 0x00, 0xb2, 0x40, 0x00, 
     0xb3, 0x7b, 0x00, 0xb3, 0x40, 0x00, 0xb4, 0x7b, 0x00, 0xb4, 0x40, 0x00, 0xb5, 0x7b, 0x00, 0xb5, 0x40, 0x00, 
@@ -33,6 +32,7 @@ static char all_notes_off[] =
     0xbf, 0x7b, 0x00, 0xbf, 0x40, 0x00
 };
     
+int sizeof_all_notes_off = sizeof(all_notes_off);
 
 
 

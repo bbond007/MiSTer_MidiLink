@@ -34,45 +34,6 @@ static pthread_mutex_t swrite_lock;
 extern int             MIDI_DEBUG;
 extern enum ASCIITRANS TCPAsciiTrans;
 
-static char * athelp[] =
-{
-    "AT       - Attention",
-    "ATBAUD#  - Set baud rate",
-    "ATBAUD   - Show baud rate menu",
-    "ATDIR    - Show dialing MidiLink.DIR",
-    "ATDT     - Dial 'ATDT192.168.1.131:23'",
-    "ATHELP   - Show valid AT Comamnds",
-    "ATINI    - Show MidiLink.INI",
-    "ATIP     - Show IP address",
-    "ATMID1   - Switch synth to FluidSynth",
-    "ATMID2   - Switch synth to MUNT",
-    "ATMID    - Play MIDI file",
-    "ATMIDSF  - Select FluidSynth SoundFont",
-    "ATMID!   - Stop currently playing MIDI",
-    "ATM0     - Disable modem sounds",
-    "ATM1     - Enable modem sounds",
-    "ATM###%%  - Set modem volume [0-100%%]",
-    "ATMP3    - Play MP3 file",
-    "ATMP3!   - Stop playing MP3 File",
-    "ATROWS   - Do terminal row test",
-    "ATROWS## - Set number of terminal rows",
-    "ATRZ     - Receive a file using Zmodem",
-    "ATSZ     - Send a file via Zmodem",
-    "ATTEL0   - Disable telnet negotiation",
-    "ATTEL1   - Enable telnet negotiation",
-    "ATTRANS# - Set ASCII translation",
-    "ATQ0     - Verbose result codes",
-    "ATQ1     - Suppress result codes",
-    "ATVER    - Show MidiLink version",
-    "ATZ      - Reset modem",
-    "AT&D0    - DTR mode normal",
-    "AT&D2    - DTR drop causes hangup",
-    "AT&K0    - Disable  flow control",
-    "AT&K3    - RTS/CTS  flow control",
-    "AT&K4    - XON/XOFF flow control",
-    "+++ATH   - Hang-up",
-    NULL
-};
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -434,6 +395,7 @@ int misc_check_module_loaded (char * modName)
     }
 }
 
+/*
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // int misc_get_midi_port(char * descr)
@@ -477,6 +439,7 @@ int misc_get_midi_port(char * descr)
         return FALSE;
     }
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -844,27 +807,6 @@ void misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// void misc_show_at_commands(int fdSerial, int rows)
-//
-void misc_show_at_commands(int fdSerial, int rows)
-{
-    int index = 0;
-    int rowcount = 0;
-    char c = (char) 0x00;
-
-    while(athelp[index] != NULL && c != 'Q')
-    {
-        misc_swrite(fdSerial, "\r");
-        if (rowcount != 0 || index == 0) //rowcount not reset
-            misc_swrite(fdSerial, "\n");
-        misc_swrite(fdSerial, athelp[index]);
-        index++;
-        misc_do_rowcheck(fdSerial, rows, &rowcount, &c);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
 // BOOL misc_do_pipe2(int fdSerial, char * command)
 //
 int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
@@ -993,3 +935,5 @@ char * misc_hayes_ATQ_to_str(int dtr)
     }
 
 }
+
+
