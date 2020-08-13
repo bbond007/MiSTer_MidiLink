@@ -620,12 +620,15 @@ int main(int argc, char *argv[])
             if(MIDIBaudRate != -1)
                 baudRate = MIDIBaudRate;
             else
+                baudRate = 31250;
+            /*
             {
                 if (strcmp(coreName, "AO486") == 0)
                     baudRate = 38400;
                 else
                     baudRate = 31250;
             }
+            */
         }
 
         serial_set_flow_control(fdSerial, 0);
