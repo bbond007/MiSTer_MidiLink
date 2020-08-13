@@ -748,7 +748,6 @@ int main(int argc, char *argv[])
     break;
     case ModeTCP:
     {
-        modem_set_defaults();
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
         //serial2_set_DCD(sericlDevice, fdSerial, FALSE);
