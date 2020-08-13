@@ -469,7 +469,7 @@ int main(int argc, char *argv[])
     misc_print(0, helloStr);
     misc_print(0, "\n");
 	
-
+    modem_set_defaults();
     misc_get_core_name(coreName, sizeof(coreName));
     misc_print(0, "CORE --> '%s'\n", coreName);
 
@@ -748,7 +748,7 @@ int main(int argc, char *argv[])
     break;
     case ModeTCP:
     {
-		modem_set_defaults();
+        modem_set_defaults();
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
         //serial2_set_DCD(sericlDevice, fdSerial, FALSE);

@@ -184,6 +184,7 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("TCP_BAUD", key) == 0)
     {
         ini_int(value, &TCPBaudRate);
+        printf("************************************ --> %d\n", TCPBaudRate);
     }
     else if (strcmp("UDP_BAUD_ALT", key) == 0)
     {
