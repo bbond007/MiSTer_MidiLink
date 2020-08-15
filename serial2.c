@@ -90,8 +90,7 @@ int serial2_is_valid_rate (int baud)
     */
     if (baud == 110   || baud == 300   || baud == 600   || baud == 1200  || baud == 2400  || baud == 4800  || 
         baud == 9600  || baud == 14400 || baud == 19200 || baud == 31250 || baud == 38400 || baud == 57600 || 
-        baud == 115200 ||
-        baud == 93750)
+        baud == 115200)
         return TRUE;
     return FALSE;
 }
