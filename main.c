@@ -458,6 +458,7 @@ int main(int argc, char *argv[])
 {
     int status;
     int midiPort;
+    int midiPortThrough;
     int altBaud = FALSE;
     char coreName[30] = "";
     MUNTCPUMask = CPUMASK;
@@ -565,6 +566,19 @@ int main(int argc, char *argv[])
             misc_print(0, "ERROR: Unable to find Synth MIDI port after several attempts :(\n");
             close_fd();
             return -3;
+        }
+        
+        if(misc_check_args_option(argc, argv, "THROUGH"))
+        {
+            midiPortThrough = alsa_get_midi_port("Midi Through");
+            if (midiPortThrough != -1)
+            {
+                misc_print(0, "Using MIDI-Through port --> %d\n", midiPortThrough);   
+                misc_print(0, "Connecting MIDI port %d:0 --> %d:0\n", midiPortThrough, midiPort);   
+                sprintf(buf, "aconnect %d:0 %d:0", midiPortThrough, midiPort);
+                system(buf);
+                midiPort = midiPortThrough;
+            }
         }
     }
 
