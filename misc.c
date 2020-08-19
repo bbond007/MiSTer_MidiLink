@@ -173,8 +173,6 @@ void misc_swrite_no_trans(int fdSerial, const char* format, ... )
 int misc_check_args_option (int argc, char *argv[], char * option)
 {
     int result = FALSE;
-    char * OPTION = strdup(option);
-    misc_str_to_upper(OPTION);
     if(argc > 1)
         for (int i = 1; i< argc; i++)
         {
@@ -184,7 +182,6 @@ int misc_check_args_option (int argc, char *argv[], char * option)
                 break;
             }
         }
-    free(OPTION);
     return result;
 }
 
