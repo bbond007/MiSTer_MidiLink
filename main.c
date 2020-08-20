@@ -458,6 +458,7 @@ int main(int argc, char *argv[])
 {
     int status;
     int midiPort;
+    int midiPortThrough;
     int altBaud = FALSE;
     char coreName[30] = "";
     MUNTCPUMask = CPUMASK;
@@ -469,7 +470,7 @@ int main(int argc, char *argv[])
     misc_print(0, helloStr);
     misc_print(0, "\n");
 	
-
+    modem_set_defaults();
     misc_get_core_name(coreName, sizeof(coreName));
     misc_print(0, "CORE --> '%s'\n", coreName);
 
@@ -566,6 +567,19 @@ int main(int argc, char *argv[])
             close_fd();
             return -3;
         }
+        
+        if(misc_check_args_option(argc, argv, "THROUGH"))
+        {
+            midiPortThrough = alsa_get_midi_port("Midi Through");
+            if (midiPortThrough != -1)
+            {
+                misc_print(0, "Using MIDI-Through port --> %d\n", midiPortThrough);   
+                misc_print(0, "Connecting MIDI port %d:0 --> %d:0\n", midiPortThrough, midiPort);   
+                sprintf(buf, "aconnect %d:0 %d:0", midiPortThrough, midiPort);
+                system(buf);
+                midiPort = midiPortThrough;
+            }
+        }
     }
 
     //these modes don't need serial port. all others do :)
@@ -620,12 +634,15 @@ int main(int argc, char *argv[])
             if(MIDIBaudRate != -1)
                 baudRate = MIDIBaudRate;
             else
+                baudRate = 31250;
+            /*
             {
                 if (strcmp(coreName, "AO486") == 0)
                     baudRate = 38400;
                 else
                     baudRate = 31250;
             }
+            */
         }
 
         serial_set_flow_control(fdSerial, 0);
@@ -748,7 +765,6 @@ int main(int argc, char *argv[])
     break;
     case ModeTCP:
     {
-		modem_set_defaults();
         if(TCPFlow > 0)
             serial_set_flow_control(fdSerial, TCPFlow);
         //serial2_set_DCD(sericlDevice, fdSerial, FALSE);

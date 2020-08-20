@@ -68,7 +68,7 @@ int alsa_open_seq(int _portNo, int _devNo)
         return FALSE;
     }
     alsa_reset_seq_event(&ev);
-    snd_midi_event_new(256, &parser);
+    snd_midi_event_new(1024, &parser);
     return TRUE;
 }
 
