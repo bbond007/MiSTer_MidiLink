@@ -874,6 +874,10 @@ int main(int argc, char *argv[])
         serial_do_tcdrain(fdSerialUSB);
         serial2_set_DCD(serialDeviceUSB, fdSerialUSB, TRUE);
 
+		  // ttyS1 somehow loses baud rate setting. Therefore set it here again
+		  // TODO: find the cause.
+        serial2_set_baud(serialDevice, fdSerial, baudRate);
+
         status = pthread_create(&serialInThread, NULL, serial_thread_function, NULL);
         if (status == -1)
         {
