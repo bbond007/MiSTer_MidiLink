@@ -47,7 +47,8 @@ int main(int argc, char *argv[])
         }
         serial2_set_baud(serialDevice, fdSerial, baud);
         close(fdSerial);
-        if(misc_check_device(serialDeviceUSB))// && misc_check_file("/tmp/ML_USBSER"))
+        
+        if(misc_check_device(serialDeviceUSB) && misc_check_file("/tmp/ML_USBSER"))
         {
             fdSerial = open(serialDeviceUSB, O_RDWR | O_NOCTTY | O_SYNC);
             if (fdSerial < 0)
