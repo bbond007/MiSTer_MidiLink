@@ -491,7 +491,7 @@ int main(int argc, char *argv[])
     if (midilinkPriority != 0)
         misc_set_priority(midilinkPriority);
 
-    if (!misc_check_device(midiDevice) && misc_check_args_option(argc, argv, "MENU"))
+    if (misc_check_args_option(argc, argv, "MENU"))
     {
         if (misc_check_file("/tmp/ML_MUNT"))                mode = ModeMUNT;
         if (misc_check_file("/tmp/ML_MUNTGM"))              mode = ModeMUNTGM;
@@ -502,7 +502,7 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_TCP_ALT"))           { mode = ModeTCP; altBaud = TRUE;  }
         if (misc_check_file("/tmp/ML_USBMIDI"))             mode = ModeUSBMIDI;
         if (misc_check_file("/tmp/ML_USBSER"))              mode = ModeUSBSER;
-        if (mode == ModeUSBMIDI) // no USB MIDI 
+        if (mode == ModeUSBMIDI && !misc_check_device(midiDevice)) // no USB MIDI 
         {
             misc_print(0, "MENU --> FSYNTH\n");
             mode = ModeFSYNTH;
