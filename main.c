@@ -644,7 +644,8 @@ int main(int argc, char *argv[])
             }
             */
         }
-
+        sprintf(buf, "%d", baudRate);
+        misc_make_file("/tmp/ML_BAUD", buf);
         serial_set_flow_control(fdSerial, 0);
         serial2_set_baud(serialDevice, fdSerial, baudRate);
         serial_do_tcdrain(fdSerial);

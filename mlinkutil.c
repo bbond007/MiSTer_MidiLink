@@ -45,6 +45,9 @@ int main(int argc, char *argv[])
             misc_print(0, "ERROR: opening %s: %s\n", serialDevice, strerror(errno));
             return -2;
         }
+        char strBaud[10];
+        sprintf(strBaud,"%d", baud);
+        misc_make_file("/tmp/ML_BAUD", strBaud);
         serial2_set_baud(serialDevice, fdSerial, baud);
         close(fdSerial);
         
