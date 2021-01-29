@@ -38,6 +38,8 @@ char * misc_hayes_flow_to_str(int flow);
 char * misc_hayes_DTR_to_str(int dtr);
 char * misc_hayes_ATQ_to_str(int dtr);
 char * misc_get_clrScr();
+void   misc_make_file(const char * filename, const char * data);
+
 //int    misc_get_midi_port(char * descr);
 #define TRUE 1
 #define FALSE 0

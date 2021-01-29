@@ -933,4 +933,16 @@ char * misc_hayes_ATQ_to_str(int dtr)
 
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// void misc_make_file(const char * filename, const char * data)
+//
+void misc_make_file(const char * filename, const char * data)
+{
+        FILE * file;
+        file = fopen(filename, "w");
+        fwrite(data, strlen(data), 1, file);
+        fclose(file);
+}
+
 
