@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "modem.h"
 #include "config.h"
 
-enum MODE {ModeUSBMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeUDPMUNT, ModeUDPMUNTGM, ModeUDPFSYNTH};
+enum MODE {ModeUSBMIDI, ModeSERMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeUDPMUNT, ModeUDPMUNTGM, ModeUDPFSYNTH};
 
 static enum MODE        mode                   = ModeUSBMIDI;
 static int              fdSerialUSB            = -1;
@@ -501,12 +501,9 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_UDP_ALT"))           { mode = ModeUDP; altBaud = TRUE;  }
         if (misc_check_file("/tmp/ML_TCP_ALT"))           { mode = ModeTCP; altBaud = TRUE;  }
         if (misc_check_file("/tmp/ML_USBMIDI"))             mode = ModeUSBMIDI;
+        if (misc_check_file("/tmp/ML_SERMIDI"))             mode = ModeSERMIDI;
         if (misc_check_file("/tmp/ML_USBSER"))              mode = ModeUSBSER;
-        if (mode == ModeUSBMIDI && !misc_check_device(midiDevice)) // no USB MIDI 
-        {
-            misc_print(0, "MENU --> FSYNTH\n");
-            mode = ModeFSYNTH;
-        }
+        
     }
     else
     {
@@ -518,12 +515,27 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "UDPALT"))  { mode = ModeUDP; altBaud = TRUE;  }
         if(misc_check_args_option(argc, argv, "TCPALT"))  { mode = ModeTCP; altBaud = TRUE;  }
         if(misc_check_args_option(argc, argv, "USBMIDI"))   mode = ModeUSBMIDI;
+        if(misc_check_args_option(argc, argv, "SERMIDI"))   mode = ModeSERMIDI;
         if(misc_check_args_option(argc, argv, "USBSER"))    mode = ModeUSBSER;
         if(misc_check_args_option(argc, argv, "UDPMUNT"))   mode = ModeUDPMUNT;
         if(misc_check_args_option(argc, argv, "UDPMUNTGM")) mode = ModeUDPMUNTGM;
         if(misc_check_args_option(argc, argv, "UDPFSYNTH")) mode = ModeUDPFSYNTH;
     }
 
+    if (mode == ModeUSBMIDI && !misc_check_device(midiDevice)) // no USB MIDI 
+    {
+            if(misc_check_device(serialDeviceUSB))
+            {
+                misc_print(0, "No USBMIDI using --> SERMIDI\n");
+                mode = ModeSERMIDI;
+            }
+            else
+            {
+                misc_print(0, "No USBMIDI or SERMIDI using --> FSYNTH\n");
+                mode = ModeFSYNTH;
+            }
+    }
+    
     modem_killall_mpg123(0);
     modem_killall_aplaymidi(0);
     killall_softsynth(3);
@@ -629,6 +641,12 @@ int main(int argc, char *argv[])
             else
                 baudRate = 115200;
         }
+        /*
+        else if (mode == ModeSERMIDI)
+        {
+            baudRate = 31250;
+        }
+        */
         else
         {
             if(MIDIBaudRate != -1)
@@ -644,6 +662,8 @@ int main(int argc, char *argv[])
             }
             */
         }
+        
+            
         sprintf(buf, "%d", baudRate);
         misc_make_file("/tmp/ML_BAUD", buf);
         serial_set_flow_control(fdSerial, 0);
@@ -842,6 +862,7 @@ int main(int argc, char *argv[])
         misc_print(0, "CONNECT : %s <--> %s\n", serialDevice, midiDevice);
     }
     break;
+    case ModeSERMIDI:
     case ModeUSBSER:
     {
         if (!misc_check_device(serialDeviceUSB))
@@ -867,9 +888,11 @@ int main(int argc, char *argv[])
             close_fd();
             return -22;
         }
-
-        serial_set_flow_control(fdSerial, 3);    //RTS/CTS
-        serial_set_flow_control(fdSerialUSB, 3);
+        
+        
+        serial_set_flow_control(fdSerial,    (mode==ModeSERMIDI)?0:3);   //0:NONE or 3:RTS/CTS
+        serial_set_flow_control(fdSerialUSB, (mode==ModeSERMIDI)?0:3);
+        
         serial_set_interface_attribs(fdSerialUSB);
         serial2_set_baud(serialDeviceUSB, fdSerialUSB, baudRate);
         serial_do_tcdrain(fdSerialUSB);
@@ -915,9 +938,16 @@ int main(int argc, char *argv[])
                 misc_print(1, "ERROR: (USBMIDI) from read: %d: %s\n", rdLen, strerror(errno));
         } while (TRUE);
         break;
+    case ModeSERMIDI:
+        if(strlen(MT32LCDMsg) > 0)
+        {
+            misc_print(1, "Sending MT-32 LCD --> '%s'\n", MT32LCDMsg);
+            write_midi_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
+        }
+        misc_print(0, "Starting --> USB MIDI Serial loop :)\n");
     case ModeUSBSER:
-        //This main loop handles USB serial
-        misc_print(0, "Starting --> USB Serial loop :)\n");
+        //This main loop handles USB serial and usb MIDI serial
+        misc_print(0, "Starting --> USB%sSerial loop :)\n", (mode != ModeSERMIDI)?" MIDI ":" ");
         do
         {
             int rdLen = read(fdSerial, buf, sizeof(buf));
