@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         }
         char strBaud[10];
         sprintf(strBaud,"%d", baud);
-        misc_make_file("/tmp/ML_BAUD", strBaud);
+        misc_make_file(tmpBAUD, strBaud);
         serial2_set_baud(serialDevice, fdSerial, baud);
         close(fdSerial);
         
@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
                 printf("ERROR --> unable to connect to FluidSynth:9800\n");
                 return -11;
             }
+            misc_make_file(tmpSoundfont, argv[result + 1]); 
             bShowInfo = FALSE;
         }
         else

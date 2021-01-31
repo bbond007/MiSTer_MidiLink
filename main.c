@@ -145,6 +145,7 @@ int start_fsynth()
 {
     char buf[256];
     int midiPort = -1;
+    misc_make_file(tmpSoundfont, fsynthSoundFont); 
     set_pcm_volume(fsynthVolume);
     misc_print(0, "Starting --> fluidsynth");
     if (CPUMASK != FSYNTHCPUMask)
@@ -461,6 +462,8 @@ int main(int argc, char *argv[])
     int midiPortThrough;
     int altBaud = FALSE;
     char coreName[30] = "";
+    remove(tmpSoundfont);
+    remove(tmpBAUD);
     MUNTCPUMask = CPUMASK;
     FSYNTHCPUMask = CPUMASK;
     
@@ -665,7 +668,7 @@ int main(int argc, char *argv[])
         
             
         sprintf(buf, "%d", baudRate);
-        misc_make_file("/tmp/ML_BAUD", buf);
+        misc_make_file(tmpBAUD, buf);
         serial_set_flow_control(fdSerial, 0);
         serial2_set_baud(serialDevice, fdSerial, baudRate);
         serial_do_tcdrain(fdSerial);
