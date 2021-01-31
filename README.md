@@ -102,6 +102,11 @@ The 'midilink' daemon currently supports following switches / options:
 
       USBSER    - Connect to USB serial converter
 
+      USBMIDI   - Use USB MIDI adapter such as Roland UM-ONE MK2 (Default)
+
+      SERMIDI   - Use USB Serial adapter such as FT232R for MIDI 
+                  (Fail-over if no USB MIDI adapter found) 
+
       MENU      - starts based on /tmp/ML_MUNT, /tmp/ML_UDP, 
                   /tmp/ML_FSYNTH, /tmp/ML_TCP /tmp/ML_USBSER
                   used with MiSTer Menu to set mode of operation. 
