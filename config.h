@@ -13,7 +13,7 @@
 char                 * midiLinkINI      = "/media/fat/linux/MidiLink.INI"; 
 char                 * midiLinkDIR      = "/media/fat/linux/MidiLink.DIR";
 char                 * serialDevice     = "/dev/ttyS1";
-char                 * helloStr         = "MiSTer MidiLink 3.2.1 BB7";
+char                 * helloStr         = "MiSTer MidiLink 3.2.2 BB7";
 char                 * PCMDevice        = "/dev/snd/pcmC0D0p";
 int                    CPUMASK          = 1;
 static char          * MrAudioDevice    = "/dev/MrAudio";
@@ -21,6 +21,8 @@ static unsigned char   test_note[3]     = {0x90, 60, 127};
 static char          * midiINDevice     = "/dev/midi2";
 static char          * midiDevice       = "/dev/midi1";
 static char          * serialDeviceUSB  = "/dev/ttyUSB0";
+static char          * tmpSoundfont     = "/tmp/ML_SOUNDFONT";
+static char          * tmpBAUD          = "/tmp/ML_BAUD";
 
 char all_notes_off[] = 
 {
