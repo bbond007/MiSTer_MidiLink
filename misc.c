@@ -20,6 +20,7 @@
 #include <net/if.h>
 #include "misc.h"
 #include "ini.h"
+#include "serial2.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -876,7 +877,39 @@ int misc_get_core_name(char * buf, int maxBuf)
     }
 }
 
-
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  misc_get_tmp_uartspeed()
+//
+int misc_get_tmp_uartspeed()
+{
+    FILE * file;
+    char * fileName = "/tmp/UART_SPEED";
+    char baudStr[10];
+    baudStr[0] = 0x00;
+    char * ptr;
+    file = fopen(fileName, "r");
+    if (file)
+    {
+        fgets(baudStr, sizeof(baudStr), file);
+        fclose(file);
+        misc_replace_char(baudStr, strlen(baudStr), 0x0a, 0x00);
+        misc_replace_char(baudStr, strlen(baudStr), 0x0d, 0x00);
+        int baudRate = strtol(baudStr, &ptr, 10); 
+        if (!serial2_is_valid_rate (baudRate))
+        {
+            misc_print(0, "ERROR : BAUD not valid --> %s\n", baudRate);
+            return -2;
+        }
+        return baudRate;
+    }
+    else
+    {
+        misc_print(0, "ERROR: misc_get_tmp_uartspeed() : Unable to open --> '%s'\n", fileName);
+        return -1;
+    }
+}
+    
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // char * misc_hayes_flow_to_str(int flow)

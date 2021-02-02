@@ -505,8 +505,7 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_TCP_ALT"))           { mode = ModeTCP; altBaud = TRUE;  }
         if (misc_check_file("/tmp/ML_USBMIDI"))             mode = ModeUSBMIDI;
         if (misc_check_file("/tmp/ML_SERMIDI"))             mode = ModeSERMIDI;
-        if (misc_check_file("/tmp/ML_USBSER"))              mode = ModeUSBSER;
-        
+        if (misc_check_file("/tmp/ML_USBSER"))              mode = ModeUSBSER;        
     }
     else
     {
@@ -620,6 +619,12 @@ int main(int argc, char *argv[])
                 return -5;
             }
         }
+        else if (misc_check_args_option(argc, argv, "MENU") &&
+                 misc_get_tmp_uartspeed() > 0)
+        {
+            baudRate = misc_get_tmp_uartspeed();
+            misc_print(0, "Got BAUD from MENU --> %d\n", baudRate);                
+        } 
         else if (altBaud && mode == ModeUDP && UDPBaudRate_alt != -1)
         {
             baudRate = UDPBaudRate_alt;
