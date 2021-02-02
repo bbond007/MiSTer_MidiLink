@@ -27,7 +27,6 @@ int    misc_count_str_chr(char * str, char chr);
 int    misc_MT32_LCD(char * MT32Message, char * buf);
 void   misc_do_rowcheck(int fdSerial, int rows, int * rowcount, char * c);
 int    misc_get_core_name(char * buf, int maxBuf);
-int    misc_get_tmp_uartspeed();
 char   misc_replace_char(char * str, int strLen, char old, char new);
 int    misc_do_pipe(int fdSerial,  char * path, char * command, 
                     char * arg1, 
@@ -40,7 +39,6 @@ char * misc_hayes_DTR_to_str(int dtr);
 char * misc_hayes_ATQ_to_str(int dtr);
 char * misc_get_clrScr();
 void   misc_make_file(const char * filename, const char * data);
-int    misc_get_tmp_uartspeed();
 
 //int    misc_get_midi_port(char * descr);
 #define TRUE 1

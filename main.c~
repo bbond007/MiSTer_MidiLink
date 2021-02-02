@@ -620,7 +620,7 @@ int main(int argc, char *argv[])
             }
         }
         else if (misc_check_args_option(argc, argv, "MENU") &&
-                 misc_get_tmp_uartspeed() > 0)
+                 baudRate = misc_get_tmp_uartspeed() != -1)
         {
             baudRate = misc_get_tmp_uartspeed();
             misc_print(0, "Got BAUD from MENU --> %d\n", baudRate);                

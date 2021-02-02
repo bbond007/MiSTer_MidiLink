@@ -895,7 +895,7 @@ int misc_get_tmp_uartspeed()
         fclose(file);
         misc_replace_char(baudStr, strlen(baudStr), 0x0a, 0x00);
         misc_replace_char(baudStr, strlen(baudStr), 0x0d, 0x00);
-        int baudRate = strtol(baudStr, &ptr, 10); 
+        baudRate = strtol(baudStr, &ptr, 10); 
         if (!serial2_is_valid_rate (baudRate))
         {
             misc_print(0, "ERROR : BAUD not valid --> %s\n", baudRate);
