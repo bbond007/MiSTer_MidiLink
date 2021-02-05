@@ -8,7 +8,7 @@ all :
 	$(CC) $(CCFLAGS) mlinkutil.c misc.c serial2.c tcpsock.c -o mlinkutil
 	$(STRIP) mlinkutil
 clean:
-	rm -f midilink *~ *.orig DEADJOE
+	rm -f midilink mlinkutil *~ *.orig DEADJOE
 	
 	
 
