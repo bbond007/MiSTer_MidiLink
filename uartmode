@@ -112,7 +112,7 @@ elif [ "$1" == "5" ]; then
 		(
 			while true
 			do
-				taskset 1 midilink UDPALT QUIET &
+				taskset 1 midilink UDP QUIET BAUD $conn_speed 
 				wait $!
 
 				[ ! -f /tmp/uartmode5 ] && exit 0
