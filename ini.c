@@ -291,7 +291,7 @@ char ini_process_key_value_pair(char * key, char * value)
                 break;
             }
     }
-    else if (strcmp("TMP_TERM_DIR", key) == 0) 
+    else if (strcmp("TCP_TERM_DIR", key) == 0) 
     {
         ini_str(key, value, midiLinkDIR, sizeof(midiLinkDIR));    
     }
