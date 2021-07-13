@@ -11,8 +11,8 @@
 // 
 
 char                 * midiLinkINI      = "/media/fat/linux/MidiLink.INI"; 
-char                 * midiLinkDIR      = "/media/fat/linux/MidiLink.DIR";
-char                 * serialDevice     = "/dev/ttyS1";
+char                   midiLinkDIR[50]  = "/media/fat/linux/MidiLink.DIR";
+char                   serialDevice[20] = "/dev/ttyS1";
 char                 * helloStr         = "MiSTer MidiLink 3.3 BB7";
 char                 * PCMDevice        = "/dev/snd/pcmC0D0p";
 int                    CPUMASK          = 1;

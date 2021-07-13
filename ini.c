@@ -7,8 +7,9 @@
 #include "ini.h"
 #include "misc.h"
 #include "serial.h"
-
+extern char            serialDevice[20]; 
 extern char            fsynthSoundFont[150];
+extern char            midiLinkDIR[50]; 
 extern char            MUNTRomPath[150];
 extern char            UDPServer[100];
 extern char            mixerControl[20];
@@ -290,6 +291,14 @@ char ini_process_key_value_pair(char * key, char * value)
                 break;
             }
     }
+    else if (strcmp("TMP_TERM_DIR", key) == 0) 
+    {
+        ini_str(key, value, midiLinkDIR, sizeof(midiLinkDIR));    
+    }
+    else if (strcmp("SERIAL_DEVICE", key) == 0)
+    {
+        ini_str(key, value, serialDevice, sizeof(serialDevice));
+    }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -301,6 +310,7 @@ char ini_process_key_value_pair(char * key, char * value)
 void ini_print_settings(int p)
 {
     misc_print(p, "Settings:\n");
+    misc_print(p, "  - SERIAL_DEVICE      --> '%s'\n", serialDevice);
     if(midilinkPriority != 0)
         misc_print(p, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
@@ -400,6 +410,7 @@ void ini_print_settings(int p)
         misc_print(p, "  - TCP_SOUND_CONNECT  --> '%s'\n",  modemConnectSndWAV);
     else
         misc_print(p, "  - TCP_SOUND_CONNECT  --> Software\n");
+    misc_print(p, "  - TCP_TERM_DIR       --> '%s'\n", midiLinkDIR); 
     if(USBSerBaudRate > 0)
         misc_print(p, "  - USB_SERIAL_BAUD    --> %d\n", USBSerBaudRate);
     else

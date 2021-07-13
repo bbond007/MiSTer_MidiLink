@@ -115,6 +115,8 @@ The MidiLink.INI file:
 
       #This is a sample MidiLink.INI FILE  _[DESCRIPTION]_ 
 
+      #SERIAL_DEVICE     = /dev/ttyS1   --> Specify alternate serial sevice. 
+
       MIDILINK_PRIORITY  = -20          --> Sets the task priority of MidiLink
       
       MUNT_OPTIONS       =              --> Optional parameters for MUNT
@@ -215,6 +217,9 @@ The MidiLink.INI file:
       #TCP_SOUND_CONNECT =              --> optional WAV file for TCP modem 
                                             connect
 
+      #TCP_TERM_DIR      = /media/fat/linux/MidiLink.INI
+                                        --> Spefify alternate directory per
+                                            core                         
       USB_SERIAL_BAUD    = 9600         --> Set USB serial baud to 9600
 
       DELAYSYSEX         = TRUE         --> This option fixes "Buffer Overflow" 
