@@ -835,6 +835,10 @@ int misc_file_to_serial(int fdSerial,  char * fileName, int rows)
     else
     {
         misc_print(0, "ERROR: misc_file_to_serial('%s') --> '%s'\n", fileName, strerror(errno));
+        misc_swrite(fdSerial, "\r\n");
+        misc_swrite(fdSerial, strerror(errno));
+        misc_swrite(fdSerial, " --> ");
+        misc_swrite(fdSerial, fileName);
         return FALSE;
     }
 }

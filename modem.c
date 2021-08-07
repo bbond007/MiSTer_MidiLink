@@ -55,11 +55,11 @@ extern int              TCPDTR;
 extern int              TCPFlow;
 extern char             all_notes_off[];
 extern char           * midiLinkINI;    
-extern char           * midiLinkDIR;
 extern char 	      * PCMDevice;
-extern char           * serialDevice;
 extern char           * helloStr;
 extern char         	fsynthSoundFont[];
+extern char             serialDevice[20];
+extern char             midiLinkDIR[50];
 
 static pthread_t        socketInThread;
 
