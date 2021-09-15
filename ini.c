@@ -35,6 +35,7 @@ extern int             UDPFlow;
 extern unsigned int    UDPServerFilterIP;
 extern unsigned int    DELAYSYSEX;
 extern char            MP3Path[500];
+extern char            MP3Player[20];
 extern char 	       MIDIPath[500];
 extern char            downloadPath[500];
 extern char            uploadPath[100];
@@ -226,6 +227,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, MP3Path, sizeof(MP3Path));
     }
+    else if (strcmp("TCP_TERM_MP3_PLAYER", key) == 0)
+    {
+        ini_str(key, value, MP3Player, sizeof(MP3Player));
+    } 
     else if (strcmp("TCP_TERM_MIDI", key) == 0)
     {
         ini_str(key, value, MIDIPath, sizeof(MIDIPath));
@@ -394,7 +399,8 @@ void ini_print_settings(int p)
     misc_print(p, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
     misc_print(p, "  - TCP_TERM_DOWNLOAD  --> '%s'\n",  downloadPath);
     misc_print(p, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
-    misc_print(p, "  - TCP_TERM_MIDI      --> '%s'\n",    MIDIPath);
+    misc_print(p, "  - TCP_TERM_MP3_PLAYER--> '%s'\n",  MP3Path);
+    misc_print(p, "  - TCP_TERM_MIDI      --> '%s'\n",  MIDIPath);
     misc_print(p, "  - TCP_TERM_SYNTH     --> %s\n",   (TCPSoftSynth==MUNT)?"MUNT":"FluidSynth");
     misc_print(p, "  - TCP_TERM_TRANS     --> %s\n",    misc_trans_to_str(TCPAsciiTrans));
     misc_print(p, "  - TCP_SOUND          --> %s\n",    MODEMSOUND?"TRUE":"FALSE");

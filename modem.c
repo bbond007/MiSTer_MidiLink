@@ -33,6 +33,7 @@ char                    uploadPath[100]        = "/media/fat/UPLOAD";
 char                    modemConnectSndWAV[50] = "";
 char                    modemDialSndWAV[50]    = "";
 char                    modemRingSndWAV[50]    = "";
+char                    MP3Player[20]          = "mpg123";
 int                     TCPATHDelay            = 900;
 int                     MP3Volume              = -1;
 unsigned int            TCPTermRows            = DEFAULT_TCPTermRows;
@@ -136,8 +137,10 @@ void modem_show_at_commands(int fdSerial, int rows)
 //
 void modem_killall_mpg123(int delay)
 {
-    misc_print(0, "Killing --> mpg123\n");
-    system("killall -q mpg123");
+    char tmp[30];
+    misc_print(0, "Killing --> %s\n", MP3Player);
+    sprintf(tmp, "killall -q %s", MP3Player);
+    system(tmp);
     if(delay)
         sleep(delay);
 }
@@ -687,7 +690,12 @@ int modem_handle_at_command(char * lineBuf)
             {
                 chdir("/root");
                 set_pcm_volume(MP3Volume);
-                sprintf(tmp, "taskset %d mpg123 -o alsa \"%s/%s\" 2> /tmp/mpg123 & ", CPUMASK, MP3Path, fileName);
+                char * ext = strrchr(fileName, '.');
+                sprintf(tmp, "taskset %d %s -o alsa %s \"%s/%s\" 2> /tmp/%s & ", 
+                        CPUMASK,
+                        MP3Player,
+                        (ext && strcasecmp(ext, ".PLS") == 0)?"-@":"",
+                        MP3Path, fileName, MP3Player);
                 if(!MP3)
                 {
                     modem_killall_aplaymidi(0);
@@ -698,7 +706,8 @@ int modem_handle_at_command(char * lineBuf)
                 system(tmp);
                 misc_swrite(fdSerial, "\r\n");
                 sleep(1);
-                misc_file_to_serial(fdSerial, "/tmp/mpg123", TCPTermRows);
+                sprintf(tmp, "/tmp/%s", MP3Player);
+                misc_file_to_serial(fdSerial, tmp, TCPTermRows);
                 MP3 = TRUE;
             }
         }
