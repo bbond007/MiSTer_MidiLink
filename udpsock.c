@@ -17,7 +17,8 @@ static struct sockaddr_in server_addr;
 //
 int udpsock_client_connect(char * ipAddr, int port)
 {
-    int sock = 0, valread;
+    int sock = 0;
+    
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
         misc_print(0, "ERROR:socket_client_connect() --> Socket creation error\n");
