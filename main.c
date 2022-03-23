@@ -749,7 +749,7 @@ int main(int argc, char *argv[])
     {
         if(UDPFlow > 0)
             serial_set_flow_control(fdSerial, UDPFlow);
-        if (strlen(UDPServer) > 7)
+        if (strlen(UDPServer) > 1)
         {
             if(!misc_is_ip_addr(UDPServer))
                 misc_hostname_to_ip(UDPServer, UDPServer);
