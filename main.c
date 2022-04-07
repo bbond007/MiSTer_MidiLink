@@ -756,7 +756,7 @@ int main(int argc, char *argv[])
     case ModeUDPMUNT:
     case ModeUDPMUNTGM:
     case ModeUDPFSYNTH:
-	case ModeCSSW10:
+	case ModeUDPCSSW10:
         if(alsa_open_seq(midiPort, (mode == ModeUDPMUNTGM)?1:0))
         {
             show_line();
