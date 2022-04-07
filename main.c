@@ -1014,7 +1014,7 @@ int main(int argc, char *argv[])
     case ModeUDPMUNT:
     case ModeUDPMUNTGM:
     case ModeUDPFSYNTH:
-	case ModeCSSW10:
+	case ModeUDPCSSW10:
         misc_print(0, "Starting --> UDP Synth loop :)\n");
         do
         {
