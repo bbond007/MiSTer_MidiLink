@@ -639,7 +639,7 @@ int main(int argc, char *argv[])
     }
 
     //these modes don't need serial port. all others do :)
-    if (mode != ModeUDPMUNT && mode != ModeUDPMUNTGM && mode != ModeUDPFSYNTH ) 
+    if (mode != ModeUDPMUNT && mode != ModeUDPMUNTGM && mode != ModeUDPFSYNTH && mode != ModeUDPCSSW10) 
     {
         fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
         if (fdSerial < 0)
