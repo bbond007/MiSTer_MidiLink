@@ -10,9 +10,11 @@
 extern char            serialDevice[20]; 
 extern char            fsynthSoundFont[150];
 extern char            midiLinkDIR[50]; 
+extern char            CSSW10RomPath[150];
 extern char            MUNTRomPath[150];
 extern char            UDPServer[100];
 extern char            mixerControl[20];
+extern int             cssw10Volume;
 extern int             MP3Volume;
 extern int             muntVolume;
 extern int             fsynthVolume;
@@ -37,8 +39,10 @@ extern unsigned int    DELAYSYSEX;
 extern char            MP3Path[500];
 extern char            MP3Player[20];
 extern char 	       MIDIPath[500];
+//extern char            PDFPath[500];
 extern char            downloadPath[500];
 extern char            uploadPath[100];
+extern char            CSSW10Options[30];
 extern char            MUNTOptions[30];
 extern char            MT32LCDMsg[21];
 extern int             MODEMSOUND;
@@ -48,6 +52,7 @@ extern char            modemRingSndWAV[50];
 extern int             TCPATHDelay;
 extern enum ASCIITRANS TCPAsciiTrans;
 extern enum SOFTSYNTH  TCPSoftSynth;
+extern int             CSSW10CPUMask;
 extern int             MUNTCPUMask;
 extern int             FSYNTHCPUMask;
 
@@ -119,6 +124,19 @@ char ini_process_key_value_pair(char * key, char * value)
         misc_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &MP3Volume);
     }
+	else if(strcmp("CSSW10_VOLUME", key) == 0)
+    {
+        misc_replace_char(value, strlen(value), '%', 0x00);
+        ini_int(value, &fsynthVolume);
+    }
+	else if (strcmp("CSSW10_ROM_PATH", key) == 0)
+    {
+        ini_str(key, value, MUNTRomPath, sizeof(MUNTRomPath));
+    }
+    else if (strcmp("CSSW10_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &MUNTCPUMask);
+    }
     else if(strcmp("MUNT_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
@@ -132,7 +150,6 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &MUNTCPUMask);
     }
-   
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
@@ -235,6 +252,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, MIDIPath, sizeof(MIDIPath));
     }
+    /*else if (strcmp("TCP_TERM_PDF", key) == 0)
+    {
+        ini_str(key, value, PDFPath, sizeof(PDFPath));
+    }*/
     else if (strcmp("TCP_DTR", key) == 0)
     {
         ini_int(value, &TCPDTR);
@@ -320,8 +341,12 @@ void ini_print_settings(int p)
         misc_print(p, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
         misc_print(p, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");
+	misc_print(p, "  - CSSW10_OPTIONS       --> '%s'\n", CSSW10Options);
+    misc_print(p, "  - CSSW10_ROM_PATH      --> '%s'\n", CSSW10RomPath);
+	
     misc_print(p, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
     misc_print(p, "  - MUNT_ROM_PATH      --> '%s'\n", MUNTRomPath);
+	
     if(MP3Volume != -1)
         misc_print(p, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
     else
@@ -330,6 +355,7 @@ void ini_print_settings(int p)
         misc_print(p, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
         misc_print(p, "  - MUNT_VOLUME        --> Default (don't set)\n");
+	misc_print(p, "  - CSSW32_CPU_MASK    --> %d\n",CSSW10CPUMask);
     misc_print(p, "  - MUNT_CPU_MASK      --> %d\n",MUNTCPUMask);
     misc_print(p, "  - FSYNTH_CPU_MASK    --> %d\n",FSYNTHCPUMask);  
     if(fsynthVolume != -1)
@@ -398,6 +424,7 @@ void ini_print_settings(int p)
     misc_print(p, "  - TCP_TERM_ROWS      --> %d\n",    TCPTermRows);
     misc_print(p, "  - TCP_TERM_UPLOAD    --> '%s'\n",  uploadPath);
     misc_print(p, "  - TCP_TERM_DOWNLOAD  --> '%s'\n",  downloadPath);
+    //misc_print(p, "  - TCP_TERM_PDF       --> '%s'\n",  PDFPath);
     misc_print(p, "  - TCP_TERM_MP3       --> '%s'\n",  MP3Path);
     misc_print(p, "  - TCP_TERM_MP3_PLAYER--> '%s'\n",  MP3Path);
     misc_print(p, "  - TCP_TERM_MIDI      --> '%s'\n",  MIDIPath);
