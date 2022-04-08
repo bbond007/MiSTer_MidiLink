@@ -44,7 +44,6 @@ Direct connect to another MiSTer or other computer.
 Default speed:
 
       Default : 31250 BPS
-      ao486   : 38400 BPS
 
 Many Amiga applications and most games don’t require any additional drivers for MIDI. Some “newer” applications may require the CAMD driver.
       
@@ -87,6 +86,9 @@ The 'midilink' daemon currently supports following switches / options:
 
       FSYNTH    - Use FluidSynth SoftSynth (no USB MIDI adapter 
                   required)
+	  
+	  CSSW10    - Use Casio SW-10 SoftSynth (no USB MIDI adapter 
+                  required)
 
       UDP       - Send MIDI to UDP Port (INI setting MIDI_SERVER /
                   MIDI_SERVER_PORT)
@@ -96,6 +98,8 @@ The 'midilink' daemon currently supports following switches / options:
       UDPMUNTGM - Listen on UDP port and send to MUNT (GM mapping)
       
       UDPFSYNTH - Listen on UDP port and send to FluidSynth
+	  
+	  UDPCSSW10 - Listen on UDP port and send to Casio SW-10 synth 
 
       TCP       - Works like a modem with AT commands: 
                   (ATDT, ATBAUD, ATIPADDR, +++ATH)
@@ -123,6 +127,8 @@ The MidiLink.INI file:
 
       MUNT_ROM_PATH      = /media/fat/mt32-rom-data
 
+	  CSSW10_ROM_PATH    = /media/fat/linux/css10-rom-data/ROMSXGM.BIN
+	  
                                         --> Path to MT-32/CM-32 ROM files
                                         
       MP3_VOLUME         = 100          --> Volume for MP3 Player (0 - 100)
