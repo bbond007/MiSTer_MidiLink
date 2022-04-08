@@ -575,7 +575,10 @@ int modem_handle_at_command(char * lineBuf)
     {
         char * ipAddr = &lineBuf[4];
         if(ipAddr[0] != (char) 0x00)
-            directory_search(midiLinkDIR, ipAddr, ipAddr);
+        {
+            misc_get_core_name(tmp, sizeof(tmp));
+            directory_search(midiLinkDIR, tmp, ipAddr, ipAddr);
+        }
         char * prtSep  = strchr(ipAddr, ':');
         if(prtSep == NULL)
             prtSep = strchr(ipAddr, '*'); // with NCOMM?
@@ -835,7 +838,8 @@ int modem_handle_at_command(char * lineBuf)
     }
     else if (memcmp(lineBuf, "ATDIR", 5) == 0)
     {
-        misc_file_to_serial(fdSerial, midiLinkDIR, TCPTermRows);
+        misc_get_core_name(tmp, sizeof(tmp));
+        directory_list(fdSerial, TCPTermRows, midiLinkDIR, tmp);
     }
     else if (memcmp(lineBuf, "ATTRANS", 7) == 0)
     {
