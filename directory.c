@@ -121,7 +121,7 @@ void directory_list(int fdSerial, int rows, char* fileName, char* coreName)
     _rows     = rows;
     _fdSerial = fdSerial;
     _rowCount = 0;
-
+    misc_swrite(_fdSerial, "\r\n");
     directory_read_loop(output,
                         fileName,
                         coreName,
