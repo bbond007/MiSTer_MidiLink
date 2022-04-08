@@ -15,7 +15,6 @@
 
 int compare(char * searchKey, char * key, char * vlaue)
 {
-	misc_print(0, "compare --> %s == %s\r\n", key, searchKey);
     if (strcmp(key, searchKey) == 0)
     {
         return TRUE;
@@ -25,7 +24,7 @@ int compare(char * searchKey, char * key, char * vlaue)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
-// int compare(char * searchKey, char * key, char * value, char * sec)
+// int output(char* searchKey, char* key, char* value)
 //
 static int _rows;
 static int _fdSerial;
@@ -59,10 +58,10 @@ int directory_read_loop (int (*fun_ptr)(char * searchKey, char * key, char * val
                          char * sec,   int secMax)
 {
     int count;
-	sec[0] = 0x00;
     char str[1024];
     FILE * file;
 	int result = FALSE;
+	sec[0] = 0x00;
     file = fopen(fileName, "r");
     if (file)
     {
