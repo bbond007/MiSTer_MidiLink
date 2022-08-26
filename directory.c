@@ -68,8 +68,8 @@ int directory_read_loop (int (*fun_ptr)(char * searchKey, char * key, char * val
         while (fgets(str, sizeof(str), file) != NULL)
         {
             if (ini_first_char(str, strlen(str)) != '#')
-                if (ini_parse_line(str, strlen(str), key, keyMax, value, valMax, sec, secMax))
-                    if (sec[0] == 0x00 || strcmp(section, sec) == 0)
+                if (ini_parse_line(str, strlen(str), key, keyMax, value, valMax, sec, secMax)) 
+                    if (sec[0] == 0x00 || strstr(sec, section) != NULL)
                         if (result = fun_ptr(searchKey, key, value))
                             break;
         }
