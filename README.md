@@ -242,6 +242,8 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       ATBAUD#  - Set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
       ATBAUD   - Show baud rate menu.
       ATDIR    - Show dialing Directory (/media/fat/linux/MidiLink.DIR)
+      ATE0     - Disable command echo
+      ATE1     - Enable command echo
       ATDT     - Dial --> ATDT192.168.1.131:23 or ATDTBBS.DOMAIN.COM:31337 ( '*' can also be used in place of ':')
       ATINI    - Show MidiLink.INI (/media/fat/linux/MidiLink.INI)
       ATIP     - Show IP address --> ATIP

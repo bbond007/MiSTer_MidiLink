@@ -23,6 +23,7 @@
 #define DEFAULT_TCPFlow       -1
 #define DEFAULT_TCPDTR         1
 #define DEFAULT_TCPQuiet       0
+#define DEFAULT_CMDEcho        1
 
 enum SOFTSYNTH          TCPSoftSynth           = FluidSynth;
 enum ASCIITRANS         TCPAsciiTrans          = DEFAULT_TCPAsciiTrans;
@@ -39,6 +40,7 @@ int                     MP3Volume              = -1;
 unsigned int            TCPTermRows            = DEFAULT_TCPTermRows;
 int                     modemVolume            = DEFAULT_modemVolume;
 int                     TCPQuiet               = DEFAULT_TCPQuiet;
+int                     CMDEcho                = DEFAULT_CMDEcho;
 int                     MODEMSOUND             = DEFAULT_MODEMSOUND;
 
 extern int              MIDI_DEBUG;
@@ -76,6 +78,8 @@ static char * athelp[] =
     "ATBAUD#  - Set baud rate",
     "ATBAUD   - Show baud rate menu",
     "ATDIR    - Show dialing MidiLink.DIR",
+    "ATE0     - Disable command echo",
+    "ATE1     - Enable command echo",
     "ATDT     - Dial 'ATDT192.168.1.131:23'",
     "ATHELP   - Show valid AT Comamnds",
     "ATINI    - Show MidiLink.INI",
@@ -381,6 +385,7 @@ void modem_set_defaults()
     TCPFlow          = DEFAULT_TCPFlow;
     TCPDTR           = DEFAULT_TCPDTR;
     TCPQuiet         = DEFAULT_TCPQuiet;
+    CMDEcho          = DEFAULT_CMDEcho;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -679,6 +684,14 @@ int modem_handle_at_command(char * lineBuf)
         else if (lineBuf[5] == '1')
             TELNET_NEGOTIATE = TRUE;
         misc_swrite(fdSerial, "\r\nTelnet Negotiations --> %s", TELNET_NEGOTIATE?"TRUE":"FALSE");
+    }
+    else if (memcmp(lineBuf, "ATE", 3) == 0)
+    {
+        if (lineBuf[3] == '0')
+            CMDEcho = FALSE;
+        else if (lineBuf[3] == '1')
+            CMDEcho = TRUE;
+        misc_swrite(fdSerial, "\r\nLCommand Echo --> %s", CMDEcho?"ON":"OFF");
     }
     else if (memcmp(lineBuf, "ATMP3", 5) == 0)
     {
@@ -1043,7 +1056,8 @@ void modem_do_emulation(char * buf, int bufLen)
             if (iLineBuf < 80)
             {
                 lineBuf[iLineBuf++] = *p;
-                write(fdSerial, p, 1);
+                if (CMDEcho)
+                    write(fdSerial, p, 1);
                 lineBuf[iLineBuf] = 0x00;
             }
         }
