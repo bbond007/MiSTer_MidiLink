@@ -4,13 +4,15 @@ This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI 
 MidiLink 2.0 is now included in MiSTer general and incudes MUNT and
 FluidSynth support running on the HPS ARM core!
 
-
-
-UartMODE : Connection : MIDI 
-             MidiLink : Local
-                 TYPE : MUNT
-
 Use MUNT softSynth:
+
+    UartMODE : Connection : MIDI
+
+                 MidiLink : Local
+	     
+                     TYPE : MUNT
+
+
 		 
 Roland MT-32/CM-32 roms need to be placed in '/media/fat/linux/mt32-rom-data'
 
@@ -18,26 +20,36 @@ Additional MUNT parameters can be specified in MidiLink.INI
        
       MUNT_OPTIONS = 
 
-UartMODE : Connection : MIDI 
-             MidiLink : Local
-                 TYPE : FSYNTH 
+Use FluidSynth softSynth:
 
-Use FluidSynth softSynth.
+    UartMODE : Connection : MIDI 
+
+                 MidiLink : Local
+	     
+                     TYPE : FSYNTH 
+
+
 
 FluidSynth soundfont is defined in MidiLink.INI
 
       FSYNTH_SOUNDFONT   = /media/fat/linux/SOUNDFONT/sc-55.sf2
+      
+Use modem emulation:
 
-UartMODE : CONNECTION : MODEM 
-                 LINK : TCP
+    UartMODE : CONNECTION : MODEM 
+
+                     LINK : TCP
 
 Modem mode supporting a small subset of common Hayes 'AT' Commands.
 Default speed for this mode is 115200 BPS
 
-UartMODE : CONNECTION : MODEM 
-                 LINK : UDP
+Direct connect to another MiSTer or other computer:
+
+    UartMODE : CONNECTION : MODEM 
+
+                     LINK : UDP
 		 
-Direct connect to another MiSTer or other computer.
+
 
 Many Amiga applications and most games don’t require any additional drivers for MIDI. Some “newer” applications may require the CAMD driver.
       
