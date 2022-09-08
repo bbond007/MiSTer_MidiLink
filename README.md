@@ -4,46 +4,40 @@ This is a daemon for the MiSTer DE10-nano FPGA to allow ALSA supported USB MIDI 
 MidiLink 2.0 is now included in MiSTer general and incudes MUNT and
 FluidSynth support running on the HPS ARM core!
 
-Uartmode : MIDI : Local / MUNT   
 
-Use MUNT softSynth.
 
-Speed:
+UartMODE : Connection : MIDI 
+             MidiLink : Local
+                 TYPE : MUNT
 
-      Default : 31250 BPS
-      ao486   : 38400 BPS
-
+Use MUNT softSynth:
+		 
 Roland MT-32/CM-32 roms need to be placed in '/media/fat/linux/mt32-rom-data'
 
 Additional MUNT parameters can be specified in MidiLink.INI
        
       MUNT_OPTIONS = 
 
-Uartmode : MIDI : Local / FSYNTH 
+UartMODE : Connection : MIDI 
+             MidiLink : Local
+                 TYPE : FSYNTH 
 
 Use FluidSynth softSynth.
-
-Speed:
-      
-      Default : 31250 BPS
-      ao486   : 38400 BPS
 
 FluidSynth soundfont is defined in MidiLink.INI
 
       FSYNTH_SOUNDFONT   = /media/fat/linux/SOUNDFONT/sc-55.sf2
 
-UartMODE : MIDI : Remote / TCP    
+UartMODE : CONNECTION : MODEM 
+                 LINK : TCP
 
 Modem mode supporting a small subset of common Hayes 'AT' Commands.
 Default speed for this mode is 115200 BPS
 
-Uartmode : MIDI : Remote / UDP    
-
+UartMODE : CONNECTION : MODEM 
+                 LINK : UDP
+		 
 Direct connect to another MiSTer or other computer.
-
-Default speed:
-
-      Default : 31250 BPS
 
 Many Amiga applications and most games don’t require any additional drivers for MIDI. Some “newer” applications may require the CAMD driver.
       
@@ -53,7 +47,7 @@ While some sequencer applications may support MIDI on the serial port, DOS games
 
       http://bjt42.github.io/softmpu/
       
-SoftMPU requires the QEMM memory manager be installed. For testing QEMM 8.03 was used. QEMM “stealth” option seems to be incompatible with ao486 so it is advisable to skip that part of the optimize process. It’s a good idea to run the QEMM optimize application again after installing SoftMPU (in the AUTOEXEC.BAT) to get as much of the lower 640K conventional RAM free as possible.
+SoftMPU requires the EMM386 or QEMM memory manager be installed. For testing QEMM 8.03 was used. QEMM “stealth” option seems to be incompatible with ao486 so it is advisable to skip that part of the optimize process. It’s a good idea to run the QEMM optimize application again after installing SoftMPU (in the AUTOEXEC.BAT) to get as much of the lower 640K conventional RAM free as possible.
 
 Although less common, some DOS games and applications require MPU-401 interrupts. This option can break compatibility with others software not requiring interrupts.
 
@@ -66,9 +60,6 @@ Starting SoftMPU with MPU-401 interrupts:
       SOFTMPU.EXE /SB:220 /IRQ:5 /MPU:330 /OUTPUT:COM1  
 
 The Rev.0 Roland MT-32 used in testing required the ‘DELAYSYSEX’ switch to prevent buffer overflow for certain games but made Sierra games upload sysex commands excessively slowly.
-
-*** I now recommend using the "DELAYSYSEX" in the MidiLink.INI instead of the
-SoftMPU option ***
       
       SOFTMPU.EXE /MPU:330 /DELAYSYSEX /OUTPUT:COM1 
 
@@ -87,7 +78,7 @@ The 'midilink' daemon currently supports following switches / options:
       FSYNTH    - Use FluidSynth SoftSynth (no USB MIDI adapter 
                   required)
 	  
-	  CSSW10    - Use Casio SW-10 SoftSynth (no USB MIDI adapter 
+      CSSW10    - Use Casio SW-10 SoftSynth (no USB MIDI adapter 
                   required)
 
       UDP       - Send MIDI to UDP Port (INI setting MIDI_SERVER /
@@ -99,7 +90,7 @@ The 'midilink' daemon currently supports following switches / options:
       
       UDPFSYNTH - Listen on UDP port and send to FluidSynth
 	  
-	  UDPCSSW10 - Listen on UDP port and send to Casio SW-10 synth 
+      UDPCSSW10 - Listen on UDP port and send to Casio SW-10 synth 
 
       TCP       - Works like a modem with AT commands: 
                   (ATDT, ATBAUD, ATIPADDR, +++ATH)
@@ -127,7 +118,7 @@ The MidiLink.INI file:
 
       MUNT_ROM_PATH      = /media/fat/mt32-rom-data
 
-	  CSSW10_ROM_PATH    = /media/fat/linux/css10-rom-data/ROMSXGM.BIN
+      CSSW10_ROM_PATH    = /media/fat/linux/css10-rom-data/ROMSXGM.BIN
 	  
                                         --> Path to MT-32/CM-32 ROM files
                                         
