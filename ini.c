@@ -55,7 +55,7 @@ extern enum SOFTSYNTH  TCPSoftSynth;
 extern int             CSSW10CPUMask;
 extern int             MUNTCPUMask;
 extern int             FSYNTHCPUMask;
-
+extern char            OPENAI_KEY[150];
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void ini_bool(char * value, int * dest)
@@ -325,6 +325,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, serialDevice, sizeof(serialDevice));
     }
+    else if (strcmp("OPENAI_KEY", key) == 0)
+    {
+        ini_str(key, value, OPENAI_KEY, sizeof(OPENAI_KEY));
+    }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -451,6 +455,7 @@ void ini_print_settings(int p)
     misc_print(p, "  - USB_SERIAL_MODULE  --> '%s'\n", USBSerModule);
     misc_print(p, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
     misc_print(p, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
+    misc_print(p, "  - OPENAI_KEY         --> '%s'\n", OPENAI_KEY);
     misc_print(p, "\n");
 }
 

@@ -41,7 +41,10 @@ char * misc_hayes_ATQ_to_str(int dtr);
 char * misc_get_clrScr();
 void   misc_make_file(const char * filename, const char * data);
 int    misc_get_tmp_uartspeed();
-
+void   misc_ascii_to_petskii(char * buf, int bufLen);
+void   misc_ascii_to_petskii_null(char * buf);
+void   misc_petskii_to_ascii(char * buf, int bufLen);
+void   misc_petskii_to_ascii_null(char * buf);
 //int    misc_get_midi_port(char * descr);
 #define TRUE 1
 #define FALSE 0

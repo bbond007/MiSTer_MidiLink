@@ -15,6 +15,7 @@
 #include "serial.h"
 #include "serial2.h"
 #include "directory.h"
+#include "openai.h"
 
 #define DEFAULT_MODEMSOUND     TRUE
 #define DEFAULT_modemVolume   -1
@@ -44,20 +45,20 @@ int                     CMDEcho                = DEFAULT_CMDEcho;
 int                     MODEMSOUND             = DEFAULT_MODEMSOUND;
 
 extern int              MIDI_DEBUG;
-extern int              CPUMASK; 
+extern int              CPUMASK;
 extern int              MODEMSOUND;
 extern int              socket_in;
 extern int              socket_out;
 extern int              socket_lst;
 extern int              fdSerial;
 extern int              baudRate;
-extern int              TCPQuiet; 
+extern int              TCPQuiet;
 extern int              modemVolume;
 extern int              sizeof_all_notes_off;
 extern int              TCPDTR;
 extern int              TCPFlow;
 extern char             all_notes_off[];
-extern char           * midiLinkINI;    
+extern char           * midiLinkINI;
 extern char 	      * PCMDevice;
 extern char           * helloStr;
 extern char         	fsynthSoundFont[];
@@ -77,6 +78,7 @@ static char * athelp[] =
     "AT       - Attention",
     "ATBAUD#  - Set baud rate",
     "ATBAUD   - Show baud rate menu",
+    "ATCHAT   - Start ChatGPT",
     "ATDIR    - Show dialing MidiLink.DIR",
     "ATE0     - Disable command echo",
     "ATE1     - Enable command echo",
@@ -525,6 +527,67 @@ end:
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+// BOOL modem_do_chat_gpt()
+//
+//
+int modem_do_chat_gpt()
+{
+    char buf[1024] = "";
+    char c;
+    int iBuf = 0;
+    int done = FALSE;
+    openai_init();
+    misc_swrite(fdSerial, "\r\nWelcome to ChatGPT!\r\n\r\n<--");
+    char del = TCPAsciiTrans == AsciiToPetskii?(char)0x14:(char)0x08;
+    do
+    {
+        while (read(fdSerial, &c, 1) == 0) {};
+        switch(c)
+        {
+        case 0x08: // [DELETE]
+        case 0x14: // [PETSKII DELETE]
+        case 0xf8: // [BACKSPACE]
+            if(iBuf > 0)
+            {
+                iBuf--;
+                buf[iBuf] = 0x00;
+                write(fdSerial, &del, 1);
+            }
+            break;
+        case 13:   // [ENTER]
+            write(fdSerial, "\r\n\r\n", 4);
+            switch (TCPAsciiTrans)
+            {
+            case AsciiToPetskii:
+                misc_petskii_to_ascii(buf, iBuf);
+                break;
+            }
+            openai_say(buf);            
+            if (strcasecmp(buf, "THANKS") == 0)
+            {
+                misc_swrite(fdSerial, "\r\n");
+                done = true;
+            }
+            else
+                misc_swrite(fdSerial, "\r\n\r\n<--");
+            iBuf      = 0x00;
+            buf[iBuf] = 0x00;
+            break;
+        default:
+            if(iBuf < sizeof(buf) - 1)
+            {
+                buf[iBuf++]   = c;
+                buf[iBuf]     = 0x00;
+                if (CMDEcho)
+                    write(fdSerial, &c, 1);
+            }
+            break;
+        }
+    } while (!done);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
 // BOOL do_file_picker(char * pathBuf, char * resultBuf)
 //
 //
@@ -707,7 +770,7 @@ int modem_handle_at_command(char * lineBuf)
                 chdir("/root");
                 set_pcm_volume(MP3Volume);
                 char * ext = strrchr(fileName, '.');
-                sprintf(tmp, "taskset %d %s -o alsa %s \"%s/%s\" 2> /tmp/%s & ", 
+                sprintf(tmp, "taskset %d %s -o alsa %s \"%s/%s\" 2> /tmp/%s & ",
                         CPUMASK,
                         MP3Player,
                         (ext && strcasecmp(ext, ".PLS") == 0)?"-@":"",
@@ -973,6 +1036,10 @@ int modem_handle_at_command(char * lineBuf)
             misc_swrite(fdSerial,"\r\nUnsupported result code mode --> '%s'", &lineBuf[3]);
             break;
         }
+    }
+    else if (memcmp(lineBuf, "ATCHAT", 6) == 0)
+    {
+        modem_do_chat_gpt();
     }
     else if (memcmp(lineBuf, "ATZ", 3) == 0)
     {
