@@ -10,11 +10,9 @@
 char OPENAI_KEY[150] = "";
 static CURL *curl = NULL;
 static struct curl_slist *headers = NULL;
-
 static size_t openai_callback(void *data, size_t size, size_t nmemb, void *clientp);
 extern int  fdSerial;
 extern enum ASCIITRANS TCPAsciiTrans;
-static char bufOut[1024 * 1024];
 struct openai_memory_chunk openai_chunk = {0};
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -122,6 +120,8 @@ static size_t openai_callback(void *data, size_t size, size_t nmemb, void *clien
 
 CURLcode openai_say(char * msg)
 {
+    static char bufOut[1024 * 1024];
+
     if(strlen(msg) < 3)
         return -1;
 
@@ -138,7 +138,7 @@ CURLcode openai_say(char * msg)
             misc_print(0, "curl_easy_perform() failed: %s\n",
                        curl_easy_strerror(res));
         //DEBUG--> write(fdSerial, openai_chunk.response, openai_chunk.size);
-        openai_parse_json_content(openai_chunk.response, openai_chunk.size, 1);
+        openai_parse_json_content(openai_chunk.response, openai_chunk.size, TRUE);
         openai_reset_chunk();        
         return res;
     }
