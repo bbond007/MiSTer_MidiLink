@@ -85,8 +85,8 @@ static void openai_handle_json_output(unsigned int iBracket, unsigned int iBrace
         }
         else
         {
-            misc_swrite(fdSerial, "ERROR --> %s\n", value);
-            misc_swrite(fdSerial, "Don't forget to set OPENAI_KEY = ##### in MidiLink.INI.\n");
+            misc_swrite(fdSerial, "ERROR --> %s\r\n", value);
+            misc_swrite(fdSerial, "Don't forget to set OPENAI_KEY = ##### in MidiLink.INI.\r\n");
         }
     }
     misc_print(0, "DEBUG--> Exiting openai_handle_json_output()\n");
