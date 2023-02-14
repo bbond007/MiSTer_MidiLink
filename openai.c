@@ -293,9 +293,15 @@ void openai_parse_json_content(char * jsonContent, size_t jsonContentSize, bool 
             }
             else
             {
-                if(iValue < sizeof(value)-1)
+                if(iValue < sizeof(value)-2)
                 {
-                    if((*c != ' ' || quote) && (*c != 'n' || lastc != BSL_KEY))
+                    if (*c == 'n' && lastc == BSL_KEY)
+                    {
+                        value[iValue++] = 0x0a; 
+                        value[iValue++] = 0x0d;
+                        value[iValue] = 0x00;
+                    }    
+                    else if(*c != ' ' || quote)
                     {
                         value[iValue++] = *c;
                         value[iValue] = 0x00;
