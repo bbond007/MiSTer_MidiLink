@@ -11,6 +11,7 @@ CURLcode openai_say(char * msg);
 void openai_done();
 void openai_reset_chunk();
 void openai_parse_json_content(char * jsonContent, size_t jsonContentSize, bool reset);
+void openai_parse_jsmn_content(char * jsonContent, size_t jsonContentSize);
 
 struct openai_memory_chunk {
   char *response;

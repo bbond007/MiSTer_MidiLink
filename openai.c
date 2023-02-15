@@ -129,18 +129,6 @@ static size_t openai_callback(void *data, size_t size, size_t nmemb, void *clien
 //  CURLcode openai_say(char * msg)
 //
 
-#ifdef USE_JSMN
-static int jsoneq(const char *json, jsmntok_t *tok, const char *s)
-{
-    if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
-            strncmp(json + tok->start, s, tok->end - tok->start) == 0)
-    {
-        return 0;
-    }
-    return -1;
-}
-#endif
-
 CURLcode openai_say(char * msg)
 {
     if(strlen(msg) < 3)
@@ -163,42 +151,10 @@ CURLcode openai_say(char * msg)
                 misc_print(0, "curl_easy_perform() failed: %s\n",
                            curl_easy_strerror(cRes));
 #ifdef USE_JSMN
-d
-DEBUG--> curl_slist_append()
-DEBUG--> CURLOPT_URL
-            int iRes = jsmn_parse(&jsmnParser, openai_chunk.response, openai_chunk.size, jsmnToken,
-                               sizeof(jsmnToken) / sizeof(jsmnToken[0]));;
-            if (iRes > -1)
-            {
-                char * key;
-                for (int i = 1; i < iRes; i++)
-                {
-                    if (jsoneq(openai_chunk.response, &jsmnToken[i], STR_TEXT) == 0)
-                        key = STR_TEXT;
-                    else if (jsoneq(openai_chunk.response, &jsmnToken[i], STR_MESSAGE) == 0)
-                        key = STR_MESSAGE;
-                    else
-                        key = "";
-
-                    if (key[0] != 0x00)
-                    {
-                        size_t valSize = jsmnToken[i + 1].end - jsmnToken[i + 1].start;
-                        char * value = malloc(valSize + 1);
-                        if (value)
-                        {
-                            memcpy(value, openai_chunk.response + jsmnToken[i + 1].start, valSize);
-                            value[valSize] = 0x00;
-                            openai_handle_json_output(0,0, key, value);
-                            free(value);
-                        }
-                        else
-                            misc_print(0, "ERROR--> value = malloc(%d)!\n", valSize + 1);
-                    }
-                }
-            }
-            else
-                misc_print(0, "ERROR--> jsmn_parse() fail (iRres=%d)!\n", iRes);
+            // Use jsmn
+            openai_parse_jsmn_content(openai_chunk.response, openai_chunk.size);
 #else
+            // Use janky json
             openai_parse_json_content(openai_chunk.response, openai_chunk.size, TRUE);
 #endif
             openai_reset_chunk();
@@ -235,14 +191,69 @@ void openai_done()
     }
 }
 
+#ifdef USE_JSMN
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  BOOL jsoneq(const char *json, jsmntok_t *tok, const char *s)
+//
+
+static int jsoneq(const char *json, jsmntok_t *tok, const char *s)
+{
+    if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
+            strncmp(json + tok->start, s, tok->end - tok->start) == 0)
+    {
+        return 0;
+    }
+    return -1;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
+//  void openai_parse_jsmn_content(char * jsonContent, size_t jsonContentSize, bool reset)
+//
+void openai_parse_jsmn_content(char * jsonContent, size_t jsonContentSize)
+{
+    int iRes = jsmn_parse(&jsmnParser, openai_chunk.response, openai_chunk.size, jsmnToken,
+                          sizeof(jsmnToken) / sizeof(jsmnToken[0]));;
+    if (iRes > -1)
+    {
+        char * key;
+        for (int i = 1; i < iRes; i++)
+        {
+            if (jsoneq(openai_chunk.response, &jsmnToken[i], STR_TEXT) == 0)
+                key = STR_TEXT;
+            else if (jsoneq(openai_chunk.response, &jsmnToken[i], STR_MESSAGE) == 0)
+                key = STR_MESSAGE;
+            else
+                key = "";
+
+            if (key[0] != 0x00)
+            {
+                size_t valSize = jsmnToken[i + 1].end - jsmnToken[i + 1].start;
+                char * value = malloc(valSize + 1);
+                if (value)
+                {
+                    memcpy(value, openai_chunk.response + jsmnToken[i + 1].start, valSize);
+                    value[valSize] = 0x00;
+                    openai_handle_json_output(0,0, key, value);
+                    free(value);
+                }
+                else
+                    misc_print(0, "ERROR--> value = malloc(%d)!\n", valSize + 1);
+            }
+        }
+    }
+    else
+        misc_print(0, "ERROR--> jsmn_parse() fail (iRres=%d)!\n", iRes);
+}
+
+#else
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//  janky json :)
 //  void openai_parse_json_content(char * jsonContent, bool reset)
 //  void openai_parse_json_content(char * jsonContent, size_t jsonContentSize, bool reset)
 //
-#ifdef USE_JSMN
-#else
 void openai_parse_json_content(char * jsonContent, size_t jsonContentSize, bool reset)
 {
     char * c = jsonContent;
