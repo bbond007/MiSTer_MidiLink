@@ -537,6 +537,7 @@ int modem_do_chat_gpt()
     int iBuf = 0;
     int done = FALSE;
     openai_init();
+    misc_text_to_speech("Welcome to chat GPT!");
     misc_swrite(fdSerial, "\r\nWelcome to ChatGPT!\r\n\r\n<--");
     char del = TCPAsciiTrans == AsciiToPetskii?(char)0x14:(char)0x08;
     do
