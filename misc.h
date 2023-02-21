@@ -45,6 +45,8 @@ void   misc_ascii_to_petskii(char * buf, int bufLen);
 void   misc_ascii_to_petskii_null(char * buf);
 void   misc_petskii_to_ascii(char * buf, int bufLen);
 void   misc_petskii_to_ascii_null(char * buf);
+int    misc_text_to_speech_sz(char * txt, size_t len);
+int    misc_text_to_speech(char * txt);
 //int    misc_get_midi_port(char * descr);
 #define TRUE 1
 #define FALSE 0

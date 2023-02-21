@@ -1046,4 +1046,36 @@ void misc_make_file(const char * filename, const char * data)
     fclose(file);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// BOOL isc_text_to_speech_sz(char * txt, size_t len)
+//
+int misc_text_to_speech_sz(char * txt, size_t len)
+{
+    if (misc_check_file("/media/fat/linux/pico2wave"))
+    {
+        char fmt[] = "/media/fat/linux/pico2wave --wave=/tmp/txtout.wav  %c%s%c;";
+        char * tmp = malloc(len + sizeof(fmt));
+        if(tmp)
+        {
+            sprintf(tmp, fmt, '"', txt, '"');
+            //misc_make_file("/tmp/tst.txt", tmp);
+            system(tmp);
+            free(tmp);
+            system("(aplay /tmp/txtout.wav;rm /tmp/txtout.wav) &");
+            //system("aplay /tmp/txtout.wav && rm /tmp/txtout.wav &");
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// BOOL misc_text_to_speech(char * txt)
+//
+int misc_text_to_speech(char * txt)
+{
+    misc_text_to_speech_sz(txt, strlen(txt));
+}
 

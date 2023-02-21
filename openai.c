@@ -9,7 +9,8 @@
 #include "misc.h"
 #include "jsmn.h"
 
-//#define USE_JSMN //<-- TODO not working too well :(
+//#define USE_JSMN   // <-- TODO not working too well :(
+#define OPENAI_SAY // <-- anoying but interesting :)
 
 char   OPENAI_KEY[150] = ""; //ini.c will populate this.
 static CURL *curl = NULL;
@@ -23,7 +24,7 @@ static char STR_MESSAGE[] = "message";
 
 #ifdef USE_JSMN
 static jsmn_parser jsmnParser;
-static jsmntok_t   jsmnToken[1024]; /* We expect no more than 128 tokens */
+static jsmntok_t   jsmnToken[1024]; /* We expect no more than 1024 tokens */
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -86,13 +87,17 @@ static void openai_handle_json_output(unsigned int iBracket, unsigned int iBrace
             //this segfaults for long value? :(
             // WTF? WHY? --> TODO <--
             //misc_swrite(fdSerial, value);
+            size_t sz = strlen(value);
+#ifdef OPENAI_SAY
+            misc_text_to_speech_sz(value, sz);
+#endif             
             switch (TCPAsciiTrans)
             {
             case AsciiToPetskii:
-                misc_ascii_to_petskii_null(value);
+                misc_ascii_to_petskii(value, sz);
                 break;
             }
-            write(fdSerial, value, strlen(value));
+            write(fdSerial, value, sz);
         }
         else
         {
