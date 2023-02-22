@@ -1054,11 +1054,30 @@ int misc_text_to_speech_sz(char * txt, size_t len)
 {
     if (misc_check_file("/media/fat/linux/pico2wave"))
     {
-        char fmt[] = "/media/fat/linux/pico2wave --wave=/tmp/txtout.wav  %c%s%c;";
-        char * tmp = malloc(len + sizeof(fmt));
+        char cmd[] = "/media/fat/linux/pico2wave --wave=/tmp/txtout.wav \""; 
+        char * c = strchr(txt, '"');
+        size_t quoteCount = 1;
+        for (size_t src = 0; src < len; src++)
+            if (txt[src] == '"') 
+                quoteCount++;
+        char * tmp = malloc(len + sizeof(cmd) + quoteCount);
         if(tmp)
         {
-            sprintf(tmp, fmt, '"', txt, '"');
+            strcpy(tmp, cmd);
+            size_t dst = sizeof(cmd) -1;
+            //we need to encode the quotes.... \"
+            for(size_t src = 0;src < len; src++)
+            {
+                if (txt[src] != '"')
+                    tmp[dst++] = txt[src];
+                else
+                {
+                    tmp[dst++] = '\\';
+                    tmp[dst++] = '\"';
+                }
+            }
+            tmp[dst++] = '"';
+            tmp[dst] = 0x00;
             //misc_make_file("/tmp/tst.txt", tmp);
             system(tmp);
             free(tmp);
