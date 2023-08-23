@@ -63,9 +63,9 @@ then
   echo "MT-32/CM-32 ROMS found"
 else
   echo "Downloading MT-32/CM-32 ROMS"
-  curl -k "https://www.deceifermedia.com/files/applications/Roland_MT32_ROMs.zip" -o $MT32_ROM_ZIP
+  curl -Lk "https://archive.org/download/mame-versioned-roland-mt-32-and-cm-32l-rom-files/mt32-roms.zip" -o $MT32_ROM_ZIP
   echo "Unzipping CM-32 ROMS"
-  unzip -o $MT32_ROM_ZIP CM32L* -d $MT32_ROM_DIR
+  unzip -o $MT32_ROM_ZIP cm32l* -d $MT32_ROM_DIR
 fi
 echo "Done in:"
 sleep 1
