@@ -12,7 +12,9 @@
 //#define USE_JSMN   // <-- TODO not working too well :(
 #define OPENAI_SAY // <-- anoying but interesting :)
 
-char   OPENAI_KEY[150] = ""; //ini.c will populate this.
+char   OPENAI_KEY[150]  = ""; //ini.c will populate this.
+char   OPENAI_MODEL[30] = "gpt-3.5-turbo-instruct";
+char   OPENAI_TEMP[8]   = "0.5";
 static CURL *curl = NULL;
 static struct curl_slist *headers = NULL;
 static size_t openai_callback(void *data, size_t size, size_t nmemb, void *clientp);
@@ -139,8 +141,8 @@ CURLcode openai_say(char * msg)
     if(strlen(msg) < 3)
         return -1;
 
-    char   formatStr[] = "{\"model\":\"text-davinci-003\",\"prompt\":\"%s\",\"max_tokens\":1024,\"temperature\":0.5}";
-    size_t bufOutSize = strlen(msg) + sizeof(formatStr);
+    char   formatStr[] = "{\"model\":\"%s\",\"prompt\":\"%s\",\"max_tokens\":1024,\"temperature\":%s}";
+    size_t bufOutSize = strlen(msg) + strlen(OPENAI_MODEL) + strlen(OPENAI_TEMP) + sizeof(formatStr);
     char * bufOut = malloc(bufOutSize);
     if (bufOut)
     {
@@ -149,7 +151,7 @@ CURLcode openai_say(char * msg)
         if (curl)
         {
             CURLcode cRes;
-            snprintf(bufOut, bufOutSize - 1, formatStr, msg);
+            snprintf(bufOut, bufOutSize - 1, formatStr, OPENAI_MODEL, msg, OPENAI_TEMP);
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, bufOut);
             cRes = curl_easy_perform(curl);
             if(cRes != CURLE_OK)

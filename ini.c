@@ -56,6 +56,8 @@ extern int             CSSW10CPUMask;
 extern int             MUNTCPUMask;
 extern int             FSYNTHCPUMask;
 extern char            OPENAI_KEY[150];
+extern char 	       OPENAI_MODEL[30];
+extern char            OPENAI_TEMP[8];
 ///////////////////////////////////////////////////////////////////////////////////////
 //
 // void ini_bool(char * value, int * dest)
@@ -329,6 +331,14 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_str(key, value, OPENAI_KEY, sizeof(OPENAI_KEY));
     }
+    else if (strcmp("OPENAI_MODEL", key) == 0)
+    {
+        ini_str(key, value, OPENAI_MODEL, sizeof(OPENAI_MODEL));
+    }
+    else if (strcmp("OPENAI_TEMP", key) == 0)
+    {
+        ini_str(key, value, OPENAI_TEMP, sizeof(OPENAI_MODEL));
+    }
     else
         misc_print(0, "ERROR: ini_process_key_value() Unknown INI KEY --> '%s' = '%s'\n", key, value);
 }
@@ -456,6 +466,8 @@ void ini_print_settings(int p)
     misc_print(p, "  - DELAYSYSEX         --> %s\n",    DELAYSYSEX?"TRUE":"FALSE");
     misc_print(p, "  - MT32_LCD_MSG       --> '%s'\n",  MT32LCDMsg);
     misc_print(p, "  - OPENAI_KEY         --> '%s'\n", OPENAI_KEY);
+    misc_print(p, "  - OPENAI_MODEL       --> '%s'\n", OPENAI_MODEL);
+    misc_print(p, "  - OPENAI_TEMP        --> '%s'\n", OPENAI_TEMP);
     misc_print(p, "\n");
 }
 

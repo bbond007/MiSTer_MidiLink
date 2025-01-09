@@ -236,7 +236,16 @@ The MidiLink.INI file:
       
       MT32_LCD_MSG       = MiSTer MIDI! --> This shows a custom message on
                                             the MT-32 LCD Screen. Max 20!
-      
+
+      OPENAI_KEY         = ############ --> API key provided by OpenAI
+
+      OPENAI_MODEL       = gpt-3.5-turbo-instruct
+                                        --> OpenAI language model to use
+
+      OPENAI_TEMP        = 0.5          --> OpenAI Temprature
+                                            a hyperparameter that controls the 
+                                            randomness of the output generated 
+                                            by OpenAI's large language models.
 
 MidiLink : TCP
 The TCP option works like a WiFi232 adapter supporting a small subset of the Hayes "AT" command set and some additionl stuff
@@ -244,6 +253,7 @@ The TCP option works like a WiFi232 adapter supporting a small subset of the Hay
       AT       - Attention
       ATBAUD#  - Set baud rate (can't auto-detect yet) --> ATBAUD9600 or ATBAUD6 (#6 from menu)
       ATBAUD   - Show baud rate menu.
+      ATCHAT   - Activate ChatGPT 
       ATDIR    - Show dialing Directory (/media/fat/linux/MidiLink.DIR)
       ATE0     - Disable command echo
       ATE1     - Enable command echo
