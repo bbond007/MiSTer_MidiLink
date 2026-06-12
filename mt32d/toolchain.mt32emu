@@ -12,7 +12,7 @@ set(CMAKE_ASM_COMPILER ${TOOLCHAIN_PREFIX}as)
 
 # Target Environment Root Path (Sysroot)
 # If you have a local copy of the target filesystem, specify it here:
-# set(CMAKE_FIND_ROOT_PATH /home/bbond007/MrRoot)
+# set(CMAKE_FIND_ROOT_PATH /home/bbond007/LXDE)
 
 # Adjust the default behavior of the FIND_XXX() commands:
 # 1. Search for executable programs in the build host directories

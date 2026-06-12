@@ -1,9 +1,9 @@
 # Define the path to your ARM sysroot
 SYSROOT=/home/bbond007/MrRoot
-
 COMPILER_PREFIX=arm-linux-gnueabihf-
-CC=$(COMPILER_PREFIX)-gcc
-CXX=$(COMPILER_PREFIX)-g++
+CC=$(COMPILER_PREFIX)gcc
+CXX=$(COMPILER_PREFIX)g++
+STRIP=$(COMPILER_PREFIX)strip
 
 CXXFLAGS=-Ofast -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -ftree-vectorize -funsafe-math-optimizations -Wno-write-strings -Wno-unused-result -Wno-deprecated-declarations --sysroot=$(SYSROOT)
 LIBS=-lpthread -lmt32emu -lm -lasound
@@ -25,8 +25,9 @@ default: mt32d
 $(XOBJ) $(OBJS): %.o: src/%.cpp
 	$(CXX) -c $< -o $@ $(CXXFLAGS) $(INCLUDES)
 
-mt32d: $(OBJS) src/console.cpp
+mt32d: 	$(OBJS) src/console.cpp
 	$(CXX) src/console.cpp -o mt32d $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) $(OBJS) $(LIBS)
+	$(STRIP) mt32d
 
 clean:
 	rm -f *.o *~

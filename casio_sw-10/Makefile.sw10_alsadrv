@@ -1,0 +1,18 @@
+SYSROOT=/home/bbond007/MrRoot
+COMPILER_PREFIX=arm-linux-gnueabihf-
+CC=$(COMPILER_PREFIX)gcc
+STRIP=$(COMPILER_PREFIX)strip
+
+CXXFLAGS=-Ofast -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -ftree-vectorize -funsafe-math-optimizations -Wno-write-strings -Wno-unused-result -Wno-deprecated-declarations --sysroot=$(SYSROOT)
+LDFLAGS=--sysroot=$(SYSROOT) \
+        -Wl,-rpath-link $(SYSROOT)/lib/arm-linux-gnueabihf 
+
+all: sw10_alsadrv
+
+sw10_alsadrv: sw10_alsadrv.c ../VLSG/VLSG.c ../VLSG/VLSG.h
+	$(CC) $(CXXFLAGS) $(LDFLAGS) --sysroot=/home/bbond007/MrRoot -Wall -o sw10_alsadrv sw10_alsadrv.c ../VLSG/VLSG.c -I../VLSG -lasound -lpthread
+	$(STRIP) sw10_alsadrv
+	
+.PHONY: clean
+clean:
+	rm -f sw10_alsadrv
