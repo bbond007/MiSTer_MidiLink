@@ -1,4 +1,4 @@
-COMPILER_PREFIX=arm-linux-gnueabihf-
+COMPILER_PREFIX=arm-none-linux-gnueabihf-
 CC=$(COMPILER_PREFIX)gcc
 STRIP=$(COMPILER_PREFIX)strip
 INCLUDES=-I../../../alsa/include

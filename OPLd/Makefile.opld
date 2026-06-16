@@ -1,4 +1,4 @@
-COMPILER_PREFIX=arm-linux-gnueabihf-
+COMPILER_PREFIX=arm-none-linux-gnueabihf-
 CC=$(COMPILER_PREFIX)gcc
 CXX=$(COMPILER_PREFIX)g++
 STRIP=$(COMPILER_PREFIX)strip
