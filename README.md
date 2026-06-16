@@ -93,7 +93,10 @@ The 'midilink' daemon currently supports following switches / options:
       CSSW10    - Use Casio SW-10 SoftSynth (no USB MIDI adapter 
                   required)
 
-      UDP       - Send MIDI to UDP Port (INI setting MIDI_SERVER /
+      OPL3      - Use OPL3 SoftSynth (no USB MIDI adapter 
+                  required)
+      
+	  UDP       - Send MIDI to UDP Port (INI setting MIDI_SERVER /
                   MIDI_SERVER_PORT)
 
       UDPMUNT   - Listen on UDP port and send to MUNT 
