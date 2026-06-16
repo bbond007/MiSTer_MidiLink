@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "modem.h"
 #include "config.h"
 
-enum MODE {ModeUSBMIDI, ModeSERMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeCSSW10, ModeUDPMUNT, ModeUDPMUNTGM, ModeUDPFSYNTH, ModeUDPCSSW10};
+enum MODE {ModeUSBMIDI, ModeSERMIDI, ModeTCP, ModeUDP, ModeUSBSER, ModeMUNT, ModeMUNTGM, ModeFSYNTH, ModeCSSW10, ModeOPL3, ModeUDPMUNT, ModeUDPMUNTGM, ModeUDPFSYNTH, ModeUDPCSSW10, ModeUDPOPL3};
 
 static enum MODE        mode                   = ModeUSBMIDI;
 static int              fdSerialUSB            = -1;
@@ -48,6 +48,7 @@ int                     socket_lst             = -1;
 int                     fdSerial               = -1;
 int                     baudRate               = -1;
 int                     cssw10Volume           = -1;
+int                     opl3Volume             = -1;
 int                     muntVolume             = -1;
 int                     fsynthVolume           = -1;
 int                     midilinkPriority       =  0;
@@ -61,6 +62,7 @@ int                     TCPFlow                = -1;
 int                     TCPDTR                 =  1;
 int                     UDPFlow                = -1;
 int                     CSSW10CPUMask          = -1;
+int                     OPL3CPUMask            = -1;
 int                     MUNTCPUMask            = -1;
 int                     FSYNTHCPUMask          = -1;
 unsigned int            DELAYSYSEX             = FALSE;
@@ -74,7 +76,9 @@ char                    CSSW10RomPath[150]     = "/media/fat/linux/css10-rom-dat
 char                    UDPServer [100]        = "";
 char                    mixerControl[20]       = "Master";
 char                    MUNTOptions[30]        = "";
+char                    FSYNTHOptions[30]      = "-is -a alsa -m alsa_seq";
 char                    CSSW10Options[30]      = "";
+char                    OPL3Options[30]        = "";
 char                    USBSerModule[100]      = "";
 
 static pthread_t        midiInThread;
@@ -107,37 +111,12 @@ void killall_softsynth(int delay)
     system("killall -q fluidsynth");
     misc_print(0, "Killing --> mt32d\n");
     system("killall -q mt32d");
-	misc_print(0, "Killing --> sw10_alsadrv\n");
+    misc_print(0, "Killing --> sw10_alsadrv\n");
     system("killall -q sw10_alsadrv");
+    misc_print(0, "Killing --> opld\n");
+    system("killall -q opld");
     if(delay)
         sleep(delay);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////
-//
-// int start_munt()
-//
-int start_cssw10()
-{
-    char buf[200];
-    int midiPort = -1;
-    set_pcm_volume(cssw10Volume);
-    misc_print(0, "Starting --> sw10_alsadrv");
-    if (CPUMASK != CSSW10CPUMask)
-            misc_print(0, " : CPUMASK = %d", CSSW10CPUMask);
-    misc_print(0, "\n");
-    sprintf(buf, "taskset %d sw10_alsadrv -r %s &", CSSW10CPUMask, CSSW10RomPath);
-    system(buf);
-    int loop = 0;
-    do
-    {
-        if (loop > 0)
-            misc_print(0, "Looking for CASIO SW-10 port (%d / 2)\n", loop);
-        sleep(2);
-        midiPort = alsa_get_midi_port("CASIO SW-10");
-        loop++;
-    } while (midiPort < 0 && loop < 3);
-    return midiPort;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +163,7 @@ int start_fsynth()
     if (CPUMASK != FSYNTHCPUMask)
             misc_print(0, " : CPUMASK = %d", FSYNTHCPUMask);
     misc_print(0, "\n"); 
-    sprintf(buf, "taskset %d fluidsynth -is -a alsa -m alsa_seq %s &", FSYNTHCPUMask, fsynthSoundFont);
+    sprintf(buf, "taskset %d fluidsynth %s %s &", FSYNTHCPUMask, FSYNTHOptions, fsynthSoundFont);
     system(buf);
     int loop = 0;
     do
@@ -197,6 +176,61 @@ int start_fsynth()
     } while (midiPort < 0 && loop < 14);
     return midiPort;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int start_cssw10()
+//
+int start_cssw10()
+{
+    char buf[200];
+    int midiPort = -1;
+    set_pcm_volume(cssw10Volume);
+    misc_print(0, "Starting --> sw10_alsadrv");
+    if (CPUMASK != CSSW10CPUMask)
+            misc_print(0, " : CPUMASK = %d", CSSW10CPUMask);
+    misc_print(0, "\n");
+    sprintf(buf, "taskset %d sw10_alsadrv -r %s &", CSSW10CPUMask, CSSW10RomPath);
+    system(buf);
+    int loop = 0;
+    do
+    {
+        if (loop > 0)
+            misc_print(0, "Looking for CASIO SW-10 port (%d / 2)\n", loop);
+        sleep(2);
+        midiPort = alsa_get_midi_port("CASIO SW-10");
+        loop++;
+    } while (midiPort < 0 && loop < 3);
+    return midiPort;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+// int start_opl3()
+//
+int start_opl3()
+{
+    char buf[200];
+    int midiPort = -1;
+    set_pcm_volume(opl3Volume);
+    misc_print(0, "Starting --> opld");
+    if (CPUMASK != OPL3CPUMask)
+       misc_print(0, " : CPUMASK = %d", OPL3CPUMask);
+    misc_print(0, "\n");
+    sprintf(buf, "taskset %d opld &", OPL3CPUMask);
+    system(buf);
+    int loop = 0;
+    do
+    {
+        if (loop > 0)
+            misc_print(0, "Looking for OPLD port (%d / 2)\n", loop);
+        sleep(2);
+        midiPort = alsa_get_midi_port("opld");
+        loop++;
+    } while (midiPort < 0 && loop < 3);
+    return midiPort;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //
@@ -499,7 +533,8 @@ int main(int argc, char *argv[])
     remove(tmpBAUD);
     MUNTCPUMask   = CPUMASK;
     FSYNTHCPUMask = CPUMASK;
-	CSSW10CPUMask = CPUMASK;
+    CSSW10CPUMask = CPUMASK;
+    OPL3CPUMask   = CPUMASK;
     
     unsigned char buf[256];
     //catch_signal(SIGTERM);
@@ -533,7 +568,8 @@ int main(int argc, char *argv[])
         if (misc_check_file("/tmp/ML_MUNT"))                mode = ModeMUNT;
         if (misc_check_file("/tmp/ML_MUNTGM"))              mode = ModeMUNTGM;
         if (misc_check_file("/tmp/ML_FSYNTH"))              mode = ModeFSYNTH;
-		if (misc_check_file("/tmp/ML_CSSW10"))              mode = ModeCSSW10;
+        if (misc_check_file("/tmp/ML_CSSW10"))              mode = ModeCSSW10;
+        if (misc_check_file("/tmp/ML_OPL3"))                mode = ModeOPL3;
         if (misc_check_file("/tmp/ML_UDP"))               { mode = ModeUDP; altBaud = FALSE; }
         if (misc_check_file("/tmp/ML_TCP"))               { mode = ModeTCP; altBaud = FALSE; }
         if (misc_check_file("/tmp/ML_UDP_ALT"))           { mode = ModeUDP; altBaud = TRUE;  }
@@ -547,7 +583,8 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "MUNT"))      mode = ModeMUNT;
         if(misc_check_args_option(argc, argv, "MUNTGM"))    mode = ModeMUNTGM;
         if(misc_check_args_option(argc, argv, "FSYNTH"))    mode = ModeFSYNTH;
-		if(misc_check_args_option(argc, argv, "CSSW10"))    mode = ModeCSSW10;
+        if(misc_check_args_option(argc, argv, "CSSW10"))    mode = ModeCSSW10;
+        if(misc_check_args_option(argc, argv, "OPL3"))      mode = ModeOPL3;
         if(misc_check_args_option(argc, argv, "UDP"))     { mode = ModeUDP; altBaud = FALSE; }
         if(misc_check_args_option(argc, argv, "TCP"))     { mode = ModeTCP; altBaud = FALSE; }
         if(misc_check_args_option(argc, argv, "UDPALT"))  { mode = ModeUDP; altBaud = TRUE;  }
@@ -558,7 +595,8 @@ int main(int argc, char *argv[])
         if(misc_check_args_option(argc, argv, "UDPMUNT"))   mode = ModeUDPMUNT;
         if(misc_check_args_option(argc, argv, "UDPMUNTGM")) mode = ModeUDPMUNTGM;
         if(misc_check_args_option(argc, argv, "UDPFSYNTH")) mode = ModeUDPFSYNTH;
-		if(misc_check_args_option(argc, argv, "UDPCSSW10")) mode = ModeUDPCSSW10;
+        if(misc_check_args_option(argc, argv, "UDPCSSW10")) mode = ModeUDPCSSW10;
+        if(misc_check_args_option(argc, argv, "UDPOPL3"))   mode = ModeUDPOPL3;
     }
 
     if (mode == ModeUSBMIDI && !misc_check_device(midiDevice)) // no USB MIDI 
@@ -580,7 +618,7 @@ int main(int argc, char *argv[])
     //modem_killall_pdfviewer(0);
     killall_softsynth(3);
 
-    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH || mode == ModeCSSW10 || 
+    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH || mode == ModeCSSW10 || mode == ModeOPL3 || 
         mode == ModeUDPMUNT || mode == ModeUDPMUNTGM || mode == ModeUDPFSYNTH || mode == ModeUDPCSSW10 )
     {
         /* Disable this so we can run UDPMUNT & UDPFSYNTH on RPi or other linux device. 
@@ -611,10 +649,15 @@ int main(int argc, char *argv[])
             case ModeUDPFSYNTH:
                 midiPort = start_fsynth();
                 break;
-			case ModeCSSW10:
-			case ModeUDPCSSW10:
+            case ModeCSSW10:
+            case ModeUDPCSSW10:
                 midiPort = start_cssw10();
                 break;
+            case ModeOPL3:
+            case ModeUDPOPL3:
+                midiPort = start_opl3();
+                break;
+            
         }
 
         if (midiPort < 0)
@@ -639,7 +682,7 @@ int main(int argc, char *argv[])
     }
 
     //these modes don't need serial port. all others do :)
-    if (mode != ModeUDPMUNT && mode != ModeUDPMUNTGM && mode != ModeUDPFSYNTH && mode != ModeUDPCSSW10) 
+    if (mode != ModeUDPMUNT && mode != ModeUDPMUNTGM && mode != ModeUDPFSYNTH && mode != ModeUDPCSSW10 && mode != ModeUDPOPL3) 
     {
         fdSerial = open(serialDevice, O_RDWR | O_NOCTTY | O_SYNC);
         if (fdSerial < 0)
@@ -722,14 +765,14 @@ int main(int argc, char *argv[])
         serial2_set_DCD(serialDevice, fdSerial, (mode == ModeTCP)?FALSE:TRUE);
     }
     
-    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH || mode == ModeCSSW10 )
+    if (mode == ModeMUNT || mode == ModeMUNTGM || mode == ModeFSYNTH || mode == ModeCSSW10 || mode == ModeOPL3)
     {
         if(alsa_open_seq(midiPort, (mode == ModeMUNTGM)?1:0))
         {
             show_line();
             if(strlen(MT32LCDMsg) > 0)
                 write_alsa_packet(buf, misc_MT32_LCD(MT32LCDMsg, buf));
-            //This loop handles softSynth MUNT/FluidSynth
+            //This loop handles softSynth MUNT/FluidSynth/CSSW10/OPL3
             misc_print(0, "Starting --> local MIDI loop :)\n");
             do
             {
@@ -756,7 +799,8 @@ int main(int argc, char *argv[])
     case ModeUDPMUNT:
     case ModeUDPMUNTGM:
     case ModeUDPFSYNTH:
-	case ModeUDPCSSW10:
+    case ModeUDPCSSW10:
+    case ModeUDPOPL3:
         if(alsa_open_seq(midiPort, (mode == ModeUDPMUNTGM)?1:0))
         {
             show_line();

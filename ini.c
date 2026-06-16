@@ -14,10 +14,11 @@ extern char            CSSW10RomPath[150];
 extern char            MUNTRomPath[150];
 extern char            UDPServer[100];
 extern char            mixerControl[20];
-extern int             cssw10Volume;
 extern int             MP3Volume;
 extern int             muntVolume;
 extern int             fsynthVolume;
+extern int             cssw10Volume;
+extern int             opl3Volume;
 extern int             modemVolume;
 extern int             midilinkPriority;
 extern unsigned int    UDPServerPort;
@@ -44,6 +45,8 @@ extern char            downloadPath[500];
 extern char            uploadPath[100];
 extern char            CSSW10Options[30];
 extern char            MUNTOptions[30];
+extern char            FSYNTHOptions[30];
+extern char            OPL3Options[30];
 extern char            MT32LCDMsg[21];
 extern int             MODEMSOUND;
 extern char            modemConnectSndWAV[50];
@@ -52,9 +55,10 @@ extern char            modemRingSndWAV[50];
 extern int             TCPATHDelay;
 extern enum ASCIITRANS TCPAsciiTrans;
 extern enum SOFTSYNTH  TCPSoftSynth;
-extern int             CSSW10CPUMask;
 extern int             MUNTCPUMask;
 extern int             FSYNTHCPUMask;
+extern int             CSSW10CPUMask;
+extern int             OPL3CPUMask;
 extern char            OPENAI_KEY[150];
 extern char 	       OPENAI_MODEL[30];
 extern char            OPENAI_TEMP[8];
@@ -126,19 +130,6 @@ char ini_process_key_value_pair(char * key, char * value)
         misc_replace_char(value, strlen(value), '%', 0x00);
         ini_int(value, &MP3Volume);
     }
-	else if(strcmp("CSSW10_VOLUME", key) == 0)
-    {
-        misc_replace_char(value, strlen(value), '%', 0x00);
-        ini_int(value, &fsynthVolume);
-    }
-	else if (strcmp("CSSW10_ROM_PATH", key) == 0)
-    {
-        ini_str(key, value, MUNTRomPath, sizeof(MUNTRomPath));
-    }
-    else if (strcmp("CSSW10_CPU_MASK", key) == 0)
-    {
-        ini_int(value, &MUNTCPUMask);
-    }
     else if(strcmp("MUNT_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
@@ -152,6 +143,10 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &MUNTCPUMask);
     }
+    else if (strcmp("MUNT_OPTIONS", key) == 0)
+    {
+        ini_str(key, value, MUNTOptions, sizeof(MUNTOptions));
+    } 
     else if(strcmp("FSYNTH_VOLUME", key) == 0)
     {
         misc_replace_char(value, strlen(value), '%', 0x00);
@@ -160,6 +155,40 @@ char ini_process_key_value_pair(char * key, char * value)
     else if (strcmp("FSYNTH_CPU_MASK", key) == 0)
     {
         ini_int(value, &FSYNTHCPUMask);
+    }
+    else if (strcmp("FSYNTH_OPTIONS", key) == 0)
+    {
+        ini_str(key, value, FSYNTHOptions, sizeof(FSYNTHOptions));
+    }
+    else if(strcmp("CSSW10_VOLUME", key) == 0)
+    {
+        misc_replace_char(value, strlen(value), '%', 0x00);
+        ini_int(value, &cssw10Volume);
+    }
+    else if (strcmp("CSSW10_ROM_PATH", key) == 0)
+    {
+        ini_str(key, value, CSSW10RomPath, sizeof(MUNTRomPath));
+    }
+    else if (strcmp("CSSW10_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &CSSW10CPUMask);
+    }
+    else if (strcmp("CSSW10_OPTIONS", key) == 0)
+    {
+        ini_str(key, value, CSSW10Options, sizeof(CSSW10Options));
+    }
+    else if(strcmp("OPL3_VOLUME", key) == 0)
+    {
+        misc_replace_char(value, strlen(value), '%', 0x00);
+        ini_int(value, &opl3Volume);
+    }
+    else if (strcmp("OPL3_CPU_MASK", key) == 0)
+    {
+        ini_int(value, &OPL3CPUMask);
+    }
+    else if (strcmp("OPL3_OPTIONS", key) == 0)
+    {
+        ini_str(key, value, OPL3Options, sizeof(OPL3Options));
     }
     else if(strcmp("MODEM_VOLUME", key) == 0)
     {
@@ -295,10 +324,6 @@ char ini_process_key_value_pair(char * key, char * value)
     {
         ini_int(value, &UDPFlow);
     }
-    else if (strcmp("MUNT_OPTIONS", key) == 0)
-    {
-        ini_str(key, value, MUNTOptions, sizeof(MUNTOptions));
-    }
     else if (strcmp("MT32_LCD_MSG", key) == 0)
     {
         ini_str(key, value, MT32LCDMsg, sizeof(MT32LCDMsg));
@@ -355,33 +380,55 @@ void ini_print_settings(int p)
         misc_print(p, "  - MIDILINK_PRIORITY  --> %d\n",   midilinkPriority);
     else
         misc_print(p, "  - MIDILINK_PRIORITY  --> Default (don't change)\n");
-	misc_print(p, "  - CSSW10_OPTIONS       --> '%s'\n", CSSW10Options);
-    misc_print(p, "  - CSSW10_ROM_PATH      --> '%s'\n", CSSW10RomPath);
-	
+/* MUNT */
     misc_print(p, "  - MUNT_OPTIONS       --> '%s'\n", MUNTOptions);
-    misc_print(p, "  - MUNT_ROM_PATH      --> '%s'\n", MUNTRomPath);
-	
-    if(MP3Volume != -1)
-        misc_print(p, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
-    else
-        misc_print(p, "  - MP3_VOLUME         --> Default (don't set)\n");
+    misc_print(p, "  - MUNT_ROM_PATH      --> '%s'\n", MUNTRomPath);	
+    misc_print(p, "  - MUNT_CPU_MASK      --> %d\n",   MUNTCPUMask);
     if(muntVolume != -1)
         misc_print(p, "  - MUNT_VOLUME        --> %d%c\n", muntVolume, '%');
     else
         misc_print(p, "  - MUNT_VOLUME        --> Default (don't set)\n");
-	misc_print(p, "  - CSSW32_CPU_MASK    --> %d\n",CSSW10CPUMask);
-    misc_print(p, "  - MUNT_CPU_MASK      --> %d\n",MUNTCPUMask);
-    misc_print(p, "  - FSYNTH_CPU_MASK    --> %d\n",FSYNTHCPUMask);  
+   
+ /* FSYNTH */ 
+    misc_print(p, "  - FSYNTH_OPTIONS     --> '%s'\n", FSYNTHOptions);
+    misc_print(p, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
+    misc_print(p, "  - FSYNTH_CPU_MASK    --> %d\n",   FSYNTHCPUMask);  
     if(fsynthVolume != -1)
         misc_print(p, "  - FSYNTH_VOLUME      --> %d%c\n", fsynthVolume, '%');
     else
         misc_print(p, "  - FSYNTH_VOLUME      --> Default (don't set)\n");
+        
+/* CSSW10 */ 
+    misc_print(p, "  - CSSW10_OPTIONS     --> '%s'\n", CSSW10Options);
+    misc_print(p, "  - CSSW10_ROM_PATH    --> '%s'\n", CSSW10RomPath);	
+    misc_print(p, "  - CSSW32_CPU_MASK    --> %d\n",   CSSW10CPUMask);
+    
+    if(cssw10Volume != -1)
+        misc_print(p, "  - CSSW10_VOLUME      --> %d%c\n", cssw10Volume, '%');
+    else
+        misc_print(p, "  - CSSW10_VOLUME      --> Default (don't set)\n");
+        
+ /* OPL3 */
+    misc_print(p, "  - OPL3_OPTIONS       --> '%s'\n", OPL3Options);
+    misc_print(p, "  - OPL3_CPU_MASK      --> %d\n",   OPL3CPUMask);
+    if(opl3Volume != -1)
+        misc_print(p, "  - OPL3_VOLUME        --> %d%c\n", opl3Volume, '%');
+    else
+        misc_print(p, "  - OPL3_VOLUME        --> Default (don't set)\n");
+   
+
     if(modemVolume != -1)
         misc_print(p, "  - MODEM_VOLUME       --> %d%c\n", modemVolume, '%');
     else
         misc_print(p, "  - MODEM_VOLUME       --> Default (don't set)\n");
+   
+    if(MP3Volume != -1)
+        misc_print(p, "  - MP3_VOLUME         --> %d%c\n", MP3Volume, '%');
+    else
+        misc_print(p, "  - MP3_VOLUME         --> Default (don't set)\n");
+   
+      
     misc_print(p, "  - MIXER_CONTROL      --> %s\n", mixerControl);
-    misc_print(p, "  - FSYNTH_SOUNTFONT   --> '%s'\n", fsynthSoundFont);
     misc_print(p, "  - UDP_SERVER         --> '%s'%s\n", UDPServer,
                misc_ipaddr_is_multicast(UDPServer)?" MULTICAST":"");
     misc_print(p, "  - UDP_SERVER_PORT    --> %d\n",     UDPServerPort);
