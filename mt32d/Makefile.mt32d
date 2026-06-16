@@ -1,22 +1,17 @@
-# Define the path to your ARM sysroot
-SYSROOT=/home/bbond007/MrRoot
 COMPILER_PREFIX=arm-linux-gnueabihf-
 CC=$(COMPILER_PREFIX)gcc
 CXX=$(COMPILER_PREFIX)g++
 STRIP=$(COMPILER_PREFIX)strip
 
-CXXFLAGS=-Ofast -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -ftree-vectorize -funsafe-math-optimizations -Wno-write-strings -Wno-unused-result -Wno-deprecated-declarations --sysroot=$(SYSROOT)
+CXXFLAGS=-Ofast -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -ftree-vectorize -funsafe-math-optimizations -Wno-write-strings -Wno-unused-result -Wno-deprecated-declarations 
 LIBS=-lpthread -lmt32emu -lm -lasound
 
 # LDFLAGS tells the linker where to find direct (-L) and indirect (-rpath-link) libraries
-LDFLAGS=--sysroot=$(SYSROOT) \
-        -L../build/mt32emu \
-        -L$(SYSROOT)/usr/lib/arm-linux-gnueabihf \
-        -L$(SYSROOT)/lib/arm-linux-gnueabihf \
-        -Wl,-rpath-link,$(SYSROOT)/lib/arm-linux-gnueabihf \
-        -Wl,-rpath-link,$(SYSROOT)/usr/lib/arm-linux-gnueabihf
-
-INCLUDES=-I$(SYSROOT)/usr/include -I../mt32emu/include -I../build/mt32emu/include/
+LDFLAGS=-L../build/mt32emu \
+	-L../../../alsa/lib
+        
+INCLUDES=-I../../../alsa/include \
+	-I../build/mt32emu/include/
 
 OBJS=wav.o alsadrv.o
 
@@ -28,7 +23,6 @@ $(XOBJ) $(OBJS): %.o: src/%.cpp
 mt32d: 	$(OBJS) src/console.cpp
 	$(CXX) src/console.cpp -o mt32d $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) $(OBJS) $(LIBS)
 	$(STRIP) mt32d
-
 clean:
 	rm -f *.o *~
 

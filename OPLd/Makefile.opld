@@ -1,0 +1,29 @@
+COMPILER_PREFIX=arm-linux-gnueabihf-
+CC=$(COMPILER_PREFIX)gcc
+CXX=$(COMPILER_PREFIX)g++
+STRIP=$(COMPILER_PREFIX)strip
+
+EXE = ../opld
+
+OBJECTS = \
+	main.o alsa_pcm.o alsa_seq.o \
+	ymf262.o opl_sw.o opl_midi.o \
+	reverb.o
+
+INCLUDES = -I../../../alsa/include
+LDFLAGS = -L../../../alsa/lib -lasound -lm  
+
+CFLAGS = $(INCLUDES) -Ofast -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -ftree-vectorize -funsafe-math-optimizations -Wno-write-strings -Wno-unused-result -Wno-deprecated-declarations
+
+all : $(EXE)
+
+$(EXE) : $(OBJECTS) $(EXE).dep
+	$(CC) $(CFLAGS) $(OBJECTS) -o $(EXE) $(LDFLAGS) 
+	$(STRIP) $(EXE)
+clean :
+	rm -f *.o $(EXE)
+
+$(EXE).dep : 
+	$(CC) $(CFLAGS) -MM $(OBJECTS:.o=.c) >$(EXE).dep
+
+-include $(EXE).dep
